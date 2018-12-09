@@ -12,8 +12,7 @@ from pokemaster import session
 
 
 class Pokemon:
-    """A Pokémon.
-    """
+    """A Pokémon"""
 
     SESSION: ClassVar = session.initialize_database()
 
@@ -23,7 +22,9 @@ class Pokemon:
 
         if isinstance(identity, str):
             self._pokemon = util.get(_session, tb.Pokemon, identifier=identity)
-            self._species = util.get(_session, tb.PokemonSpecies, identifier=identity)
+            self._species = util.get(
+                _session, tb.PokemonSpecies, identifier=identity
+            )
         elif isinstance(identity, int):
             self._pokemon = util.get(_session, tb.Pokemon, id=identity)
             self._species = util.get(_session, tb.PokemonSpecies, id=identity)
@@ -32,7 +33,7 @@ class Pokemon:
                 f'`identity` must be a str or an int, not {type(identity)}'
             )
 
-        self.pid = randint(0x00000000, 0xffffffff)  # Hack
+        self.pid = randint(0x00000000, 0xFFFFFFFF)  # Hack
 
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
@@ -49,8 +50,7 @@ class Pokemon:
         self._gender_base_value = self._species.gender_rate
 
         self._all_moves = (
-            _session
-            .query(tb.Move)
+            _session.query(tb.Move)
             .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
             .filter(tb.PokemonMove.pokemon_id == self.id)
             .filter(tb.PokemonMove.version_group_id == 6)  # Hack
@@ -77,4 +77,3 @@ class Pokemon:
         #     .filter(tb.PokemonAbility.is_hidden == 1)
         #     .one_or_none()
         # )
-

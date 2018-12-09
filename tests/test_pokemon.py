@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '../..')))
 
 from pokemaster.pokemon import Pokemon
 
 
 class TestPokemon:
-
     def test_pokemon_methods(self):
 
         bulbasaur = Pokemon(1)

@@ -15,7 +15,7 @@ from pokedex.db.load import load
 from pokedex import defaults
 
 
-def initialize_database(engine_uri: str=None, directory: str=None):
+def initialize_database(engine_uri: str = None, directory: str = None):
 
     engine_uri = engine_uri or defaults.get_default_db_uri()
     directory = directory or defaults.get_default_csv_dir()
