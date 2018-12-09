@@ -1,2 +1,2 @@
-# Pokemaster - Pokémon games on yout command line
+# Pokemaster - Pokémon games on your command line
 
