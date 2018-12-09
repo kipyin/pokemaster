@@ -1,5 +1,7 @@
 # Pokemaster - Pokémon games on your command line
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
 ## Installation
 
 1. This project uses [`poetry`](https://poetry.eustace.io) to manage dependencies. Install it via
