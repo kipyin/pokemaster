@@ -85,11 +85,11 @@ version = "0.4.1"
 
 [[package]]
 category = "main"
-description = "A powerful declarative parser/builder for binary data"
+description = "A powerful declarative symmetric parser/builder for binary data"
 name = "construct"
 optional = false
 python-versions = "*"
-version = "2.5.3"
+version = "2.9.45"
 
 [[package]]
 category = "dev"
@@ -181,12 +181,11 @@ version = "0.1.0"
 
 [package.dependencies]
 Whoosh = "=2.5.7"
-construct = "=2.5.3"
 markdown = "*"
 sqlalchemy = ">=0.9.7"
 
 [package.source]
-reference = "3886769519160ec5e73f16844ce35f85a9282996"
+reference = "e81da0fc1c8b1415b874a9b84a9e279800023746"
 type = "git"
 url = "https://github.com/kipyin/pokedex.git"
 
@@ -297,7 +296,7 @@ python-versions = "*"
 version = "2.5.7"
 
 [metadata]
-content-hash = "52fb5d8327223a68db3df5a8437b6013e5c611db0f4af4816bd3c68643f61b96"
+content-hash = "de0c2933020638a0ed5b0042f1120da7cef32322931af7d2660e0af816980450"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -310,7 +309,7 @@ cached-property = ["3a026f1a54135677e7da5ce819b0c690f156f37976f3e30c543074072520
 cfgv = ["73f48a752bd7aab103c4b882d6596c6360b7aa63b34073dd2c35c7b4b8f93010", "d1791caa9ff5c0c7bce80e7ecc1921752a2eb7c2463a08ed9b6c96b85a2f75aa"]
 click = ["2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13", "5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"]
 colorama = ["05eed71e2e327246ad6b38c540c4a3117230b19679b875190486ddd2d721422d", "f8ac84de7840f5b9c4e3347b3c1eaa50f7e49c2b07596221daec5edaabbd7c48"]
-construct = ["b2233bc7c6a4d73803f5806bc3167e4935daa3ea8a5cd056cbabbdb9c3d79a36"]
+construct = ["2271a0efd0798679dea825ff47e22a4c550456a5db0ba8baa82f7eae0af0118c"]
 identify = ["5e956558a9a1e3b3891d7c6609fc9709657a11878af288ace484d1a46a93922b", "623086059219cc7b86c77a3891f3700cb175d4ce02b8fb8802b047301d71e783"]
 importlib-metadata = ["28fba9f65e5415a691dd254cdb602bcc4d6f738e68407ad251651db358b63bcf", "4a545e6125dc72b4ad98201ea3f40f92e8126e3a19667352b3a134d22b8bc74f"]
 importlib-resources = ["6e2783b2538bd5a14678284a3962b0660c715e5a0f10243fd5e00a4b5974f50b", "d3279fd0f6f847cced9f7acc19bd3e5df54d34f93a2e7bb5f238f81545787078"]

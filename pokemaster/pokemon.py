@@ -6,6 +6,7 @@
 from random import randint
 from typing import *
 
+from construct import Struct, Int8ul, Int32ul, Padding
 from pokedex.db import tables as tb, util, connect
 
 from pokemaster import session
@@ -18,7 +19,7 @@ class Pokemon:
 
     def __init__(self, identity: Union[str, int], level=None):
 
-        _session = Pokemon.SESSION
+        self._session = Pokemon.SESSION
 
         if isinstance(identity, str):
             self._pokemon = util.get(_session, tb.Pokemon, identifier=identity)
@@ -33,7 +34,7 @@ class Pokemon:
                 f'`identity` must be a str or an int, not {type(identity)}'
             )
 
-        self.pid = randint(0x00000000, 0xFFFFFFFF)  # Hack
+        self.pid = Int32ul.build(randint(0x00000000, 0xFFFFFFFF))  # Hack
 
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
@@ -50,7 +51,7 @@ class Pokemon:
         self._gender_base_value = self._species.gender_rate
 
         self._all_moves = (
-            _session.query(tb.Move)
+            self._session.query(tb.Move)
             .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
             .filter(tb.PokemonMove.pokemon_id == self.id)
             .filter(tb.PokemonMove.version_group_id == 6)  # Hack
