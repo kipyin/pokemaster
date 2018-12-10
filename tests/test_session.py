@@ -6,13 +6,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '../..')))
 
 import pytest
 
-from pokemaster import session
+from pokemaster.session import get_session
+import pokedex.db.tables
 
 
 class TestInitDatabase:
-    @pytest.mark.skip(reason='slow test')
     def test_initializing_database(self):
-        session.initialize_database()
-
-    def test_do_not_initialize_if_database_exists(self):
-        assert True
+        session = get_session()
+        assert pokedex.db.tables.Pokemon.__table__.exists(session.bind)
