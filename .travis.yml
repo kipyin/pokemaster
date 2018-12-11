@@ -12,7 +12,7 @@ install:
         - poetry install -v
 
 script:
-        - poetry run pytest -qx --cov=./pokemaster/
+        - poetry run pytest -qx --cov=pokemaster tests/
 
 jobs:
         include:
@@ -20,4 +20,6 @@ jobs:
                 - python: "3.7"
                   dist: xenial
                         
-
+after-success:
+        - codecov
+                          
