@@ -64,7 +64,8 @@ class Pokemon:
                 f'`identity` must be a str or an int, not {type(identity)}'
             )
 
-        self.pid = Int32ul.build(randint(0x00000000, 0xFFFFFFFF))  # Hack
+        self._pid = Int32ul.build(randint(0x00000000, 0xFFFFFFFF))  # Hack
+        self._trainer = Trainer()
 
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
@@ -79,22 +80,14 @@ class Pokemon:
         )
         self._moves = []
 
-        # self._all_abilities = (
-        #     _session
-        #     .query(tb.Ability)
-        #     .join(tb.PokemonAbility)
-        #     .filter(tb.PokemonAbility.pokemon_id == self.id)
-        # )
-        # self.abilities = (
-        #     self._all_abilities
-        #     .filter(tb.PokemonAbility.is_hidden == 0)
-        #     .all()
-        # )
-        # self.hidden_ability = (
-        #     self._all_abilities
-        #     .filter(tb.PokemonAbility.is_hidden == 1)
-        #     .one_or_none()
-        # )
+        self._all_abilities = (
+            self._session.query(tb.Ability)
+            .join(tb.PokemonAbility)
+            .filter(tb.PokemonAbility.pokemon_id == self.id)
+            .filter(tb.PokemonAbility.is_hidden == 0)
+            .order_by(tb.PokemonAbility.slot)
+            .all()
+        )
 
     @property
     def gender(self):
@@ -104,6 +97,8 @@ class Pokemon:
         and its gender rate. The :meth:`tb.Species.gender_rate` is the
         probablity of a Pokémon being a female, in eighths. -1 means
         genderless.
+
+        https://bulbapedia.bulbagarden.net/wiki/Personality_value#Gender
         """
         if self._species.gender_rate == -1:  # genderless
             return 3
@@ -111,7 +106,7 @@ class Pokemon:
         threshold = 0xFF * self._species.gender_rate // 8
         gender_struct = Struct('value' / Int8ul, Padding(3))
 
-        if gender_struct.parse(self.pid).value >= threshold:
+        if gender_struct.parse(self._pid).value >= threshold:
             return 2  # male
         else:
             return 1  # female
@@ -126,8 +121,57 @@ class Pokemon:
                 tb.PokemonMove.pokemon_move_method_id.in_([1, 2])
             )
             .filter(tb.PokemonMove.level <= self.level)
-            .order_by(tb.PokemonMove.level.desc())
-            .order_by(tb.PokemonMove.order)
+            .order_by(tb.PokemonMove.level.desc(), tb.PokemonMove.order)
             .limit(4)
             .all()
         )
+
+    @property
+    def ability(self):
+        """The Pokémon's ability.
+
+        In Generations III and IV, if a Pokémon's species has morethan
+        one Ability, its Ability is determined by the lowest bit of its
+        personality value; i.e., whether p is even or odd. If p is even
+        (the lowest bit is 0), the Pokémon has its first Ability. If p
+        is odd (the lowest bit is 1), it has the second.
+
+        https://bulbapedia.bulbagarden.net/wiki/Personality_value#Ability
+        """
+        # Evolutions?
+        if len(self._all_abilities) == 1:
+            return self._all_abilities[0]
+        elif Int32ul.parse(self._pid) % 2 == 0:
+            return self._all_abilities[0]
+        else:
+            return self._all_abilities[1]
+
+    @property
+    def nature(self):
+        """The Pokémon's nature.
+
+        Determined by pid % 25. Use the ``game_index`` column in
+        :class:`~pokedex.db.tables.Nature`.
+
+        https://bulbapedia.bulbagarden.net/wiki/Personality_value#Nature
+        """
+        nature_index = Int32ul.parse(self._pid) % 25
+        return (
+            self._session.query(tb.Nature)
+            .filter(tb.Nature.game_index == nature_index)
+            .one()
+        )
+
+    @property
+    def shiny(self):
+        """Determine the shininess of a Pokémon.
+
+        https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
+        """
+        shiny_struct = Struct('p2' / Int16ul, 'p1' / Int16ul)
+        p1 = shiny_struct.parse(self._pid).p1
+        p2 = shiny_struct.parse(self._pid).p2
+        if self.trainer.id ^ self.trainer.secret_id ^ p1 ^ p2 < 8:
+            return True
+        else:
+            return False
