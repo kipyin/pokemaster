@@ -1,6 +1,6 @@
 # Pokemaster - Pokémon games on your command line
 
-[![Build Status](https://travis-ci.com/kipyin/pokemaster.svg?branch=develop)](https://travis-ci.com/kipyin/pokemaster) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![codecov](https://codecov.io/gh/kipyin/pokemaster/branch/develop/graph/badge.svg)](https://codecov.io/gh/kipyin/pokemaster) [![Build Status](https://travis-ci.com/kipyin/pokemaster.svg?branch=develop)](https://travis-ci.com/kipyin/pokemaster) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 ## Installation
 
