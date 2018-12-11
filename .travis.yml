@@ -1,10 +1,19 @@
 language: python
+
+cache:
+        pip: true
+
+before-install:
+        - pip install codecov
+
 install:
         - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
         - source $HOME/.poetry/env
         - poetry install -v
+
 script:
-        - pytest -q
+        - poetry run pytest -qx -cov=./pokemaster/
+
 jobs:
         include:
                 - python: "3.6"
