@@ -12,7 +12,7 @@ install:
         - poetry install -v
 
 script:
-        - poetry run pytest -qx -cov=./pokemaster/
+        - poetry run pytest -qx --cov=./pokemaster/
 
 jobs:
         include:
