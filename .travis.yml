@@ -3,7 +3,7 @@ language: python
 cache:
         pip: true
 
-before-install:
+before_install:
         - pip install codecov
 
 install:
@@ -20,6 +20,6 @@ jobs:
                 - python: "3.7"
                   dist: xenial
                         
-after-success:
+after_success:
         - codecov
                           
