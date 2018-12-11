@@ -4,7 +4,7 @@ python:
         - "3.7"
 install:
         - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-        - poetry install -v
+        - poetry install -D -v
 script:
         - pytest
 
