@@ -4,7 +4,7 @@ python:
         - "3.7"
 install:
         - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-        - set PATH $HOME/.poetry/bin $PATH
+        - source $HOME/.poetry/env
         - poetry install -D -v
 script:
         - pytest
