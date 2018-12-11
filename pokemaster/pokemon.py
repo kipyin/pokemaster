@@ -8,7 +8,7 @@ from random import randint
 from typing import AnyStr, ClassVar, Union, List
 
 import attr
-from construct import Struct, Int8ul, Int16ul, Int32ul, Padding
+from construct import Struct, Int8ul, Int16ul, Int24ul, Int32ul, Padding
 from pokedex.db import tables as tb, util, connect
 
 from pokemaster.session import get_session
@@ -64,7 +64,32 @@ class Pokemon:
                 f'`identity` must be a str or an int, not {type(identity)}'
             )
 
-        self._pid = Int32ul.build(randint(0x00000000, 0xFFFFFFFF))  # Hack
+        # Build a gender-consistent PID.
+        gender_struct = Struct('value' / Int8ul, 'other' / Int24ul)
+
+        if self._species.gender_rate == -1:  # Genderless
+            gender_value = 0b11111111
+            self.gender = 3
+        elif self._species.gender_rate == 8:  # Female-only
+            gender_value = 0b11111110
+            self.gender = 1
+        elif self._species.gender_rate == 0:  # Male-only
+            gender_value = 0b00000000
+            self.gender = 2
+        else:
+            # endpoints included.
+            gender_value = randint(0b00000001, 0b11111101)
+            gender_threshold = 0xFF * self._species.gender_rate // 8
+            if gender_value >= gender_threshold:
+                self.gender = 2
+            else:
+                self.gender = 1
+
+        gender_other = randint(0, 0xFFFFFF)  # Also hack.
+        self._pid = gender_struct.build(
+            dict(value=gender_value, other=gender_other)
+        )
+
         self._trainer = Trainer()
 
         self.id = self._pokemon.id
@@ -88,28 +113,6 @@ class Pokemon:
             .order_by(tb.PokemonAbility.slot)
             .all()
         )
-
-    @property
-    def gender(self):
-        """Return the gender of a pokemon.
-
-        A Pokémon's gender is determined by the last byte of its PID,
-        and its gender rate. The :meth:`tb.Species.gender_rate` is the
-        probablity of a Pokémon being a female, in eighths. -1 means
-        genderless.
-
-        https://bulbapedia.bulbagarden.net/wiki/Personality_value#Gender
-        """
-        if self._species.gender_rate == -1:  # genderless
-            return 3
-
-        threshold = 0xFF * self._species.gender_rate // 8
-        gender_struct = Struct('value' / Int8ul, Padding(3))
-
-        if gender_struct.parse(self._pid).value >= threshold:
-            return 2  # male
-        else:
-            return 1  # female
 
     @property
     def moves(self):
