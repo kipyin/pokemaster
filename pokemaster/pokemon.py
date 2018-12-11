@@ -5,15 +5,16 @@
 """
 import datetime
 from random import randint
-from typing import *
+from typing import AnyStr, ClassVar, Union, List
 
-from construct import Struct, Int8ul, Int32ul, Padding
+import attr
+from construct import Struct, Int8ul, Int16ul, Int32ul, Padding
 from pokedex.db import tables as tb, util, connect
 
 from pokemaster.session import get_session
 
 
-def lcrng(seed: int):
+def random_number_generator(seed: int):
     """The Linear Congruential random number generator in Gen III & IV.
 
     The initial seed in Emerald is always 0. See:
@@ -23,6 +24,18 @@ def lcrng(seed: int):
         seed = 0x41C64E6D * seed + 0x00006073
         seed &= 0xFFFFFFFF
         yield seed >> 16
+
+
+@attr.s(slots=True, auto_attribs=True)
+class Trainer:
+    """A trainer"""
+
+    # _seed: ClassVar[int] = datetime.datetime.now().microsecond % 0xFFFF
+    # _prng: ClassVar[Generator] = random_number_generator(_seed)
+
+    name: AnyStr = b""
+    id: int = randint(0, 0xFFFF)
+    secret_id: int = randint(0, 0xFFFF)
 
 
 class Pokemon:

@@ -26,7 +26,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.1"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Classes Without Boilerplate"
 name = "attrs"
 optional = false
@@ -296,7 +296,7 @@ python-versions = "*"
 version = "2.5.7"
 
 [metadata]
-content-hash = "de0c2933020638a0ed5b0042f1120da7cef32322931af7d2660e0af816980450"
+content-hash = "d3736973c1df627836db1a75e5e59353394540af47fbf63db0e6c3d49e88b35f"
 python-versions = "^3.6"
 
 [metadata.hashes]
