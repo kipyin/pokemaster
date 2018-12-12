@@ -7,7 +7,39 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, '../..')))
 import pytest
 from construct import Int32ul
 
-from pokemaster.pokemon import Pokemon, Trainer
+from pokemaster.pokemon import Pokemon, Trainer, pokemon_prng, PRNG
+
+
+def test_prng():
+    """The PRNG is used in the rest of the tests, thus needs to be tested
+    first.
+
+    The seed and the results are from the following link:
+    https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
+    """
+    seed = 0x1A56B091
+    prng = pokemon_prng(seed)
+    assert [next(prng) for _ in range(5)] == [
+        0x01DB,
+        0x7B06,
+        0x5233,
+        0xE470,
+        0x5CC4,
+    ]
+
+
+def test_new_prng_class():
+    """An instance of a PRNG class should behave exactly like the old
+    pokemon_prng.
+    """
+    prng = PRNG(0x1A56B091)
+    assert [prng() for _ in range(5)] == [
+        0x01DB,
+        0x7B06,
+        0x5233,
+        0xE470,
+        0x5CC4,
+    ]
 
 
 @pytest.fixture(scope='module')
@@ -18,6 +50,9 @@ def bulbasaur():
     yield bulbasaur
 
 
+@pytest.mark.skipped(
+    reason='Involves probablity. To be fixed with the new PRNG.'
+)
 class TestPokemonPID:
     """PID related mechanisms."""
 

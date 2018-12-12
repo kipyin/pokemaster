@@ -5,7 +5,7 @@
 """
 import datetime
 from random import randint
-from typing import AnyStr, ClassVar, Union, List
+from typing import AnyStr, ClassVar, Union, List, Generator, Callable
 
 import attr
 from construct import Struct, Int8ul, Int16ul, Int24ul, Int32ul, Padding
@@ -14,16 +14,59 @@ from pokedex.db import tables as tb, util, connect
 from pokemaster.session import get_session
 
 
-def random_number_generator(seed: int):
+def pokemon_prng(seed: int):
     """The Linear Congruential random number generator in Gen III & IV.
 
-    The initial seed in Emerald is always 0. See:
-    https://bulbapedia.bulbagarden.net/wiki/Pseudorandom_number_generation_in_Pokémon
+    Stolen from `pokedex.struct._pokemon_struct`.
+
+    References:
+        https://bulbapedia.bulbagarden.net/wiki/Pseudorandom_number_generation_in_Pokémon
+        https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
     """
     while True:
         seed = 0x41C64E6D * seed + 0x00006073
         seed &= 0xFFFFFFFF
         yield seed >> 16
+
+
+@attr.s
+class PRNG:
+    """A linear congruential random number generator.
+
+    Usage::
+
+        >>> prng = PRNG()
+        >>> prng()
+        0
+        >>> prng()
+        59774
+        >>> prng.format = hex
+        >>> prng()
+        '0x5271'
+        >>> prng.reset(seed=0x1A56B091)
+        >>> prng()
+        >>> '0x1db'  # format persists
+
+    """
+
+    _seed: int = attr.ib(default=0)
+    _value: int = attr.ib(init=False)
+    format: Callable = attr.ib(init=False, default=int)
+
+    def __attrs_post_init__(self):
+        self._value = self._seed
+
+    def reset(self, seed=None):
+        self._seed = seed or 0
+        self._value = self._seed
+
+    def _generator(self):
+        while True:
+            self._value = (0x41C64E6D * self._value + 0x00006073) & 0xFFFFFFFF
+            yield self._value >> 16
+
+    def __call__(self):
+        return self.format(next(self._generator()))
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -42,6 +85,7 @@ class Pokemon:
     """A Pokémon"""
 
     SESSION: ClassVar = get_session()
+    # PRNG: ClassVar[Generator]
 
     def __init__(self, identity: Union[str, int], level=None):
 
