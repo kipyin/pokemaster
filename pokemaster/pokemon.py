@@ -8,6 +8,7 @@ from random import randint
 from typing import AnyStr, ClassVar, Union, List, Generator, Callable
 
 import attr
+from attr.validators import instance_of as _instance_of
 from construct import Struct, Int8ul, Int16ul, Int24ul, Int32ul, Padding
 from pokedex.db import tables as tb, util, connect
 
@@ -29,7 +30,7 @@ def pokemon_prng(seed: int):
         yield seed >> 16
 
 
-@attr.s
+@attr.s(slots=True)
 class PRNG:
     """A linear congruential random number generator.
 
@@ -49,9 +50,15 @@ class PRNG:
 
     """
 
-    _seed: int = attr.ib(default=0)
+    _seed: int = attr.ib(default=0, validator=_instance_of(int))
     _value: int = attr.ib(init=False)
-    format: Callable = attr.ib(init=False, default=int)
+    format: Callable[[int], Union[int, str]] = attr.ib(
+        init=False, default=int, validator=_instance_of(Callable)
+    )
+    # FIXME: A simple `Callable` is not enough. Need to check if the
+    # provided function conforms to `Callable[[int], Union[int, str]].
+    # Too bad parameterized generics cannot be used with class or
+    # instance checks
 
     def __attrs_post_init__(self):
         self._value = self._seed
