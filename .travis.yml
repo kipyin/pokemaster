@@ -2,6 +2,9 @@ language: python
 
 cache:
         pip: true
+        directories:
+                - "$HOME/.cache/pypoetry"
+                - "$HOME/.cache/pre-commit"
 
 before_install:
         - pip install codecov
