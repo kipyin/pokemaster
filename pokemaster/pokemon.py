@@ -5,7 +5,7 @@
 """
 import datetime
 from random import randint
-from typing import AnyStr, ClassVar, Union, List, Generator, Callable
+from typing import AnyStr, ClassVar, Union, List, Generator, Callable, Tuple
 
 import attr
 from attr.validators import instance_of as _instance_of
@@ -41,30 +41,23 @@ class PRNG:
         0
         >>> prng()
         59774
-        >>> prng.format = hex
-        >>> prng()
+        >>> # hex, oct, bin can be passed for debugging:
+        >>> prng(format=hex)
         '0x5271'
         >>> prng.reset(seed=0x1A56B091)
         >>> prng()
-        >>> '0x1db'  # format persists
+        475
+        >>> # Resetting is (roughly) equivalent to:
+        >>> prng = PRNG(seed=0x1A56B091)
+        >>> prng()
+        475
 
     """
 
     _seed: int = attr.ib(default=0, validator=_instance_of(int))
     _value: int = attr.ib(init=False)
-    format: Callable[[int], Union[int, str]] = attr.ib(
-        init=False, default=int, validator=_instance_of(Callable)
-    )
-    # FIXME: A simple `Callable` is not enough. Need to check if the
-    # provided function conforms to `Callable[[int], Union[int, str]].
-    # Too bad parameterized generics cannot be used with class or
-    # instance checks
 
     def __attrs_post_init__(self):
-        self._value = self._seed
-
-    def reset(self, seed=None):
-        self._seed = seed or 0
         self._value = self._seed
 
     def _generator(self):
@@ -72,43 +65,82 @@ class PRNG:
             self._value = (0x41C64E6D * self._value + 0x00006073) & 0xFFFFFFFF
             yield self._value >> 16
 
-    def __call__(self):
-        return self.format(next(self._generator()))
+    def __call__(self, format: Callable = int) -> Union[int, str]:
+        valid_formats = (str, bin, oct, int, hex)
+        if format not in valid_formats:
+            raise ValueError(f'format must be one of {valid_formats}.')
+        return format(next(self._generator()))
+
+    def reset(self, seed=None):
+        """Reset the generator with seed, if given."""
+        self._seed = seed or 0
+        self._value = self._seed
+
+    def next(self, n=1, format=int) -> List[Union[str, int]]:
+        """Generate the next n random numbers."""
+        return [self(format=format) for _ in range(n)]
+
+    def get_pid_ivs(
+        self, method=2
+    ) -> Tuple[int, int]:  # Can we have a proper name?
+        """Generate the PID and IV's using the internal generator. Return
+        a tuple of two integers, in the order of 'PID' and 'IVs'.
+
+        Checkout [this link](https://www.smogon.com/ingame/rng/pid_iv_creation#rng_pokemon_generation)
+         for more information on Method 1, 2, and 4.
+        """
+        if method not in [1, 2, 4]:
+            raise ValueError(
+                'Only methods 1, 2, 4 are supported. For more information on '
+                'the meaning of the methods, see '
+                'https://www.smogon.com/ingame/rng/pid_iv_creation#rng_pokemon_generation'
+                ' for help.'
+            )
+        elif method == 1:
+            pid1, pid2, iv1, iv2 = self.next(4)
+        elif method == 2:
+            pid1, pid2, _, iv1, iv2 = self.next(5)
+        else:  # method == 4:
+            pid1, pid2, iv1, _, iv2 = self.next(5)
+
+        pid = pid1 + (pid2 << 16)
+        ivs = iv1 + (iv2 << 16)
+        return (pid, ivs)
 
 
-@attr.s(slots=True, auto_attribs=True)
+@attr.s(auto_attribs=True)
 class Trainer:
     """A trainer"""
 
-    # _seed: ClassVar[int] = datetime.datetime.now().microsecond % 0xFFFF
-    # _prng: ClassVar[Generator] = random_number_generator(_seed)
+    prng: ClassVar[PRNG] = None
+    name: AnyStr
 
-    name: AnyStr = b""
-    id: int = randint(0, 0xFFFF)
-    secret_id: int = randint(0, 0xFFFF)
+    def __attrs_post_init__(self):
+        self.id = self.prng()
+        self._secret_id = self.prng()
 
 
 class Pokemon:
     """A Pokémon"""
 
     SESSION: ClassVar = get_session()
-    # PRNG: ClassVar[Generator]
+    prng: ClassVar[PRNG] = None
 
     def __init__(self, identity: Union[str, int], level=None):
 
-        self._session = Pokemon.SESSION
+        self.SESSION = Pokemon.SESSION
 
         if isinstance(identity, str):
             self._pokemon = util.get(
-                self._session, tb.Pokemon, identifier=identity
+                self.SESSION, tb.Pokemon, identifier=identity
             )
             self._species = util.get(
-                self._session, tb.PokemonSpecies, identifier=identity
+                self.SESSION, tb.PokemonSpecies, identifier=identity
             )
         elif isinstance(identity, int):
-            self._pokemon = util.get(self._session, tb.Pokemon, id=identity)
+            self._pokemon = util.get(self.SESSION, tb.Pokemon, id=identity)
             self._species = util.get(
-                self._session, tb.PokemonSpecies, id=identity
+                self.SESSION, tb.PokemonSpecies, id=identity
             )
         else:
             raise TypeError(
@@ -141,7 +173,7 @@ class Pokemon:
             dict(value=gender_value, other=gender_other)
         )
 
-        self._trainer = Trainer()
+        self._trainer = Trainer('')
 
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
@@ -149,7 +181,7 @@ class Pokemon:
         self.level = level or 5
 
         self._all_moves = (
-            self._session.query(tb.Move)
+            self.SESSION.query(tb.Move)
             .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
             .filter(tb.PokemonMove.pokemon_id == self.id)
             .filter(tb.PokemonMove.version_group_id == 6)  # Hack
@@ -157,7 +189,7 @@ class Pokemon:
         self._moves = []
 
         self._all_abilities = (
-            self._session.query(tb.Ability)
+            self.SESSION.query(tb.Ability)
             .join(tb.PokemonAbility)
             .filter(tb.PokemonAbility.pokemon_id == self.id)
             .filter(tb.PokemonAbility.is_hidden == 0)
@@ -211,7 +243,7 @@ class Pokemon:
         """
         nature_index = Int32ul.parse(self._pid) % 25
         return (
-            self._session.query(tb.Nature)
+            self.SESSION.query(tb.Nature)
             .filter(tb.Nature.game_index == nature_index)
             .one()
         )
@@ -225,7 +257,7 @@ class Pokemon:
         shiny_struct = Struct('p2' / Int16ul, 'p1' / Int16ul)
         p1 = shiny_struct.parse(self._pid).p1
         p2 = shiny_struct.parse(self._pid).p2
-        if self.trainer.id ^ self.trainer.secret_id ^ p1 ^ p2 < 8:
+        if self.trainer.id ^ self.trainer._secret_id ^ p1 ^ p2 < 8:
             return True
         else:
             return False
