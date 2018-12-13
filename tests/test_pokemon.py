@@ -82,9 +82,29 @@ def bulbasaur():
     prng = PRNG()
     Pokemon.prng = prng
     Trainer.prng = prng
+    kip = Trainer('Kip')
+    # kip.id = 0
+    # kip.secret_id = 59774
     bulbasaur = Pokemon(1)
-    bulbasaur._pid = Int32ul.build(0xC0FFEE)
+    # bulbasaur.pid = 833639025
+    # bulbasaur.ivs = 2948981452
+    bulbasaur.trainer = kip
     yield bulbasaur
+
+
+def test_ids(bulbasaur):
+    assert bulbasaur.trainer.id == 0
+    assert bulbasaur.trainer.secret_id == 59774
+    assert bulbasaur._pid == 833_639_025
+    assert bulbasaur._ivs == 2_948_981_452
+
+
+class TestTrainer:
+
+    # TODO: use hypothesis' testing suite for the trainer's name.
+    def test_trainer_sanity(self):
+        Trainer.prng = PRNG()
+        assert Trainer('Kip')
 
 
 @pytest.mark.skip(
@@ -96,6 +116,7 @@ class TestPokemonPID:
     def test_pokemon_gender(self, bulbasaur):
         assert bulbasaur.gender == 2  # male
         nidoran_f = Pokemon('nidoran-f')
+        nidoran_f.trainer = bulbasaur.trainer
         assert nidoran_f.gender == 1
 
     def test_pokemon_ablity(self, bulbasaur):
@@ -106,8 +127,6 @@ class TestPokemonPID:
 
     def test_pokemon_shininess(self, bulbasaur):
         """See https://bulbapedia.bulbagarden.net/wiki/Personality_value#Example"""
-        bulbasaur._pid = Int32ul.build(2_814_471_828)
-        bulbasaur.trainer = Trainer('')
         assert bulbasaur.shiny
 
 

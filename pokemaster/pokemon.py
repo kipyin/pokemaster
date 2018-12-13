@@ -54,6 +54,7 @@ class PRNG:
 
     """
 
+    # In Emerald, the initial seed is always 0.
     _seed: int = attr.ib(default=0, validator=_instance_of(int))
     _value: int = attr.ib(init=False)
 
@@ -117,61 +118,51 @@ class Trainer:
 
     def __attrs_post_init__(self):
         self.id = self.prng()
-        self._secret_id = self.prng()
+        self.secret_id = self.prng()
 
 
 class Pokemon:
     """A Pokémon"""
 
-    SESSION: ClassVar = get_session()
+    session: ClassVar = get_session()
     prng: ClassVar[PRNG] = None
 
     def __init__(self, identity: Union[str, int], level=None):
 
-        self.SESSION = Pokemon.SESSION
-
         if isinstance(identity, str):
             self._pokemon = util.get(
-                self.SESSION, tb.Pokemon, identifier=identity
+                self.session, tb.Pokemon, identifier=identity
             )
             self._species = util.get(
-                self.SESSION, tb.PokemonSpecies, identifier=identity
+                self.session, tb.PokemonSpecies, identifier=identity
             )
         elif isinstance(identity, int):
-            self._pokemon = util.get(self.SESSION, tb.Pokemon, id=identity)
+            self._pokemon = util.get(self.session, tb.Pokemon, id=identity)
             self._species = util.get(
-                self.SESSION, tb.PokemonSpecies, id=identity
+                self.session, tb.PokemonSpecies, id=identity
             )
         else:
             raise TypeError(
                 f'`identity` must be a str or an int, not {type(identity)}'
             )
 
-        # Build a gender-consistent PID.
-        gender_struct = Struct('value' / Int8ul, 'other' / Int24ul)
+        # TODO: method 1 for legendaries, method 2 for all others.
+        self._pid, self._ivs = self.prng.get_pid_ivs(method=2)
 
         if self._species.gender_rate == -1:  # Genderless
-            gender_value = 0b11111111
             self.gender = 3
         elif self._species.gender_rate == 8:  # Female-only
-            gender_value = 0b11111110
             self.gender = 1
         elif self._species.gender_rate == 0:  # Male-only
-            gender_value = 0b00000000
             self.gender = 2
         else:
-            # endpoints included.
-            gender_value = randint(0b00000001, 0b11111101)
+            # Gender is determined by the last byte of the PID.
+            gender_value = self._pid % 0xFF
             gender_threshold = 0xFF * self._species.gender_rate // 8
             if gender_value >= gender_threshold:
                 self.gender = 2
             else:
                 self.gender = 1
-
-        gender_other = randint(0, 0xFFFFFF)  # Also hack.
-        self._pid = gender_struct.build(
-            dict(value=gender_value, other=gender_other)
-        )
 
         self._trainer = Trainer('')
 
@@ -181,7 +172,7 @@ class Pokemon:
         self.level = level or 5
 
         self._all_moves = (
-            self.SESSION.query(tb.Move)
+            self.session.query(tb.Move)
             .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
             .filter(tb.PokemonMove.pokemon_id == self.id)
             .filter(tb.PokemonMove.version_group_id == 6)  # Hack
@@ -189,7 +180,7 @@ class Pokemon:
         self._moves = []
 
         self._all_abilities = (
-            self.SESSION.query(tb.Ability)
+            self.session.query(tb.Ability)
             .join(tb.PokemonAbility)
             .filter(tb.PokemonAbility.pokemon_id == self.id)
             .filter(tb.PokemonAbility.is_hidden == 0)
@@ -243,7 +234,7 @@ class Pokemon:
         """
         nature_index = Int32ul.parse(self._pid) % 25
         return (
-            self.SESSION.query(tb.Nature)
+            self.session.query(tb.Nature)
             .filter(tb.Nature.game_index == nature_index)
             .one()
         )
@@ -257,7 +248,7 @@ class Pokemon:
         shiny_struct = Struct('p2' / Int16ul, 'p1' / Int16ul)
         p1 = shiny_struct.parse(self._pid).p1
         p2 = shiny_struct.parse(self._pid).p2
-        if self.trainer.id ^ self.trainer._secret_id ^ p1 ^ p2 < 8:
+        if self.trainer.id ^ self.trainer.secret_id ^ p1 ^ p2 < 8:
             return True
         else:
             return False
