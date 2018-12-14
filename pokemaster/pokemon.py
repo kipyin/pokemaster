@@ -3,6 +3,7 @@
     Basic Pokémon API
 
 """
+from enum import IntEnum
 import datetime
 from random import randint
 from typing import AnyStr, ClassVar, Union, List, Generator, Callable, Tuple
@@ -109,6 +110,13 @@ class PRNG:
         return (pid, ivs)
 
 
+class Gender(IntEnum):
+
+    FEMALE = 1
+    MALE = 2
+    GENDERLESS = 3
+
+
 @attr.s(auto_attribs=True)
 class Trainer:
     """A trainer"""
@@ -150,19 +158,19 @@ class Pokemon:
         self._pid, self._ivs = self.prng.get_pid_ivs(method=2)
 
         if self._species.gender_rate == -1:  # Genderless
-            self.gender = 3
+            self.gender = Gender.GENDERLESS
         elif self._species.gender_rate == 8:  # Female-only
-            self.gender = 1
+            self.gender = Gender.FEMALE
         elif self._species.gender_rate == 0:  # Male-only
-            self.gender = 2
+            self.gender = Gender.MALE
         else:
             # Gender is determined by the last byte of the PID.
             gender_value = self._pid % 0xFF
             gender_threshold = 0xFF * self._species.gender_rate // 8
             if gender_value >= gender_threshold:
-                self.gender = 2
+                self.gender = Gender.MALE
             else:
-                self.gender = 1
+                self.gender = Gender.FEMALE
 
         self._trainer = Trainer('')
 
