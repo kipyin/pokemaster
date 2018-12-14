@@ -1,6 +1,10 @@
+SHELL: /bin/bash
+
+.ONESHELL:
 .PHONY: install
 install:
-	@curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python; source $$HOME/.poetry/env
+	@curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+	@source $$HOME/.poetry/env
 	@poetry install -v
 
 
