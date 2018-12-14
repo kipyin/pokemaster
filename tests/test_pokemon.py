@@ -2,60 +2,36 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(__file__, '../..')))
-
 import pytest
 from construct import Int32ul
+from hypothesis import given
+from hypothesis import strategies as st
 
-from pokemaster.pokemon import Pokemon, Trainer, pokemon_prng, PRNG
+from pokemaster.pokemon import PRNG, Gender, Pokemon, Trainer
 
 
 class TestPRNG:
-    def test_prng(self):
-        """The PRNG is used in the rest of the tests, thus needs to be tested
-        first.
+    """Given a seed, the PRNG should have the exact same behavior.
 
-        The seed and the results are from the following link:
-        https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
-        """
-        seed = 0x1A56B091
-        prng = pokemon_prng(seed)
-        assert [next(prng) for _ in range(5)] == [
-            0x01DB,
-            0x7B06,
-            0x5233,
-            0xE470,
-            0x5CC4,
-        ]
+    The seed and the results are from the following link:
+    https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
+    """
 
-    def test_new_prng_class(self):
-        """An instance of a PRNG class should behave exactly like the old
-        pokemon_prng.
-        """
-        prng = PRNG(0x1A56B091)
-        assert [prng() for _ in range(5)] == [
-            0x01DB,
-            0x7B06,
-            0x5233,
-            0xE470,
-            0x5CC4,
-        ]
-
-    def test_reset_prng(self):
+    def test_prng_sanity(self):
         prng = PRNG()
         assert prng() == 0
-        prng.reset(seed=0x1A56B091)
-        assert prng() == 475
+        prng = PRNG(0x1A56B091)
+        assert prng() == 0x01DB
 
     def test_format_output(self):
         prng = PRNG(0x1A56B091)
-        assert [prng(format=hex) for _ in range(5)] == [
-            '0x1db',
-            '0x7b06',
-            '0x5233',
-            '0xe470',
-            '0x5cc4',
-        ]
+        assert prng(format=hex) == '0x1db'
+        assert prng(format=bin) == '0b111101100000110'
+        assert prng(format=oct) == '0o51063'
+        assert prng(format=str) == '58480'
+        assert prng(format=int) == 23748
+        with pytest.raises(ValueError):
+            assert prng(format=bytes)
 
     def test_next_5(self):
         prng = PRNG(0x1A56B091)
@@ -71,14 +47,40 @@ class TestPRNG:
             '0x5cc4',
         ]
 
+    def test_reset_prng(self):
+        prng = PRNG()
+        assert prng() == 0
+        prng.next(10)
+        prng.reset()
+        assert prng() == 0
+
     def test_get_pid_ivs(self):
         prng = PRNG(0x560B9CE3)
         assert (0x7E482751, 0x5EE9629C) == prng.get_pid_ivs(method=2)
 
 
-@pytest.fixture(scope='module')
+def test_gender_sanity():
+    assert Gender.FEMALE == 1
+    assert Gender.MALE == 2
+    assert Gender.GENDERLESS == 3
+
+
+class TestTrainer:
+    @given(name=st.text())
+    def test_trainer_sanity(self, name):
+        Trainer.prng = PRNG()
+        some_guy = Trainer(name)
+        assert some_guy.id == 0
+        assert some_guy.secret_id == 59774
+
+
+@pytest.fixture(scope='class')
 def bulbasaur():
-    """Instantiate a Bulbasaur with pid=0xc0ffee."""
+    """Instantiate a Bulbasaur.
+
+    According to the PID, this is a male bulbasaur with Overgrow ability,
+    hardy nature, shiny?
+    """
     prng = PRNG()
     Pokemon.prng = prng
     Trainer.prng = prng
@@ -92,44 +94,39 @@ def bulbasaur():
     yield bulbasaur
 
 
-def test_ids(bulbasaur):
-    assert bulbasaur.trainer.id == 0
-    assert bulbasaur.trainer.secret_id == 59774
-    assert bulbasaur._pid == 833_639_025
-    assert bulbasaur._ivs == 2_948_981_452
-
-
-class TestTrainer:
-
-    # TODO: use hypothesis' testing suite for the trainer's name.
-    def test_trainer_sanity(self):
-        Trainer.prng = PRNG()
-        assert Trainer('Kip')
-
-
-@pytest.mark.skip(
-    reason='Involves probablity. To be fixed with the new Pokémon model.'
-)
 class TestPokemonPID:
     """PID related mechanisms."""
 
+    def test_bulbasaur_ids(self, bulbasaur):
+        assert bulbasaur.trainer.id == 0
+        assert bulbasaur.trainer.secret_id == 59774
+        assert bulbasaur._pid == 833_639_025
+        assert bulbasaur._ivs == 2_948_981_452
+
     def test_pokemon_gender(self, bulbasaur):
-        assert bulbasaur.gender == 2  # male
+        assert bulbasaur.gender == Gender.MALE  # male
         nidoran_f = Pokemon('nidoran-f')
         nidoran_f.trainer = bulbasaur.trainer
-        assert nidoran_f.gender == 1
+        assert nidoran_f.gender == Gender.FEMALE
+        nidoran_m = Pokemon('nidoran-m')
+        nidoran_m.trainer = bulbasaur.trainer
+        assert nidoran_m.gender == Gender.MALE
+        magnemite = Pokemon('magnemite')
+        magnemite.trainer = bulbasaur.trainer
+        assert magnemite.gender == Gender.GENDERLESS
 
     def test_pokemon_ablity(self, bulbasaur):
         assert bulbasaur.ability.identifier == 'overgrow'
 
     def test_pokemon_nature(self, bulbasaur):
-        assert bulbasaur.nature.identifier == 'bold'
+        assert bulbasaur.nature.identifier == 'hardy'
 
     def test_pokemon_shininess(self, bulbasaur):
         """See https://bulbapedia.bulbagarden.net/wiki/Personality_value#Example"""
-        assert bulbasaur.shiny
+        assert not bulbasaur.shiny
 
 
+@pytest.mark.skip
 class TestPokemonMoves:
     def test_pokemon_initial_moves(self, bulbasaur):
         assert bulbasaur.id == 1
