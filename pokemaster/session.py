@@ -6,16 +6,14 @@
 
 """
 
-import os
 import logging
+import os
 from pathlib import Path
-
-from sqlalchemy.exc import OperationalError
 
 import pokedex
 import pokedex.db
 import pokedex.db.load
-
+from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 

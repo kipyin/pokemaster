@@ -3,32 +3,20 @@
     Basic Pokémon API
 
 """
-from enum import IntEnum
 import datetime
+from enum import IntEnum
 from random import randint
-from typing import AnyStr, ClassVar, Union, List, Generator, Callable, Tuple
+from typing import AnyStr, Callable, ClassVar, Generator, List, Tuple, Union
 
 import attr
 from attr.validators import instance_of as _instance_of
-from construct import Struct, Int8ul, Int16ul, Int24ul, Int32ul, Padding
-from pokedex.db import tables as tb, util, connect
+from construct import Int8ul, Int16ul, Int24ul, Int32ul, Padding, Struct
+from pokedex.db import connect
+from pokedex.db import tables as tb
+from pokedex.db import util
+from sqlalchemy.orm.exc import NoResultFound
 
 from pokemaster.session import get_session
-
-
-def pokemon_prng(seed: int):
-    """The Linear Congruential random number generator in Gen III & IV.
-
-    Stolen from `pokedex.struct._pokemon_struct`.
-
-    References:
-        https://bulbapedia.bulbagarden.net/wiki/Pseudorandom_number_generation_in_Pokémon
-        https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
-    """
-    while True:
-        seed = 0x41C64E6D * seed + 0x00006073
-        seed &= 0xFFFFFFFF
-        yield seed >> 16
 
 
 @attr.s(slots=True)
@@ -53,6 +41,9 @@ class PRNG:
         >>> prng()
         475
 
+    References:
+        https://bulbapedia.bulbagarden.net/wiki/Pseudorandom_number_generation_in_Pokémon
+        https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
     """
 
     # In Emerald, the initial seed is always 0.
@@ -91,7 +82,7 @@ class PRNG:
         Checkout [this link](https://www.smogon.com/ingame/rng/pid_iv_creation#rng_pokemon_generation)
          for more information on Method 1, 2, and 4.
         """
-        if method not in [1, 2, 4]:
+        if method not in (1, 2, 4):
             raise ValueError(
                 'Only methods 1, 2, 4 are supported. For more information on '
                 'the meaning of the methods, see '
@@ -122,7 +113,7 @@ class Trainer:
     """A trainer"""
 
     prng: ClassVar[PRNG] = None
-    name: AnyStr
+    name: AnyStr  # TODO: Restrict to charsets only.
 
     def __attrs_post_init__(self):
         self.id = self.prng()
@@ -137,22 +128,25 @@ class Pokemon:
 
     def __init__(self, identity: Union[str, int], level=None):
 
-        if isinstance(identity, str):
-            self._pokemon = util.get(
-                self.session, tb.Pokemon, identifier=identity
-            )
-            self._species = util.get(
-                self.session, tb.PokemonSpecies, identifier=identity
-            )
-        elif isinstance(identity, int):
-            self._pokemon = util.get(self.session, tb.Pokemon, id=identity)
-            self._species = util.get(
-                self.session, tb.PokemonSpecies, id=identity
-            )
-        else:
-            raise TypeError(
-                f'`identity` must be a str or an int, not {type(identity)}'
-            )
+        try:
+            if isinstance(identity, str):
+                self._pokemon = util.get(
+                    self.session, tb.Pokemon, identifier=identity
+                )
+                self._species = util.get(
+                    self.session, tb.PokemonSpecies, identifier=identity
+                )
+            elif isinstance(identity, int):
+                self._pokemon = util.get(self.session, tb.Pokemon, id=identity)
+                self._species = util.get(
+                    self.session, tb.PokemonSpecies, id=identity
+                )
+            else:
+                raise TypeError(
+                    f'`identity` must be a str or an int, not {type(identity)}'
+                )
+        except NoResultFound:
+            raise ValueError(f'Cannot find pokemon {identity}. ')
 
         # TODO: method 1 for legendaries, method 2 for all others.
         self._pid, self._ivs = self.prng.get_pid_ivs(method=2)
@@ -165,14 +159,14 @@ class Pokemon:
             self.gender = Gender.MALE
         else:
             # Gender is determined by the last byte of the PID.
-            gender_value = self._pid % 0xFF
+            gender_value = self._pid % 0x100
             gender_threshold = 0xFF * self._species.gender_rate // 8
             if gender_value >= gender_threshold:
                 self.gender = Gender.MALE
             else:
                 self.gender = Gender.FEMALE
 
-        self._trainer = Trainer('')
+        self.trainer = Trainer('')
 
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
@@ -182,19 +176,36 @@ class Pokemon:
         self._all_moves = (
             self.session.query(tb.Move)
             .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
-            .filter(tb.PokemonMove.pokemon_id == self.id)
-            .filter(tb.PokemonMove.version_group_id == 6)  # Hack
+            .filter_by(pokemon_id=self.id)
+            .filter_by(version_group_id=6)  # Hack
         )
         self._moves = []
 
-        self._all_abilities = (
+        all_abilities = (
             self.session.query(tb.Ability)
             .join(tb.PokemonAbility)
-            .filter(tb.PokemonAbility.pokemon_id == self.id)
+            .filter_by(pokemon_id=self.id)
             .filter(tb.PokemonAbility.is_hidden == 0)
             .order_by(tb.PokemonAbility.slot)
             .all()
         )
+        if len(all_abilities) == 1:
+            self.ability = all_abilities[0]
+        else:
+            self.ability = all_abilities[self._pid % 2]
+
+        self.nature = (
+            self.session.query(tb.Nature)
+            .filter_by(game_index=self._pid % 25)
+            .one()
+        )
+
+        self.shiny = (
+            self.trainer.id
+            ^ self.trainer.secret_id
+            ^ (self._pid >> 16)
+            ^ (self._pid % 0xFFFF)
+        ) < 8
 
     @property
     def moves(self):
@@ -210,53 +221,3 @@ class Pokemon:
             .limit(4)
             .all()
         )
-
-    @property
-    def ability(self):
-        """The Pokémon's ability.
-
-        In Generations III and IV, if a Pokémon's species has morethan
-        one Ability, its Ability is determined by the lowest bit of its
-        personality value; i.e., whether p is even or odd. If p is even
-        (the lowest bit is 0), the Pokémon has its first Ability. If p
-        is odd (the lowest bit is 1), it has the second.
-
-        https://bulbapedia.bulbagarden.net/wiki/Personality_value#Ability
-        """
-        # Evolutions?
-        if len(self._all_abilities) == 1:
-            return self._all_abilities[0]
-        elif Int32ul.parse(self._pid) % 2 == 0:
-            return self._all_abilities[0]
-        else:
-            return self._all_abilities[1]
-
-    @property
-    def nature(self):
-        """The Pokémon's nature.
-
-        Determined by pid % 25. Use the ``game_index`` column in
-        :class:`~pokedex.db.tables.Nature`.
-
-        https://bulbapedia.bulbagarden.net/wiki/Personality_value#Nature
-        """
-        nature_index = Int32ul.parse(self._pid) % 25
-        return (
-            self.session.query(tb.Nature)
-            .filter(tb.Nature.game_index == nature_index)
-            .one()
-        )
-
-    @property
-    def shiny(self):
-        """Determine the shininess of a Pokémon.
-
-        https://bulbapedia.bulbagarden.net/wiki/Personality_value#Shininess
-        """
-        shiny_struct = Struct('p2' / Int16ul, 'p1' / Int16ul)
-        p1 = shiny_struct.parse(self._pid).p1
-        p2 = shiny_struct.parse(self._pid).p2
-        if self.trainer.id ^ self.trainer.secret_id ^ p1 ^ p2 < 8:
-            return True
-        else:
-            return False
