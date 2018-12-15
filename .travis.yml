@@ -7,7 +7,9 @@ before_install:
         - pip install codecov
 
 install:
-        - make install
+        - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+        - source $$HOME/.poetry/env
+        - poetry install -v
 
 script:
         - make test
