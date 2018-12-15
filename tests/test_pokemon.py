@@ -7,7 +7,7 @@ from construct import Int32ul
 from hypothesis import given
 from hypothesis import strategies as st
 
-from pokemaster.pokemon import PRNG, Gender, Pokemon, Trainer
+from pokemaster.pokemon import PRNG, Gender, Pokemon, Trainer, get_move
 
 
 class TestPRNG:
@@ -126,10 +126,18 @@ class TestPokemonPID:
         assert not bulbasaur.shiny
 
 
-@pytest.mark.skip
 class TestPokemonMoves:
+    def test_get_move(self):
+        assert get_move(1).identifier == 'pound'
+        assert get_move('pound').id == 1
+        with pytest.raises(TypeError):
+            get_move(b'pound')
+        with pytest.raises(ValueError):
+            get_move('some-gibberish-move')
+
     def test_pokemon_initial_moves(self, bulbasaur):
-        assert bulbasaur.id == 1
-        assert bulbasaur.identifier == 'bulbasaur'
-        assert bulbasaur.name == 'Bulbasaur'
-        assert list(map(lambda x: x.id, bulbasaur.moves)) == [45, 33, 80, 113]
+        assert list(map(lambda x: x.id, bulbasaur.moves)) == [45, 33]
+
+    def test_learnable_moves(self, bulbasaur):
+        assert bulbasaur.learnable(get_move('cut'))
+        assert not bulbasaur.learnable(get_move('pound'))

@@ -3,20 +3,32 @@
     Basic Pokémon API
 
 """
-import datetime
 from enum import IntEnum
-from random import randint
-from typing import AnyStr, Callable, ClassVar, Generator, List, Tuple, Union
+from typing import AnyStr, Callable, ClassVar, List, Tuple, Union
 
 import attr
 from attr.validators import instance_of as _instance_of
-from construct import Int8ul, Int16ul, Int24ul, Int32ul, Padding, Struct
 from pokedex.db import connect
 from pokedex.db import tables as tb
-from pokedex.db import util
 from sqlalchemy.orm.exc import NoResultFound
 
 from pokemaster.session import get_session
+
+
+def get_move(identity: Union[str, int]) -> tb.Move:
+    """Get a move by id or identifier."""
+    session = get_session()
+    try:
+        if isinstance(identity, str):
+            return session.query(tb.Move).filter_by(identifier=identity).one()
+        elif isinstance(identity, int):
+            return session.query(tb.Move).filter_by(id=identity).one()
+        else:
+            raise TypeError(
+                f'`identity` must be a str or an int, not {type(identity)}'
+            )
+    except NoResultFound:
+        raise ValueError(f'Cannot find move {identity}.')
 
 
 @attr.s(slots=True)
@@ -130,23 +142,31 @@ class Pokemon:
 
         try:
             if isinstance(identity, str):
-                self._pokemon = util.get(
-                    self.session, tb.Pokemon, identifier=identity
+                self._pokemon = (
+                    self.session.query(tb.Pokemon)
+                    .filter_by(identifier=identity)
+                    .one()
                 )
-                self._species = util.get(
-                    self.session, tb.PokemonSpecies, identifier=identity
+                self._species = (
+                    self.session.query(tb.PokemonSpecies)
+                    .filter_by(identifier=identity)
+                    .one()
                 )
             elif isinstance(identity, int):
-                self._pokemon = util.get(self.session, tb.Pokemon, id=identity)
-                self._species = util.get(
-                    self.session, tb.PokemonSpecies, id=identity
+                self._pokemon = (
+                    self.session.query(tb.Pokemon).filter_by(id=identity).one()
+                )
+                self._species = (
+                    self.session.query(tb.PokemonSpecies)
+                    .filter_by(id=identity)
+                    .one()
                 )
             else:
                 raise TypeError(
                     f'`identity` must be a str or an int, not {type(identity)}'
                 )
         except NoResultFound:
-            raise ValueError(f'Cannot find pokemon {identity}. ')
+            raise ValueError(f'Cannot find pokemon {identity}.')
 
         # TODO: method 1 for legendaries, method 2 for all others.
         self._pid, self._ivs = self.prng.get_pid_ivs(method=2)
@@ -159,9 +179,9 @@ class Pokemon:
             self.gender = Gender.MALE
         else:
             # Gender is determined by the last byte of the PID.
-            gender_value = self._pid % 0x100
+            p_gender = self._pid % 0x100
             gender_threshold = 0xFF * self._species.gender_rate // 8
-            if gender_value >= gender_threshold:
+            if p_gender >= gender_threshold:
                 self.gender = Gender.MALE
             else:
                 self.gender = Gender.FEMALE
@@ -173,26 +193,18 @@ class Pokemon:
         self.name = self._pokemon.name
         self.level = level or 5
 
-        self._all_moves = (
-            self.session.query(tb.Move)
-            .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
-            .filter_by(pokemon_id=self.id)
-            .filter_by(version_group_id=6)  # Hack
-        )
-        self._moves = []
-
-        all_abilities = (
+        obtainable_abilities = (
             self.session.query(tb.Ability)
             .join(tb.PokemonAbility)
             .filter_by(pokemon_id=self.id)
-            .filter(tb.PokemonAbility.is_hidden == 0)
+            .filter_by(is_hidden=0)
             .order_by(tb.PokemonAbility.slot)
             .all()
         )
-        if len(all_abilities) == 1:
-            self.ability = all_abilities[0]
+        if len(obtainable_abilities) == 1:
+            self.ability = obtainable_abilities[0]
         else:
-            self.ability = all_abilities[self._pid % 2]
+            self.ability = obtainable_abilities[self._pid % 2]
 
         self.nature = (
             self.session.query(tb.Nature)
@@ -207,17 +219,23 @@ class Pokemon:
             ^ (self._pid % 0xFFFF)
         ) < 8
 
-    @property
-    def moves(self):
-        """List of this Pokémon's current moves."""
-        if self._moves:
-            return self._moves
-        return (
-            self._all_moves.filter(
-                tb.PokemonMove.pokemon_move_method_id.in_([1, 2])
-            )
-            .filter(tb.PokemonMove.level <= self.level)
+        self._learnable_moves = (
+            self.session.query(tb.Move)
+            .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
+            .join(tb.PokemonMove.version_group)
+            .join(tb.PokemonMove.method)
+            .filter(tb.PokemonMove.pokemon_id == self.id)
+            .filter(tb.VersionGroup.identifier == 'emerald')  # Hack
+        )
+
+        self.moves = (
+            self._learnable_moves.filter(tb.PokemonMove.level <= self.level)
+            .filter(tb.PokemonMoveMethod.identifier == 'level-up')
             .order_by(tb.PokemonMove.level.desc(), tb.PokemonMove.order)
             .limit(4)
             .all()
         )
+
+    def learnable(self, move: tb.Move) -> bool:
+        """Check if the Pokémon can learn a certain move or not."""
+        return move.id in map(lambda x: x.id, self._learnable_moves)

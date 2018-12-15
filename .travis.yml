@@ -22,3 +22,6 @@ jobs:
 
 after_success:
         - codecov
+
+notification:
+        email: false
