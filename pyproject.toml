@@ -25,6 +25,7 @@ isort = "^4.3"
 line-length = 80
 py36 = true
 skip-string-normalization = true
+skip-numeric-underscore-normalization = true
 
 [tool.isort]
 multi_line_output = 3
