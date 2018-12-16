@@ -42,13 +42,9 @@ class PRNG:
         0
         >>> prng()
         59774
-        >>> # hex, oct, bin can be passed for debugging:
-        >>> prng(format=hex)
-        '0x5271'
         >>> prng.reset(seed=0x1A56B091)
         >>> prng()
         475
-        >>> # Resetting is (roughly) equivalent to:
         >>> prng = PRNG(seed=0x1A56B091)
         >>> prng()
         475
@@ -70,24 +66,19 @@ class PRNG:
             self._value = (0x41C64E6D * self._value + 0x00006073) & 0xFFFFFFFF
             yield self._value >> 16
 
-    def __call__(self, format: Callable = int) -> Union[int, str]:
-        valid_formats = (str, bin, oct, int, hex)
-        if format not in valid_formats:
-            raise ValueError(f'format must be one of {valid_formats}.')
-        return format(next(self._generator()))
+    def __call__(self) -> int:
+        return next(self._generator())
 
     def reset(self, seed=None):
         """Reset the generator with seed, if given."""
         self._seed = seed or 0
         self._value = self._seed
 
-    def next(self, n=1, format=int) -> List[Union[str, int]]:
+    def next(self, n=1) -> List[int]:
         """Generate the next n random numbers."""
-        return [self(format=format) for _ in range(n)]
+        return [self() for _ in range(n)]
 
-    def get_pid_ivs(
-        self, method=2
-    ) -> Tuple[int, int]:  # Can we have a proper name?
+    def create_pid_ivs(self, method=2) -> Tuple[int, int]:
         """Generate the PID and IV's using the internal generator. Return
         a tuple of two integers, in the order of 'PID' and 'IVs'.
 
@@ -118,6 +109,20 @@ class Gender(IntEnum):
     FEMALE = 1
     MALE = 2
     GENDERLESS = 3
+
+
+@attr.s(slots=True, auto_attribs=True)
+class Stats:
+    """A Pokémon stats vector."""
+
+    hp: int  # or a Table
+    attack: int
+    defense: int
+    special_attack: int
+    special_defense: int
+    speed: int
+    accuracy: int = 0
+    evasion: int = 0
 
 
 @attr.s(auto_attribs=True)
@@ -169,7 +174,7 @@ class Pokemon:
             raise ValueError(f'Cannot find pokemon {identity}.')
 
         # TODO: method 1 for legendaries, method 2 for all others.
-        self._pid, self._ivs = self.prng.get_pid_ivs(method=2)
+        self._pid, self._ivs = self.prng.create_pid_ivs(method=2)
 
         if self._species.gender_rate == -1:  # Genderless
             self.gender = Gender.GENDERLESS
@@ -235,6 +240,25 @@ class Pokemon:
             .limit(4)
             .all()
         )
+
+        self.iv = Stats(
+            hp=self._ivs % 32,
+            attack=(self._ivs >> 2 ** 5) % 32,
+            defense=(self._ivs >> 2 ** 10) % 32,
+            special_attack=(self._ivs >> 2 ** 15) % 32,
+            special_defense=(self._ivs >> 2 ** 20) % 32,
+            speed=(self._ivs >> 2 ** 25) % 32,
+        )
+
+        base_stats = (
+            self.session.query(tb.PokemonStat)
+            .filter(tb.PokemonStat.pokemon_id == self.id)
+            .all()
+        )
+
+        # fmt: off
+        self.base_stats = Stats(**dict(map(lambda x: (x.stat.identifier.replace('-', '_'), x.base_stat), base_stats)))
+        # fmt: on
 
     def learnable(self, move: tb.Move) -> bool:
         """Check if the Pokémon can learn a certain move or not."""

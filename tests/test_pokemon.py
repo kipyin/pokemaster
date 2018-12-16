@@ -23,29 +23,9 @@ class TestPRNG:
         prng = PRNG(0x1A56B091)
         assert prng() == 0x01DB
 
-    def test_format_output(self):
-        prng = PRNG(0x1A56B091)
-        assert prng(format=hex) == '0x1db'
-        assert prng(format=bin) == '0b111101100000110'
-        assert prng(format=oct) == '0o51063'
-        assert prng(format=str) == '58480'
-        assert prng(format=int) == 23748
-        with pytest.raises(ValueError):
-            assert prng(format=bytes)
-
     def test_next_5(self):
         prng = PRNG(0x1A56B091)
         assert prng.next(5) == [0x01DB, 0x7B06, 0x5233, 0xE470, 0x5CC4]
-
-    def test_next_5_formatted(self):
-        prng = PRNG(0x1A56B091)
-        assert prng.next(5, format=hex) == [
-            '0x1db',
-            '0x7b06',
-            '0x5233',
-            '0xe470',
-            '0x5cc4',
-        ]
 
     def test_reset_prng(self):
         prng = PRNG()
@@ -54,9 +34,9 @@ class TestPRNG:
         prng.reset()
         assert prng() == 0
 
-    def test_get_pid_ivs(self):
+    def test_pid_ivs_creation(self):
         prng = PRNG(0x560B9CE3)
-        assert (0x7E482751, 0x5EE9629C) == prng.get_pid_ivs(method=2)
+        assert (0x7E482751, 0x5EE9629C) == prng.create_pid_ivs(method=2)
 
 
 def test_gender_sanity():
@@ -66,12 +46,11 @@ def test_gender_sanity():
 
 
 class TestTrainer:
-    @given(name=st.text())
-    def test_trainer_sanity(self, name):
+    def test_trainer_sanity(self):
         Trainer.prng = PRNG()
-        some_guy = Trainer(name)
-        assert some_guy.id == 0
-        assert some_guy.secret_id == 59774
+        t = Trainer('Kip')
+        assert t.id == 0
+        assert t.secret_id == 59774
 
 
 @pytest.fixture(scope='class')
@@ -79,7 +58,7 @@ def bulbasaur():
     """Instantiate a Bulbasaur.
 
     According to the PID, this is a male bulbasaur with Overgrow ability,
-    hardy nature, shiny?
+    hardy nature, and not shiny.
     """
     prng = PRNG()
     Pokemon.prng = prng
@@ -100,8 +79,8 @@ class TestPokemonPID:
     def test_bulbasaur_ids(self, bulbasaur):
         assert bulbasaur.trainer.id == 0
         assert bulbasaur.trainer.secret_id == 59774
-        assert bulbasaur._pid == 833_639_025
-        assert bulbasaur._ivs == 2_948_981_452
+        assert bulbasaur._pid == 833639025
+        assert bulbasaur._ivs == 2948981452
 
     def test_pokemon_gender(self, bulbasaur):
         assert bulbasaur.gender == Gender.MALE  # male
@@ -124,6 +103,19 @@ class TestPokemonPID:
     def test_pokemon_shininess(self, bulbasaur):
         """See https://bulbapedia.bulbagarden.net/wiki/Personality_value#Example"""
         assert not bulbasaur.shiny
+
+
+class TestPokemonStats:
+    def test_ivs(self):
+        """Seed and IVs can be found in:
+        https://sites.google.com/site/ivtopidapplet/home
+        """
+        Trainer.prng = PRNG(0x0)
+        Pokemon.prng = PRNG(0x35CC77B9)
+        weedle = Pokemon(13)
+        weedle.trainer = Trainer('Kip')
+        assert weedle._pid == 0xEF72C69F
+        assert weedle._ivs == 0xFFFFFFFF
 
 
 class TestPokemonMoves:
