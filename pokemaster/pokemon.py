@@ -4,12 +4,14 @@
 
 """
 from enum import IntEnum
+from functools import partial
 from typing import AnyStr, Callable, ClassVar, List, Tuple, Union
 
 import attr
 from attr.validators import instance_of as _instance_of
 from pokedex.db import connect
 from pokedex.db import tables as tb
+from pokedex.formulae import calculated_hp, calculated_stat
 from sqlalchemy.orm.exc import NoResultFound
 
 from pokemaster.session import get_session
@@ -125,6 +127,29 @@ class Stats:
     evasion: int = 0
 
 
+@attr.s
+class EffortValue(Stats):
+    def set(self, **stats):
+        """Set the effort value.
+
+        Each stat cannot exceed 255, and the sum cannot exceed 510.
+        """
+        total = 0
+        for stat, value in stats.items():
+            added_value = getattr(self, stat) + value
+            if added_value > 255:
+                raise ValueError(
+                    f'{stat} cannot exceed 255. Current: {added_value}.'
+                )
+            total += added_value
+
+        if total > 510:
+            raise ValueError(f'Total EVs cannot exceed 510. Current: {total}.')
+
+        for stat, value in stats.items():
+            setattr(self, stat, value)
+
+
 @attr.s(auto_attribs=True)
 class Trainer:
     """A trainer"""
@@ -143,7 +168,7 @@ class Pokemon:
     session: ClassVar = get_session()
     prng: ClassVar[PRNG] = None
 
-    def __init__(self, identity: Union[str, int], level=None):
+    def __init__(self, identity: Union[str, int], level=None, pid_method=2):
 
         try:
             if isinstance(identity, str):
@@ -174,7 +199,7 @@ class Pokemon:
             raise ValueError(f'Cannot find pokemon {identity}.')
 
         # TODO: method 1 for legendaries, method 2 for all others.
-        self._pid, self._ivs = self.prng.create_pid_ivs(method=2)
+        self._pid, self._ivs = self.prng.create_pid_ivs(method=pid_method)
 
         if self._species.gender_rate == -1:  # Genderless
             self.gender = Gender.GENDERLESS
@@ -241,13 +266,13 @@ class Pokemon:
             .all()
         )
 
-        self.iv = Stats(
+        self.individual_values = Stats(
             hp=self._ivs % 32,
-            attack=(self._ivs >> 2 ** 5) % 32,
-            defense=(self._ivs >> 2 ** 10) % 32,
-            special_attack=(self._ivs >> 2 ** 15) % 32,
-            special_defense=(self._ivs >> 2 ** 20) % 32,
-            speed=(self._ivs >> 2 ** 25) % 32,
+            attack=(self._ivs >> 5) % 32,
+            defense=(self._ivs >> 10) % 32,
+            speed=(self._ivs >> 15) % 32,
+            special_attack=(self._ivs >> 20) % 32,
+            special_defense=(self._ivs >> 25) % 32,
         )
 
         base_stats = (
@@ -258,8 +283,58 @@ class Pokemon:
 
         # fmt: off
         self.base_stats = Stats(**dict(map(lambda x: (x.stat.identifier.replace('-', '_'), x.base_stat), base_stats)))
+        self.effort_points = Stats(**dict(map(lambda x: (x.stat.identifier.replace('-', '_'), x.effort), base_stats)))
+        self.effort_values = EffortValue(**dict(map(lambda x: (x.stat.identifier.replace('-', '_'), 0), base_stats)))
         # fmt: on
 
     def learnable(self, move: tb.Move) -> bool:
         """Check if the Pokémon can learn a certain move or not."""
         return move.id in map(lambda x: x.id, self._learnable_moves)
+
+    # FIXME: Add nature into the calculation
+    @property
+    def stats(self):
+        """The calculated stats."""
+        return Stats(
+            hp=calculated_hp(
+                self.base_stats.hp,
+                self.level,
+                self.individual_values.hp,
+                self.effort_values.hp,
+            ),
+            attack=calculated_stat(
+                self.base_stats.attack,
+                self.level,
+                self.individual_values.attack,
+                self.effort_values.attack,
+            ),
+            defense=calculated_stat(
+                self.base_stats.defense,
+                self.level,
+                self.individual_values.defense,
+                self.effort_values.defense,
+            ),
+            special_attack=calculated_stat(
+                self.base_stats.special_attack,
+                self.level,
+                self.individual_values.special_attack,
+                self.effort_values.special_attack,
+            ),
+            special_defense=calculated_stat(
+                self.base_stats.special_defense,
+                self.level,
+                self.individual_values.special_defense,
+                self.effort_values.special_defense,
+            ),
+            speed=calculated_stat(
+                self.base_stats.speed,
+                self.level,
+                self.individual_values.speed,
+                self.effort_values.speed,
+            ),
+        )
+
+    @property
+    def iv(self):
+        """Alias to individual_values."""
+        return self.individual_values

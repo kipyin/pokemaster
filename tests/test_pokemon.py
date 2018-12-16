@@ -2,6 +2,7 @@
 import os
 import sys
 
+import attr
 import pytest
 from construct import Int32ul
 from hypothesis import given
@@ -105,6 +106,46 @@ class TestPokemonPID:
         assert not bulbasaur.shiny
 
 
+class TestStatClass:
+    def test_set_effort_value(self):
+        pass
+
+
+@pytest.fixture(scope='class')
+def garchomp():
+    """A Level 78 Garchomp with the following IVs and EVs and an
+    Adamant nature:
+
+    +===========+=====+========+=========+========+========+========+=======+
+    |           |  HP | Attack | Defense | Sp.Atk | Sp.Def |  Speed | Total |
+    +===========+=====+========+=========+========+========+========+=======+
+    | Base stat | 108 |   130  |    95   |   80   |   85   |   102  |  600  |
+    +-----------+-----+--------+---------+--------+--------+--------+-------+
+    |    IV     |  24 |    12  |    30   |   16   |   23   |     5  |  110  |
+    +-----------+-----+--------+---------+--------+--------+--------+-------+
+    |    EV     |  74 |   190  |    91   |   48   |   84   |    23  |  510  |
+    +-----------+-----+--------+---------+--------+--------+--------+-------+
+    |   Total   | 289 |   278  |   193   |  135   |  171   |   171  |       |
+    +-----------+-----+--------+---------+--------+--------+--------+-------+
+
+    https://bulbapedia.bulbagarden.net/wiki/Statistic#Example_2
+    """
+    Trainer.prng = PRNG()
+    Pokemon.prng = PRNG(0x1C262455)
+    garchomp = Pokemon('garchomp', pid_method=4)
+    garchomp.trainer = Trainer('')
+    garchomp.level = 78
+    garchomp.effort_values.set(
+        hp=74,
+        attack=190,
+        defense=91,
+        special_attack=48,
+        special_defense=84,
+        speed=23,
+    )
+    yield garchomp
+
+
 class TestPokemonStats:
     def test_ivs(self):
         """Seed and IVs can be found in:
@@ -116,6 +157,19 @@ class TestPokemonStats:
         weedle.trainer = Trainer('Kip')
         assert weedle._pid == 0xEF72C69F
         assert weedle._ivs == 0xFFFFFFFF
+
+    @pytest.mark.xfail(reason='The Smogon IV calc is wrong...')
+    def test_iv(self, garchomp):
+        assert attr.astuple(garchomp.iv) == (24, 12, 30, 16, 23, 5, 0, 0)
+
+    @pytest.mark.xfail(reason='Nature not set up correctly.')
+    def test_calculated_stats(self, garchomp):
+        assert garchomp.stats.hp == 289
+        assert garchomp.stats.attack == 278
+        assert garchomp.stats.defeense == 193
+        assert garchomp.stats.special_attack == 135
+        assert garchomp.stats.special_defense == 171
+        assert garchomp.stats.speed == 171
 
 
 class TestPokemonMoves:
