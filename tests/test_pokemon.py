@@ -8,7 +8,7 @@ from construct import Int32ul
 from hypothesis import given
 from hypothesis import strategies as st
 
-from pokemaster.pokemon import PRNG, Gender, Pokemon, Trainer, get_move
+from pokemaster.pokemon import PRNG, Gender, Pokemon, Stats, Trainer, get_move
 
 
 class TestPRNG:
@@ -110,6 +110,9 @@ class TestStatClass:
     def test_set_effort_value(self):
         pass
 
+    def test_operations(self):
+        pass
+
 
 @pytest.fixture(scope='class')
 def garchomp():
@@ -158,15 +161,13 @@ class TestPokemonStats:
         assert weedle._pid == 0xEF72C69F
         assert weedle._ivs == 0xFFFFFFFF
 
-    @pytest.mark.xfail(reason='The Smogon IV calc is wrong...')
     def test_iv(self, garchomp):
-        assert attr.astuple(garchomp.iv) == (24, 12, 30, 16, 23, 5, 0, 0)
+        assert garchomp.iv.astuple() == (24, 12, 30, 16, 23, 5, None, None)
 
-    @pytest.mark.xfail(reason='Nature not set up correctly.')
     def test_calculated_stats(self, garchomp):
         assert garchomp.stats.hp == 289
         assert garchomp.stats.attack == 278
-        assert garchomp.stats.defeense == 193
+        assert garchomp.stats.defense == 193
         assert garchomp.stats.special_attack == 135
         assert garchomp.stats.special_defense == 171
         assert garchomp.stats.speed == 171

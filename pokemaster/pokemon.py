@@ -3,6 +3,7 @@
     Basic Pokémon API
 
 """
+import operator
 from enum import IntEnum
 from functools import partial
 from typing import AnyStr, Callable, ClassVar, List, Tuple, Union
@@ -117,14 +118,88 @@ class Gender(IntEnum):
 class Stats:
     """A Pokémon stats vector."""
 
-    hp: int  # or a Table
-    attack: int
-    defense: int
-    special_attack: int
-    special_defense: int
-    speed: int
-    accuracy: int = 0
-    evasion: int = 0
+    hp: int = None
+    attack: int = None
+    defense: int = None
+    special_attack: int = None
+    special_defense: int = None
+    speed: int = None
+    accuracy: int = None
+    evasion: int = None
+
+    stats: tuple = attr.ib(
+        default=(
+            'hp',
+            'attack',
+            'defense',
+            'special_attack',
+            'special_defense',
+            'speed',
+            'accuracy',
+            'evasion',
+        ),
+        repr=False,
+        init=False,
+    )
+
+    # # Aliases
+    # @property
+    # def atk(self):
+    #     return self.attack
+
+    # @property
+    # def def(self):
+    #     return self.defense
+
+    # @property
+    # def spatk(self):
+    #     return self.special_attack
+
+    # @property
+    # def spdef(self):
+    #     return self.special_defense
+
+    # @property
+    # def spd(self):
+    #     return self.speed
+
+    # def __add__(self, other):
+    #     """Point-wise addition."""
+    #     return self._pointwise(operator.add, other)
+
+    # def __sub__(self, other):
+    #     """Point-wise subtraction."""
+    #     return self._pointwise(operator.sub, other)
+
+    # def __mul__(self, other):
+    #     """Point-wise multiplication."""
+    #     return self._pointwise(operator.mul, other)
+
+    # def __iadd__(self, other):
+    #     """Point-wise in-place addition."""
+    #     return self._pointwise(operator.iadd, other)
+
+    # def __isub__(self, other):
+    #     """Point-wise in-place subtraction."""
+    #     return self._pointwise(operator.isub, other)
+
+    # def __imul__(self, other):
+    #     """Point-wise in-place multiplication."""
+    #     retrun self._pointwise(operator.imul, other)
+
+    # def _pointwise(self, op, other):
+    #     """Apply point-wise operation."""
+    #     if not isinstance(other, Stats):
+    #         raise NotImpletemented
+    #     return Stats(**dict(map(lambda x: (x, op(getattr(self, x), getattr(other, x)), self.stats))))
+
+    def astuple(self) -> tuple:
+        """Return a tuple of the 8 stats."""
+        return tuple([getattr(self, stat) for stat in self.stats])
+
+    def asdict(self) -> dict:
+        """Return a dict of the 8 stats."""
+        return {stat: getattr(self, stat) for stat in self.stats}
 
 
 @attr.s
@@ -216,7 +291,7 @@ class Pokemon:
             else:
                 self.gender = Gender.FEMALE
 
-        self.trainer = Trainer('')
+        self.trainer = None
 
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
@@ -238,16 +313,22 @@ class Pokemon:
 
         self.nature = (
             self.session.query(tb.Nature)
-            .filter_by(game_index=self._pid % 25)
-            .one()
+            # .join(tb.Nature.stat)
+            .filter_by(game_index=self._pid % 25).one()
         )
-
-        self.shiny = (
-            self.trainer.id
-            ^ self.trainer.secret_id
-            ^ (self._pid >> 16)
-            ^ (self._pid % 0xFFFF)
-        ) < 8
+        if self.nature.is_neutral:
+            self._nature_modifiers = Stats()
+        else:
+            self._nature_modifiers = Stats(
+                **{
+                    self.nature.increased_stat.identifier.replace(
+                        '-', '_'
+                    ): 1.1,
+                    self.nature.decreased_stat.identifier.replace(
+                        '-', '_'
+                    ): 0.9,
+                }
+            )
 
         self._learnable_moves = (
             self.session.query(tb.Move)
@@ -270,9 +351,9 @@ class Pokemon:
             hp=self._ivs % 32,
             attack=(self._ivs >> 5) % 32,
             defense=(self._ivs >> 10) % 32,
-            speed=(self._ivs >> 15) % 32,
-            special_attack=(self._ivs >> 20) % 32,
-            special_defense=(self._ivs >> 25) % 32,
+            speed=(self._ivs >> 16) % 32,
+            special_attack=(self._ivs >> 21) % 32,
+            special_defense=(self._ivs >> 26) % 32,
         )
 
         base_stats = (
@@ -301,36 +382,42 @@ class Pokemon:
                 self.level,
                 self.individual_values.hp,
                 self.effort_values.hp,
+                self._nature_modifiers.hp,
             ),
             attack=calculated_stat(
                 self.base_stats.attack,
                 self.level,
                 self.individual_values.attack,
                 self.effort_values.attack,
+                self._nature_modifiers.attack,
             ),
             defense=calculated_stat(
                 self.base_stats.defense,
                 self.level,
                 self.individual_values.defense,
                 self.effort_values.defense,
+                self._nature_modifiers.defense,
             ),
             special_attack=calculated_stat(
                 self.base_stats.special_attack,
                 self.level,
                 self.individual_values.special_attack,
                 self.effort_values.special_attack,
+                self._nature_modifiers.special_attack,
             ),
             special_defense=calculated_stat(
                 self.base_stats.special_defense,
                 self.level,
                 self.individual_values.special_defense,
                 self.effort_values.special_defense,
+                self._nature_modifiers.special_defense,
             ),
             speed=calculated_stat(
                 self.base_stats.speed,
                 self.level,
                 self.individual_values.speed,
                 self.effort_values.speed,
+                self._nature_modifiers.speed,
             ),
         )
 
@@ -338,3 +425,15 @@ class Pokemon:
     def iv(self):
         """Alias to individual_values."""
         return self.individual_values
+
+    @property
+    def shiny(self):
+        if self.trainer is not None:
+            return (
+                self.trainer.id
+                ^ self.trainer.secret_id
+                ^ (self._pid >> 16)
+                ^ (self._pid % 0xFFFF)
+            ) < 8
+        else:
+            return False
