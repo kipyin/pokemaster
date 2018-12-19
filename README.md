@@ -23,7 +23,7 @@ $ poetry install -v
 
 ## Testing
 
-To run test, use
+To run tests, use
 ```shell
 $ make test
 ```
