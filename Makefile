@@ -1,10 +1,14 @@
 .PHONY: test
 test:
-	@poetry run pytest -v --cov=pokemaster tests/
+	@poetry run pytest -q --cov=pokemaster tests/
 
 .PHONY: test-pdb
 test-pdb:
-	@poetry run pytest -v --pdb --cov=pokemaster tests/
+	@poetry run pytest -q --pdb tests/
+
+.PHONY: test-ff
+test-ff:
+	@poetry run pytest -qx --ff tests/
 
 .PHONY: format
 format:
