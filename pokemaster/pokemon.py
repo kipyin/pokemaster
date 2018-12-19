@@ -4,18 +4,23 @@
 
 """
 import operator
+import sys
 from enum import IntEnum
 from functools import partial
 from typing import AnyStr, Callable, ClassVar, List, Tuple, Union
 
 import attr
 from attr.validators import instance_of as _instance_of
+from loguru import logger
+from pokedex import formulae
 from pokedex.db import connect
 from pokedex.db import tables as tb
-from pokedex.formulae import calculated_hp, calculated_stat
+from sqlalchemy import true
 from sqlalchemy.orm.exc import NoResultFound
 
 from pokemaster.session import get_session
+
+logger.add(sys.stdout, level='DEBUG')
 
 
 def get_move(identity: Union[str, int]) -> tb.Move:
@@ -59,15 +64,11 @@ class PRNG:
 
     # In Emerald, the initial seed is always 0.
     _seed: int = attr.ib(default=0, validator=_instance_of(int))
-    _value: int = attr.ib(init=False)
-
-    def __attrs_post_init__(self):
-        self._value = self._seed
 
     def _generator(self):
         while True:
-            self._value = (0x41C64E6D * self._value + 0x00006073) & 0xFFFFFFFF
-            yield self._value >> 16
+            self._seed = (0x41C64E6D * self._seed + 0x6073) & 0xFFFFFFFF
+            yield self._seed >> 16
 
     def __call__(self) -> int:
         return next(self._generator())
@@ -75,7 +76,6 @@ class PRNG:
     def reset(self, seed=None):
         """Reset the generator with seed, if given."""
         self._seed = seed or 0
-        self._value = self._seed
 
     def next(self, n=1) -> List[int]:
         """Generate the next n random numbers."""
@@ -84,6 +84,9 @@ class PRNG:
     def create_pid_ivs(self, method=2) -> Tuple[int, int]:
         """Generate the PID and IV's using the internal generator. Return
         a tuple of two integers, in the order of 'PID' and 'IVs'.
+
+        The generated 32-bit IVs is different from how it is actually
+        stored.
 
         Checkout [this link](https://www.smogon.com/ingame/rng/pid_iv_creation#rng_pokemon_generation)
          for more information on Method 1, 2, and 4.
@@ -104,6 +107,7 @@ class PRNG:
 
         pid = pid1 + (pid2 << 16)
         ivs = iv1 + (iv2 << 16)
+
         return (pid, ivs)
 
 
@@ -118,16 +122,14 @@ class Gender(IntEnum):
 class Stats:
     """A Pokémon stats vector."""
 
-    hp: int = None
-    attack: int = None
-    defense: int = None
-    special_attack: int = None
-    special_defense: int = None
-    speed: int = None
-    accuracy: int = None
-    evasion: int = None
+    hp: int = 0
+    attack: int = 0
+    defense: int = 0
+    special_attack: int = 0
+    special_defense: int = 0
+    speed: int = 0
 
-    stats: tuple = attr.ib(
+    stat_names: tuple = attr.ib(
         default=(
             'hp',
             'attack',
@@ -135,8 +137,6 @@ class Stats:
             'special_attack',
             'special_defense',
             'speed',
-            'accuracy',
-            'evasion',
         ),
         repr=False,
         init=False,
@@ -191,15 +191,15 @@ class Stats:
     #     """Apply point-wise operation."""
     #     if not isinstance(other, Stats):
     #         raise NotImpletemented
-    #     return Stats(**dict(map(lambda x: (x, op(getattr(self, x), getattr(other, x)), self.stats))))
+    #     return Stats(**dict(map(lambda x: (x, op(getattr(self, x), getattr(other, x)), self.stat_names))))
 
     def astuple(self) -> tuple:
         """Return a tuple of the 8 stats."""
-        return tuple([getattr(self, stat) for stat in self.stats])
+        return tuple([getattr(self, stat) for stat in self.stat_names])
 
     def asdict(self) -> dict:
         """Return a dict of the 8 stats."""
-        return {stat: getattr(self, stat) for stat in self.stats}
+        return {stat: getattr(self, stat) for stat in self.stat_names}
 
 
 @attr.s
@@ -296,7 +296,7 @@ class Pokemon:
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
         self.name = self._pokemon.name
-        self.level = level or 5
+        self._level = level or 5
 
         obtainable_abilities = (
             self.session.query(tb.Ability)
@@ -313,22 +313,20 @@ class Pokemon:
 
         self.nature = (
             self.session.query(tb.Nature)
-            # .join(tb.Nature.stat)
-            .filter_by(game_index=self._pid % 25).one()
+            .filter_by(game_index=self._pid % 25)
+            .one()
         )
+        # fmt: off
         if self.nature.is_neutral:
             self._nature_modifiers = Stats()
         else:
             self._nature_modifiers = Stats(
                 **{
-                    self.nature.increased_stat.identifier.replace(
-                        '-', '_'
-                    ): 1.1,
-                    self.nature.decreased_stat.identifier.replace(
-                        '-', '_'
-                    ): 0.9,
+                    self.nature.increased_stat.identifier.replace('-', '_'): 1.1,
+                    self.nature.decreased_stat.identifier.replace('-', '_'): 0.9
                 }
             )
+        # fmt: on
 
         self._learnable_moves = (
             self.session.query(tb.Move)
@@ -340,7 +338,7 @@ class Pokemon:
         )
 
         self.moves = (
-            self._learnable_moves.filter(tb.PokemonMove.level <= self.level)
+            self._learnable_moves.filter(tb.PokemonMove.level <= self._level)
             .filter(tb.PokemonMoveMethod.identifier == 'level-up')
             .order_by(tb.PokemonMove.level.desc(), tb.PokemonMove.order)
             .limit(4)
@@ -358,68 +356,56 @@ class Pokemon:
 
         base_stats = (
             self.session.query(tb.PokemonStat)
+            .join(tb.Stat)
             .filter(tb.PokemonStat.pokemon_id == self.id)
+            .filter(tb.Stat.is_battle_only == False)
             .all()
         )
 
+        def _stat_attr(base_stat) -> str:
+            """Get the stat attributes (hp, attack, etc.) from identifiers."""
+            return base_stat.stat.identifier.replace('-', '_')
+
         # fmt: off
-        self.base_stats = Stats(**dict(map(lambda x: (x.stat.identifier.replace('-', '_'), x.base_stat), base_stats)))
-        self.effort_points = Stats(**dict(map(lambda x: (x.stat.identifier.replace('-', '_'), x.effort), base_stats)))
-        self.effort_values = EffortValue(**dict(map(lambda x: (x.stat.identifier.replace('-', '_'), 0), base_stats)))
+        self.base_stats = Stats(**dict(map(lambda x: (_stat_attr(x), x.base_stat), base_stats)))
+        self.effort_points = Stats(**dict(map(lambda x: (_stat_attr(x), x.effort), base_stats)))
+        self.effort_values = EffortValue(**dict(map(lambda x: (_stat_attr(x), 0), base_stats)))
         # fmt: on
+
+    def __repr__(self):
+        return f'<Level {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
 
     def learnable(self, move: tb.Move) -> bool:
         """Check if the Pokémon can learn a certain move or not."""
         return move.id in map(lambda x: x.id, self._learnable_moves)
 
-    # FIXME: Add nature into the calculation
+    def _calculated_stats(self) -> Stats:
+        """Return the calculated stats."""
+        stats = Stats()
+        for stat in stats.stat_names:
+            if stat == 'hp':
+                func = formulae.calculated_hp
+            else:
+                func = formulae.calculated_stat
+            # A nature modifier with value 0 is OK, it will fail the clause
+            # `if nature:` and skip the stats modification.
+            setattr(
+                stats,
+                stat,
+                func(
+                    base_stat=getattr(self.base_stats, stat),
+                    level=self.level,
+                    iv=getattr(self.individual_values, stat),
+                    effort=getattr(self.effort_values, stat),
+                    nature=getattr(self._nature_modifiers, stat),
+                ),
+            )
+        return stats
+
     @property
     def stats(self):
         """The calculated stats."""
-        return Stats(
-            hp=calculated_hp(
-                self.base_stats.hp,
-                self.level,
-                self.individual_values.hp,
-                self.effort_values.hp,
-                self._nature_modifiers.hp,
-            ),
-            attack=calculated_stat(
-                self.base_stats.attack,
-                self.level,
-                self.individual_values.attack,
-                self.effort_values.attack,
-                self._nature_modifiers.attack,
-            ),
-            defense=calculated_stat(
-                self.base_stats.defense,
-                self.level,
-                self.individual_values.defense,
-                self.effort_values.defense,
-                self._nature_modifiers.defense,
-            ),
-            special_attack=calculated_stat(
-                self.base_stats.special_attack,
-                self.level,
-                self.individual_values.special_attack,
-                self.effort_values.special_attack,
-                self._nature_modifiers.special_attack,
-            ),
-            special_defense=calculated_stat(
-                self.base_stats.special_defense,
-                self.level,
-                self.individual_values.special_defense,
-                self.effort_values.special_defense,
-                self._nature_modifiers.special_defense,
-            ),
-            speed=calculated_stat(
-                self.base_stats.speed,
-                self.level,
-                self.individual_values.speed,
-                self.effort_values.speed,
-                self._nature_modifiers.speed,
-            ),
-        )
+        return self._calculated_stats()
 
     @property
     def iv(self):
@@ -437,3 +423,13 @@ class Pokemon:
             ) < 8
         else:
             return False
+
+    @property
+    def level(self):
+        return self._level
+
+    def level_up(self, evolve=True):
+        """Increase Pokémon's level by one."""
+
+    def evolve(self):
+        """Evolve."""

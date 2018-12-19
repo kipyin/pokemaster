@@ -107,11 +107,17 @@ class TestPokemonPID:
 
 
 class TestStatClass:
+    @pytest.mark.xfail(reason='Test not implemented.')
     def test_set_effort_value(self):
-        pass
+        raise NotImplementedError
 
+    @pytest.mark.xfail(reason='Test not implemented.')
     def test_operations(self):
-        pass
+        raise NotImplementedError
+
+    @pytest.mark.xfail(reason='Test not implemented.')
+    def test_astuple(self):
+        raise NotImplementedError
 
 
 @pytest.fixture(scope='class')
@@ -135,9 +141,8 @@ def garchomp():
     """
     Trainer.prng = PRNG()
     Pokemon.prng = PRNG(0x1C262455)
-    garchomp = Pokemon('garchomp', pid_method=4)
+    garchomp = Pokemon('garchomp', pid_method=4, level=78)
     garchomp.trainer = Trainer('')
-    garchomp.level = 78
     garchomp.effort_values.set(
         hp=74,
         attack=190,
@@ -162,7 +167,11 @@ class TestPokemonStats:
         assert weedle._ivs == 0xFFFFFFFF
 
     def test_iv(self, garchomp):
-        assert garchomp.iv.astuple() == (24, 12, 30, 16, 23, 5, None, None)
+        assert garchomp.iv.astuple() == (24, 12, 30, 16, 23, 5)
+
+    def test_base_stats_sanity(self, garchomp):
+        for stat in garchomp.base_stats.astuple():
+            assert stat != 0
 
     def test_calculated_stats(self, garchomp):
         assert garchomp.stats.hp == 289
