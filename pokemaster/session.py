@@ -6,16 +6,15 @@
 
 """
 
-import logging
 import os
 from pathlib import Path
+
+from loguru import logger
 
 import pokedex
 import pokedex.db
 import pokedex.db.load
 from sqlalchemy.exc import OperationalError
-
-logger = logging.getLogger(__name__)
 
 
 def get_session(engine_uri: str = None, ensure=True):
@@ -39,7 +38,7 @@ def get_session(engine_uri: str = None, ensure=True):
     try:
         session = pokedex.db.connect(engine_uri)
     except OperationalError:
-        logger.info(f'Wrong database uri: {engine_uri}.')
+        logger.error(f'Wrong database uri: {engine_uri}.')
         logger.info(
             f'Connecting to the default database: {pokedex.defaults.get_default_db_uri()}.'
         )
@@ -47,7 +46,7 @@ def get_session(engine_uri: str = None, ensure=True):
 
     if not pokedex.db.tables.Pokemon.__table__.exists(session.bind):
         # Empty database
-        logger.debug('Initializing database')
+        logger.info('Initializing database')
         pokedex.db.load.load(
             session, directory=None, drop_tables=True, safe=False
         )
