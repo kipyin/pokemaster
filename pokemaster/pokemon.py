@@ -3,24 +3,16 @@
     Basic Pokémon API
 
 """
-import operator
-import sys
 from enum import IntEnum
-from functools import partial
-from typing import AnyStr, Callable, ClassVar, List, Tuple, Union
+from typing import AnyStr, ClassVar, List, Tuple, Union
 
 import attr
 from attr.validators import instance_of as _instance_of
-from loguru import logger
 from pokedex import formulae
-from pokedex.db import connect
 from pokedex.db import tables as tb
-from sqlalchemy import true
 from sqlalchemy.orm.exc import NoResultFound
 
 from pokemaster.session import get_session
-
-logger.add(sys.stdout, level='DEBUG')
 
 
 def get_move(identity: Union[str, int]) -> tb.Move:
@@ -237,13 +229,80 @@ class Trainer:
         self.secret_id = self.prng()
 
 
+class GrowthRate(IntEnum):
+    """The experience groups.
+
+    The group names are consistent with those in Bulbapedia.
+    """
+
+    SLOW = 1
+    MEDIUM_FAST = 2
+    FAST = 3
+    MEDIUM_SLOW = 4
+    FLUCTUATING = 5
+    ERRATIC = 6
+
+
+def get_experience(level, growth_rate: GrowthRate) -> int:
+    """Return the amount of experience determined by a Pokémon's level
+    and its growth rate.
+
+    https://bulbapedia.bulbagarden.net/wiki/Experience
+    """
+    if level not in range(0, 101):
+        raise ValueError('Level must be in range(1, 101).')
+
+    n = level
+
+    if n in (0, 1):
+        return 0
+
+    square = lambda x: pow(x, 2)
+    cube = lambda x: pow(x, 3)
+
+    if growth_rate == GrowthRate.SLOW:
+        return (cube(n) * 5) // 4
+    elif growth_rate == GrowthRate.MEDIUM_FAST:
+        return cube(n)
+    elif growth_rate == GrowthRate.FAST:
+        return (4 * cube(n)) // 5
+    elif growth_rate == GrowthRate.MEDIUM_SLOW:
+        return (6 * cube(n)) // 5 - 15 * square(n) + 100 * n - 140
+    elif growth_rate == GrowthRate.FLUCTUATING:
+        if n <= 15:
+            return cube(n) * ((n + 1) // 3 + 24) // 50
+        elif n <= 36:
+            return cube(n) * (n + 14) // 50
+        else:
+            return cube(n) * (n // 2 + 32) // 50
+    elif growth_rate == GrowthRate.ERRATIC:
+        if n <= 50:
+            return cube(n) * (100 - n) // 50
+        elif n <= 68:
+            return cube(n) * (150 - n) // 100
+        elif n <= 98:
+            return cube(n) * ((1911 - 10 * n) // 3) // 500
+        else:
+            return cube(n) * (160 - n) // 100
+    else:
+        raise ValueError(f'{growth_rate} is not a valid growth rate group.')
+
+
+def get_experience_to_next(level, growth_rate: GrowthRate) -> int:
+    return get_experience(level + 1, growth_rate) - get_experience(
+        level, growth_rate
+    )
+
+
 class Pokemon:
     """A Pokémon"""
 
     session: ClassVar = get_session()
     prng: ClassVar[PRNG] = None
 
-    def __init__(self, identity: Union[str, int], level=None, pid_method=2):
+    def __init__(
+        self, identity: Union[str, int], level=None, pid_method=2, is_egg=False
+    ):
 
         try:
             if isinstance(identity, str):
@@ -275,7 +334,6 @@ class Pokemon:
 
         # TODO: method 1 for legendaries, method 2 for all others.
         # The PRNG should not be wasted on invalid Pokémon calls.
-        # This should be the **only** immutable part of the Pokémon?
         self._pid, self._ivs = self.prng.create_pid_ivs(method=pid_method)
 
         # TODO: @property
@@ -304,9 +362,13 @@ class Pokemon:
         self.identifier = self._pokemon.identifier
         self.name = self._pokemon.name
 
+        self.is_egg = is_egg
         # Can only be changed via gaining experience and applying Rare
         # Candies?
-        self._level = level or 5
+        if self.is_egg:
+            self._level = 0
+        else:
+            self._level = level or 5
 
         # Immutable? Even after evolution?
         obtainable_abilities = (

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+
 import pokedex.db.tables
 import pokedex.defaults
 import pytest
