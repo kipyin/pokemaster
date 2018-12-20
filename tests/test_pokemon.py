@@ -4,8 +4,7 @@ from functools import partial
 import attr
 import pytest
 from construct import Int32ul
-from hypothesis import given
-from hypothesis import strategies as st
+from hypothesis import given, settings, strategies as st
 
 from pokemaster.pokemon import (
     PRNG,
@@ -27,11 +26,15 @@ class TestPRNG:
     https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
     """
 
-    def test_prng_sanity(self):
+    def test_prng_default_seed_is_0(self):
         prng = PRNG()
         assert prng() == 0
-        prng = PRNG(0x1A56B091)
-        assert prng() == 0x01DB
+
+    @given(st.integers())
+    def test_prng_sanity(self, seed):
+        prng = PRNG(seed)
+        value = ((0x41C64E6D * seed + 0x6073) & 0xFFFFFFFF) >> 16
+        assert prng() == value
 
     def test_next_5(self):
         prng = PRNG(0x1A56B091)
@@ -47,12 +50,6 @@ class TestPRNG:
     def test_pid_ivs_creation(self):
         prng = PRNG(0x560B9CE3)
         assert (0x7E482751, 0x5EE9629C) == prng.create_pid_ivs(method=2)
-
-
-def test_gender_sanity():
-    assert Gender.FEMALE == 1
-    assert Gender.MALE == 2
-    assert Gender.GENDERLESS == 3
 
 
 class TestTrainer:
@@ -286,10 +283,8 @@ def garchomp():
 
     https://bulbapedia.bulbagarden.net/wiki/Statistic#Example_2
     """
-    Trainer.prng = PRNG()
     Pokemon.prng = PRNG(0x1C262455)
     garchomp = Pokemon('garchomp', pid_method=4, level=78)
-    garchomp.trainer = Trainer('')
     garchomp.effort_values.set(
         hp=74,
         attack=190,
@@ -306,10 +301,8 @@ class TestPokemonStats:
         """Seed and IVs can be found in:
         https://sites.google.com/site/ivtopidapplet/home
         """
-        Trainer.prng = PRNG(0x0)
         Pokemon.prng = PRNG(0x35CC77B9)
         weedle = Pokemon(13)
-        weedle.trainer = Trainer('Kip')
         assert weedle._pid == 0xEF72C69F
         assert weedle._ivs == 0xFFFFFFFF
 
@@ -336,8 +329,12 @@ class TestPokemonMoves:
         assert get_move('pound').id == 1
         with pytest.raises(TypeError):
             get_move(b'pound')
+
+    @settings(max_examples=20)
+    @given(st.text())
+    def test_invalid_names_raise_error(self, random_move_name):
         with pytest.raises(ValueError):
-            get_move('some-gibberish-move')
+            get_move(random_move_name)
 
     def test_pokemon_initial_moves(self, bulbasaur):
         assert list(map(lambda x: x.id, bulbasaur.moves)) == [45, 33]
