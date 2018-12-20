@@ -274,8 +274,11 @@ class Pokemon:
             raise ValueError(f'Cannot find pokemon {identity}.')
 
         # TODO: method 1 for legendaries, method 2 for all others.
+        # The PRNG should not be wasted on invalid Pokémon calls.
+        # This should be the **only** immutable part of the Pokémon?
         self._pid, self._ivs = self.prng.create_pid_ivs(method=pid_method)
 
+        # TODO: @property
         if self._species.gender_rate == -1:  # Genderless
             self.gender = Gender.GENDERLESS
         elif self._species.gender_rate == 8:  # Female-only
@@ -291,13 +294,21 @@ class Pokemon:
             else:
                 self.gender = Gender.FEMALE
 
+        # TODO: @property? Assigning a trainer to a Pokémon will change
+        # the Pokémon's current trainer and the original trainer.
+        # Does shininess change?
         self.trainer = None
 
+        # These are mutable (upon evolution).
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
         self.name = self._pokemon.name
+
+        # Can only be changed via gaining experience and applying Rare
+        # Candies?
         self._level = level or 5
 
+        # Immutable? Even after evolution?
         obtainable_abilities = (
             self.session.query(tb.Ability)
             .join(tb.PokemonAbility)
@@ -311,6 +322,8 @@ class Pokemon:
         else:
             self.ability = obtainable_abilities[self._pid % 2]
 
+        # Completely determined by the PID? Immutable once this Pokémon
+        # is spawn?
         self.nature = (
             self.session.query(tb.Nature)
             .filter_by(game_index=self._pid % 25)
@@ -328,6 +341,7 @@ class Pokemon:
             )
         # fmt: on
 
+        # Also mutable upon evolution.
         self._learnable_moves = (
             self.session.query(tb.Move)
             .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
@@ -337,6 +351,7 @@ class Pokemon:
             .filter(tb.VersionGroup.identifier == 'emerald')  # Hack
         )
 
+        # Should be settable, but only in certain ways.
         self.moves = (
             self._learnable_moves.filter(tb.PokemonMove.level <= self._level)
             .filter(tb.PokemonMoveMethod.identifier == 'level-up')
@@ -345,6 +360,7 @@ class Pokemon:
             .all()
         )
 
+        # Will never ever change.
         self.individual_values = Stats(
             hp=self._ivs % 32,
             attack=(self._ivs >> 5) % 32,
@@ -354,6 +370,7 @@ class Pokemon:
             special_defense=(self._ivs >> 26) % 32,
         )
 
+        # Will change upon evolution.
         base_stats = (
             self.session.query(tb.PokemonStat)
             .join(tb.Stat)
@@ -367,10 +384,17 @@ class Pokemon:
             return base_stat.stat.identifier.replace('-', '_')
 
         # fmt: off
+        # Base stats and effort points will change upon evolution.
+        # effort values should be settable.
         self.base_stats = Stats(**dict(map(lambda x: (_stat_attr(x), x.base_stat), base_stats)))
         self.effort_points = Stats(**dict(map(lambda x: (_stat_attr(x), x.effort), base_stats)))
         self.effort_values = EffortValue(**dict(map(lambda x: (_stat_attr(x), 0), base_stats)))
         # fmt: on
+        self._stats = self._calculate_stats()
+
+        # FIXME: use the actual minimum experience at spawn.
+        self._experience = 0
+        self._experience_to_next = 0
 
     def __repr__(self):
         return f'<Level {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
@@ -379,7 +403,7 @@ class Pokemon:
         """Check if the Pokémon can learn a certain move or not."""
         return move.id in map(lambda x: x.id, self._learnable_moves)
 
-    def _calculated_stats(self) -> Stats:
+    def _calculate_stats(self) -> Stats:
         """Return the calculated stats."""
         stats = Stats()
         for stat in stats.stat_names:
@@ -404,8 +428,10 @@ class Pokemon:
 
     @property
     def stats(self):
-        """The calculated stats."""
-        return self._calculated_stats()
+        """The calculated stats. Stats are re-calculated only when
+        leveling up, or taking a Vitamin.
+        """
+        return self._stats
 
     @property
     def iv(self):
@@ -425,11 +451,30 @@ class Pokemon:
             return False
 
     @property
+    def experience(self):
+        return self._experience
+
+    @experience.setter
+    def experience(self):
+        """Set the experience. Level, experience-to-next will change if
+        needed.
+        """
+
+    @property
     def level(self):
         return self._level
 
     def level_up(self, evolve=True):
-        """Increase Pokémon's level by one."""
+        """Increase Pokémon's level by one. Evolve the Pokémon if needed
+        and `evolve` is True (i.e. not holding an Everstone, nor canceld
+        by the player.)
+        """
+        self._level += 1
+        self._stats = self._calculate_stats()
 
-    def evolve(self):
-        """Evolve."""
+    def _evolve(self):
+        """Evolve the Pokémon. Many things will change.
+
+        This method should not be called directly. Any evolution should
+        be properly triggered upon meeting some condition.
+        """

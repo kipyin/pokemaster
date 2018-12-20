@@ -173,13 +173,14 @@ class TestPokemonStats:
         for stat in garchomp.base_stats.astuple():
             assert stat != 0
 
-    def test_calculated_stats(self, garchomp):
-        assert garchomp.stats.hp == 289
-        assert garchomp.stats.attack == 278
-        assert garchomp.stats.defense == 193
-        assert garchomp.stats.special_attack == 135
-        assert garchomp.stats.special_defense == 171
-        assert garchomp.stats.speed == 171
+    def test_calculate_stats(self, garchomp):
+        calculated_stats = garchomp._calculate_stats()
+        assert calculated_stats.hp == 289
+        assert calculated_stats.attack == 278
+        assert calculated_stats.defense == 193
+        assert calculated_stats.special_attack == 135
+        assert calculated_stats.special_defense == 171
+        assert calculated_stats.speed == 171
 
 
 class TestPokemonMoves:
