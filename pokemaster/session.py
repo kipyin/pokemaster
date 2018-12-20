@@ -9,15 +9,14 @@
 import os
 from pathlib import Path
 
-from loguru import logger
-
 import pokedex
 import pokedex.db
 import pokedex.db.load
+from loguru import logger
 from sqlalchemy.exc import OperationalError
 
 
-def get_session(engine_uri: str = None, ensure=True):
+def get_session(engine_uri: str = None):
     """Connect to a database with the given ``engine_uri``.
 
     :param engine_uri: The uri of the database. The default uri set by
@@ -31,9 +30,6 @@ def get_session(engine_uri: str = None, ensure=True):
     """
 
     engine_uri = engine_uri or pokedex.defaults.get_default_db_uri()
-
-    if not ensure:
-        return pokedex.db.connect(engine_uri)
 
     try:
         session = pokedex.db.connect(engine_uri)
