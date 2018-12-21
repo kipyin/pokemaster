@@ -311,19 +311,9 @@ class Pokemon:
                     .filter_by(identifier=identity)
                     .one()
                 )
-                self._species = (
-                    self.session.query(tb.PokemonSpecies)
-                    .filter_by(identifier=identity)
-                    .one()
-                )
             elif isinstance(identity, int):
                 self._pokemon = (
                     self.session.query(tb.Pokemon).filter_by(id=identity).one()
-                )
-                self._species = (
-                    self.session.query(tb.PokemonSpecies)
-                    .filter_by(id=identity)
-                    .one()
                 )
             else:
                 raise TypeError(
@@ -337,16 +327,16 @@ class Pokemon:
         self._pid, self._ivs = self.prng.create_pid_ivs(method=pid_method)
 
         # TODO: @property
-        if self._species.gender_rate == -1:  # Genderless
+        if self._pokemon.species.gender_rate == -1:  # Genderless
             self.gender = Gender.GENDERLESS
-        elif self._species.gender_rate == 8:  # Female-only
+        elif self._pokemon.species.gender_rate == 8:  # Female-only
             self.gender = Gender.FEMALE
-        elif self._species.gender_rate == 0:  # Male-only
+        elif self._pokemon.species.gender_rate == 0:  # Male-only
             self.gender = Gender.MALE
         else:
             # Gender is determined by the last byte of the PID.
             p_gender = self._pid % 0x100
-            gender_threshold = 0xFF * self._species.gender_rate // 8
+            gender_threshold = 0xFF * self._pokemon.species.gender_rate // 8
             if p_gender >= gender_threshold:
                 self.gender = Gender.MALE
             else:
