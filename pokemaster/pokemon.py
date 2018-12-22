@@ -77,6 +77,8 @@ class PRNG:
         """Generate the PID and IV's using the internal generator. Return
         a tuple of two integers, in the order of 'PID' and 'IVs'.
 
+        The two calls are consecutive?
+
         The generated 32-bit IVs is different from how it is actually
         stored.
 
@@ -229,71 +231,6 @@ class Trainer:
         self.secret_id = self.prng()
 
 
-class GrowthRate(IntEnum):
-    """The experience groups.
-
-    The group names are consistent with those in Bulbapedia.
-    """
-
-    SLOW = 1
-    MEDIUM_FAST = 2
-    FAST = 3
-    MEDIUM_SLOW = 4
-    FLUCTUATING = 5
-    ERRATIC = 6
-
-
-def get_experience(level, growth_rate: GrowthRate) -> int:
-    """Return the amount of experience determined by a Pokémon's level
-    and its growth rate.
-
-    https://bulbapedia.bulbagarden.net/wiki/Experience
-    """
-    if level not in range(0, 101):
-        raise ValueError('Level must be in range(1, 101).')
-
-    n = level
-
-    if n in (0, 1):
-        return 0
-
-    square = lambda x: pow(x, 2)
-    cube = lambda x: pow(x, 3)
-
-    if growth_rate == GrowthRate.SLOW:
-        return (cube(n) * 5) // 4
-    elif growth_rate == GrowthRate.MEDIUM_FAST:
-        return cube(n)
-    elif growth_rate == GrowthRate.FAST:
-        return (4 * cube(n)) // 5
-    elif growth_rate == GrowthRate.MEDIUM_SLOW:
-        return (6 * cube(n)) // 5 - 15 * square(n) + 100 * n - 140
-    elif growth_rate == GrowthRate.FLUCTUATING:
-        if n <= 15:
-            return cube(n) * ((n + 1) // 3 + 24) // 50
-        elif n <= 36:
-            return cube(n) * (n + 14) // 50
-        else:
-            return cube(n) * (n // 2 + 32) // 50
-    elif growth_rate == GrowthRate.ERRATIC:
-        if n <= 50:
-            return cube(n) * (100 - n) // 50
-        elif n <= 68:
-            return cube(n) * (150 - n) // 100
-        elif n <= 98:
-            return cube(n) * ((1911 - 10 * n) // 3) // 500
-        else:
-            return cube(n) * (160 - n) // 100
-    else:
-        raise ValueError(f'{growth_rate} is not a valid growth rate group.')
-
-
-def get_experience_to_next(level, growth_rate: GrowthRate) -> int:
-    return get_experience(level + 1, growth_rate) - get_experience(
-        level, growth_rate
-    )
-
-
 class Pokemon:
     """A Pokémon"""
 
@@ -304,29 +241,13 @@ class Pokemon:
         self, identity: Union[str, int], level=None, pid_method=2, is_egg=False
     ):
 
-        try:
-            if isinstance(identity, str):
-                self._pokemon = (
-                    self.session.query(tb.Pokemon)
-                    .filter_by(identifier=identity)
-                    .one()
-                )
-            elif isinstance(identity, int):
-                self._pokemon = (
-                    self.session.query(tb.Pokemon).filter_by(id=identity).one()
-                )
-            else:
-                raise TypeError(
-                    f'`identity` must be a str or an int, not {type(identity)}'
-                )
-        except NoResultFound:
-            raise ValueError(f'Cannot find pokemon {identity}.')
+        self._set_pokemon(identity)
 
-        # TODO: method 1 for legendaries, method 2 for all others.
-        # The PRNG should not be wasted on invalid Pokémon calls.
+        # The PRNG should not be wasted on invalid Pokémon calls, so this
+        # is called after a Pokémon is validated.
         self._pid, self._ivs = self.prng.create_pid_ivs(method=pid_method)
 
-        # TODO: @property
+        # TODO: @property this.
         if self._pokemon.species.gender_rate == -1:  # Genderless
             self.gender = Gender.GENDERLESS
         elif self._pokemon.species.gender_rate == 8:  # Female-only
@@ -445,11 +366,44 @@ class Pokemon:
         self._stats = self._calculate_stats()
 
         # FIXME: use the actual minimum experience at spawn.
-        self._experience = 0
+        self._experience = (
+            self.session.query(tb.Experience)
+            .filter_by(
+                growth_rate_id=self._pokemon.species.growth_rate_id,
+                level=self._level,
+            )
+            .one()
+            .experience
+        )
         self._experience_to_next = 0
 
     def __repr__(self):
         return f'<Level {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
+
+    # TODO: make the args (*args, **kwargs) to allow initialzing from
+    # arbitrary criteria.
+    def _set_pokemon(self, identity):
+        """Set the pokemon property by the id or identifier.
+
+        This method should be called first when initializing a Pokémon.
+        """
+        try:
+            if isinstance(identity, str):
+                self._pokemon = (
+                    self.session.query(tb.Pokemon)
+                    .filter_by(identifier=identity)
+                    .one()
+                )
+            elif isinstance(identity, int):
+                self._pokemon = (
+                    self.session.query(tb.Pokemon).filter_by(id=identity).one()
+                )
+            else:
+                raise TypeError(
+                    f'`identity` must be a str or an int, not {type(identity)}'
+                )
+        except NoResultFound:
+            raise ValueError(f'Cannot find pokemon {identity}.')
 
     def learnable(self, move: tb.Move) -> bool:
         """Check if the Pokémon can learn a certain move or not."""
@@ -498,7 +452,7 @@ class Pokemon:
                 ^ self.trainer.secret_id
                 ^ (self._pid >> 16)
                 ^ (self._pid % 0xFFFF)
-            ) < 8
+            ) < 0b111
         else:
             return False
 
@@ -507,7 +461,7 @@ class Pokemon:
         return self._experience
 
     @experience.setter
-    def experience(self):
+    def experience(self, exp):
         """Set the experience. Level, experience-to-next will change if
         needed.
         """

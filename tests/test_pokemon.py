@@ -4,19 +4,10 @@ from functools import partial
 import attr
 import pytest
 from construct import Int32ul
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
-from pokemaster.pokemon import (
-    PRNG,
-    Gender,
-    GrowthRate,
-    Pokemon,
-    Stats,
-    Trainer,
-    get_experience,
-    get_experience_to_next,
-    get_move,
-)
+from pokemaster.pokemon import PRNG, Gender, Pokemon, Stats, Trainer, get_move
 
 
 class TestPRNG:
@@ -112,158 +103,6 @@ class TestPokemonPID:
         assert not bulbasaur.shiny
 
 
-class TestExperience:
-    @pytest.mark.parametrize(
-        'growth_rate, max_exp',
-        [
-            (GrowthRate.ERRATIC, 600_001),
-            (GrowthRate.FAST, 800_001),
-            (GrowthRate.MEDIUM_FAST, 1_000_001),
-            (GrowthRate.MEDIUM_SLOW, 1_059_861),
-            (GrowthRate.SLOW, 1_250_001),
-            (GrowthRate.FLUCTUATING, 1_640_001),
-        ],
-    )
-    def test_total_experience_sanity(self, growth_rate, max_exp):
-        for level in range(0, 101):
-            assert get_experience(level, growth_rate) in range(0, max_exp)
-
-    @pytest.mark.parametrize(
-        'level, exp',
-        [
-            (0, 0),
-            (1, 0),
-            (2, 15),
-            (3, 52),
-            (4, 122),
-            (5, 237),
-            (50, 125_000),
-            (51, 131_324),
-            (68, 257_834),
-            (69, 267_406),
-            (98, 583_539),
-            (99, 591_882),
-            (100, 600_000),
-        ],
-    )
-    def test_total_experience_erratic(self, level, exp):
-        erratic_exp = partial(get_experience, growth_rate=GrowthRate.ERRATIC)
-        assert erratic_exp(level) == exp
-
-    @pytest.mark.parametrize(
-        'level, exp',
-        [
-            (0, 0),
-            (1, 0),
-            (2, 6),
-            (3, 21),
-            (4, 51),
-            (5, 100),
-            (50, 100_000),
-            (99, 776_239),
-            (100, 800_000),
-        ],
-    )
-    def test_total_experience_fast(self, level, exp):
-        fast_exp = partial(get_experience, growth_rate=GrowthRate.FAST)
-        assert fast_exp(level) == exp
-
-    @pytest.mark.parametrize(
-        'level, exp',
-        [
-            (0, 0),
-            (1, 0),
-            (2, 8),
-            (3, 27),
-            (4, 64),
-            (5, 125),
-            (50, 125_000),
-            (99, 970_299),
-            (100, 1_000_000),
-        ],
-    )
-    def test_total_experience_medium_fast(self, level, exp):
-        medium_fast_exp = partial(
-            get_experience, growth_rate=GrowthRate.MEDIUM_FAST
-        )
-        assert medium_fast_exp(level) == exp
-
-    @pytest.mark.parametrize(
-        'level, exp',
-        [
-            (0, 0),
-            (1, 0),
-            (2, 9),
-            (3, 57),
-            (4, 96),
-            (5, 135),
-            (50, 117_360),
-            (99, 1_027_103),
-            (100, 1_059_860),
-        ],
-    )
-    def test_total_experience_medium_slow(self, level, exp):
-        medium_slow_exp = partial(
-            get_experience, growth_rate=GrowthRate.MEDIUM_SLOW
-        )
-        assert medium_slow_exp(level) == exp
-
-    @pytest.mark.parametrize(
-        'level, exp',
-        [
-            (0, 0),
-            (1, 0),
-            (2, 10),
-            (3, 33),
-            (4, 80),
-            (5, 156),
-            (50, 156_250),
-            (99, 1_212_873),
-            (100, 1_250_000),
-        ],
-    )
-    def test_total_experience_slow(self, level, exp):
-        slow_exp = partial(get_experience, growth_rate=GrowthRate.SLOW)
-        assert slow_exp(level) == exp
-
-    @pytest.mark.parametrize(
-        'level, exp',
-        [
-            (0, 0),
-            (1, 0),
-            (2, 4),
-            (3, 13),
-            (4, 32),
-            (5, 65),
-            (15, 1957),
-            (16, 2457),
-            (36, 46_656),
-            (37, 50_653),
-            (99, 1_571_884),
-            (100, 1_640_000),
-        ],
-    )
-    def test_total_experience_fluctuating(self, level, exp):
-        fluctuating_exp = partial(
-            get_experience, growth_rate=GrowthRate.FLUCTUATING
-        )
-        assert fluctuating_exp(level) == exp
-
-
-class TestStatClass:
-    @pytest.mark.xfail(reason='Test not implemented.')
-    def test_set_effort_value(self):
-        raise NotImplementedError
-
-    @pytest.mark.xfail(reason='Test not implemented.')
-    def test_operations(self):
-        raise NotImplementedError
-
-    @pytest.mark.xfail(reason='Test not implemented.')
-    def test_astuple(self):
-        raise NotImplementedError
-
-
 @pytest.fixture(scope='class')
 def garchomp():
     """A Level 78 Garchomp with the following IVs and EVs and an
@@ -294,6 +133,10 @@ def garchomp():
         speed=23,
     )
     yield garchomp
+
+
+def test_experience(garchomp):
+    assert garchomp.experience == 593_190
 
 
 class TestPokemonStats:
