@@ -10,6 +10,10 @@ test-pdb:
 test-ff:
 	@poetry run pytest -qx --ff tests/
 
+.PHONY: test-pokemon
+test-pokemon:
+	@poetry run pytest -qx --hypothesis-show-statistics tests/test_pokemon.py
+
 .PHONY: format
 format:
 	@isort -rc .
