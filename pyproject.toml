@@ -9,7 +9,6 @@ license = "MIT"
 python = "^3.6"
 pokedex = { git = "https://github.com/kipyin/pokedex.git", branch = "develop" }
 sqlalchemy = "^1.2"
-construct = "^2.9"
 attrs = "^18.2"
 loguru = "^0.2.3"
 
