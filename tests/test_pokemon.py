@@ -3,7 +3,6 @@ from functools import partial
 
 import attr
 import pytest
-from construct import Int32ul
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
