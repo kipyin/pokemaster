@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-pokedex = { git = "https://github.com/kipyin/pokedex.git", branch = "develop" }
+pokedex = { git = "https://github.com/veekun/pokedex.git", branch = "master" }
 sqlalchemy = "^1.2"
 attrs = "^18.2"
 loguru = "^0.2.3"
