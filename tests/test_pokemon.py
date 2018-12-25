@@ -3,11 +3,10 @@ from functools import partial
 
 import attr
 import pytest
-from hypothesis import given, settings
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from pokemaster.pokemon import PRNG, Gender, Pokemon, Stats, Trainer, get_move
-
 
 # Given a seed, the PRNG should have the exact same behavior.
 # The seed and the results are from the following link:
@@ -51,7 +50,7 @@ def test_trainer_sanity():
     assert t.secret_id == 59774
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture
 def bulbasaur():
     """Instantiate a Bulbasaur.
 
@@ -107,7 +106,7 @@ def test_pokemon_shininess(bulbasaur):
     assert not bulbasaur.shiny
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture(scope='function')
 def garchomp():
     """A Level 78 Garchomp with the following IVs and EVs and an
     Adamant nature:
@@ -137,10 +136,6 @@ def garchomp():
         speed=23,
     )
     yield garchomp
-
-
-def test_experience(garchomp):
-    assert garchomp.experience == 593_190
 
 
 # TestPokemonStats
@@ -173,6 +168,51 @@ def test_calculate_stats(garchomp):
     assert calculated_stats.special_attack == 135
     assert calculated_stats.special_defense == 171
     assert calculated_stats.speed == 171
+
+
+# Test Pokémon Level Up
+
+
+def test_experience(garchomp):
+    assert garchomp.experience == 593_190
+
+
+# 616_298 - 593_190 = 23_108
+@given(st.integers(0, 23_108))
+def test_pokemon_gaining_experience_without_leveling_up(exp):
+    # Since the fixture only run once per test, not once per example,
+    # we have to do manual setups. Also, the EV doesn't matter when
+    # testing the exoeriences.
+    garchomp = Pokemon('garchomp', level=78)
+    garchomp.experience += exp
+    assert garchomp.experience == 593_190 + exp
+    assert garchomp.level == 78
+
+
+def test_pokemon_gaining_exact_experience_to_level_up():
+    garchomp = Pokemon('garchomp', level=78)
+    garchomp.experience += 23_108
+    assert garchomp.experience == 616_298
+    assert garchomp.level == 79
+
+
+# 640_000 - 593_190 = 46_810
+@given(st.integers(23_108, 46_810))
+def test_pokemon_gaining_experience_more_than_needed_to_level_up(exp):
+    garchomp = Pokemon('garchomp', level=78)
+    garchomp.experience += exp
+    assert garchomp.experience == 593_190 + exp
+    assert garchomp.level == 79
+
+
+# 1_250_000 - 593_190 = 656_810
+# Using @given will make hypothesis fuss about how slow the test is.
+@pytest.mark.parametrize('exp', [656_810, 656_811, 1_656_810])
+def test_pokemon_gaining_experience_to_get_to_level_100(exp):
+    garchomp = Pokemon('garchomp', level=78)
+    garchomp.experience += exp
+    assert garchomp.experience == 1_250_000
+    assert garchomp.level == 100
 
 
 # TestPokemonMoves
