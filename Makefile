@@ -12,7 +12,7 @@ test-ff:
 
 .PHONY: test-pokemon
 test-pokemon:
-	@poetry run pytest -qx --hypothesis-show-statistics tests/test_pokemon.py
+	@poetry run pytest -qx --ff tests/test_pokemon.py
 
 .PHONY: format
 format:
