@@ -31,6 +31,7 @@ def get_move(identity: Union[str, int]) -> tb.Move:
         raise ValueError(f'Cannot find move {identity}.')
 
 
+# FIXME: What's the point of using attr here?
 @attr.s(slots=True)
 class PRNG:
     """A linear congruential random number generator.
@@ -57,12 +58,14 @@ class PRNG:
     # In Emerald, the initial seed is always 0.
     _seed: int = attr.ib(default=0, validator=_instance_of(int))
 
+    # XXX: __iter__?
     def _generator(self):
         while True:
             self._seed = (0x41C64E6D * self._seed + 0x6073) & 0xFFFFFFFF
             yield self._seed >> 16
 
     def __call__(self) -> int:
+        # FIXME: will eventually return StopIteration!
         return next(self._generator())
 
     def reset(self, seed=None):
@@ -73,11 +76,13 @@ class PRNG:
         """Generate the next n random numbers."""
         return [self() for _ in range(n)]
 
+    # FIXME: Can we have a better name, plz?
+    # XXX: ivs -> genome?
     def create_pid_ivs(self, method=2) -> Tuple[int, int]:
         """Generate the PID and IV's using the internal generator. Return
         a tuple of two integers, in the order of 'PID' and 'IVs'.
 
-        The two calls are consecutive?
+        XXX: The two calls are consecutive?
 
         The generated 32-bit IVs is different from how it is actually
         stored.
@@ -157,36 +162,6 @@ class Stats:
     # def spd(self):
     #     return self.speed
 
-    # def __add__(self, other):
-    #     """Point-wise addition."""
-    #     return self._pointwise(operator.add, other)
-
-    # def __sub__(self, other):
-    #     """Point-wise subtraction."""
-    #     return self._pointwise(operator.sub, other)
-
-    # def __mul__(self, other):
-    #     """Point-wise multiplication."""
-    #     return self._pointwise(operator.mul, other)
-
-    # def __iadd__(self, other):
-    #     """Point-wise in-place addition."""
-    #     return self._pointwise(operator.iadd, other)
-
-    # def __isub__(self, other):
-    #     """Point-wise in-place subtraction."""
-    #     return self._pointwise(operator.isub, other)
-
-    # def __imul__(self, other):
-    #     """Point-wise in-place multiplication."""
-    #     retrun self._pointwise(operator.imul, other)
-
-    # def _pointwise(self, op, other):
-    #     """Apply point-wise operation."""
-    #     if not isinstance(other, Stats):
-    #         raise NotImpletemented
-    #     return Stats(**dict(map(lambda x: (x, op(getattr(self, x), getattr(other, x)), self.stat_names))))
-
     def astuple(self) -> tuple:
         """Return a tuple of the 8 stats."""
         return tuple([getattr(self, stat) for stat in self.stat_names])
@@ -241,38 +216,36 @@ class Pokemon:
         self, identity: Union[str, int], level=None, pid_method=2, is_egg=False
     ):
 
-        self._set_pokemon(identity)
+        self._pokemon = self._get_pokemon(identity)
+
+        if level is None:
+            pass
+        elif isinstance(level, int):
+            if level not in range(0, 101):
+                raise ValueError(
+                    f'Invalid level {level}. Level must be between 0 and 100.'
+                )
+        else:
+            raise TypeError(f'Level must be an int, not a {type(level)}')
 
         # The PRNG should not be wasted on invalid Pokémon calls, so this
         # is called after a Pokémon is validated.
         self._pid, self._ivs = self.prng.create_pid_ivs(method=pid_method)
 
-        # TODO: @property this.
-        if self._pokemon.species.gender_rate == -1:  # Genderless
-            self.gender = Gender.GENDERLESS
-        elif self._pokemon.species.gender_rate == 8:  # Female-only
-            self.gender = Gender.FEMALE
-        elif self._pokemon.species.gender_rate == 0:  # Male-only
-            self.gender = Gender.MALE
-        else:
-            # Gender is determined by the last byte of the PID.
-            p_gender = self._pid % 0x100
-            gender_threshold = 0xFF * self._pokemon.species.gender_rate // 8
-            if p_gender >= gender_threshold:
-                self.gender = Gender.MALE
-            else:
-                self.gender = Gender.FEMALE
-
         # TODO: @property? Assigning a trainer to a Pokémon will change
         # the Pokémon's current trainer and the original trainer.
         # Does shininess change?
         self.trainer = None
+        self._original_trainer = None
+        self._current_trainer = None
 
         # These are mutable (upon evolution).
+        # Basically the underlying self._pokemon will change.
         self.id = self._pokemon.id
         self.identifier = self._pokemon.identifier
         self.name = self._pokemon.name
 
+        # XXX: Hmmm is there a more descriptive way to do this?
         self.is_egg = is_egg
         # Can only be changed via gaining experience and applying Rare
         # Candies?
@@ -281,19 +254,11 @@ class Pokemon:
         else:
             self._level = level or 5
 
-        # Immutable? Even after evolution?
-        obtainable_abilities = (
-            self.session.query(tb.Ability)
-            .join(tb.PokemonAbility)
-            .filter_by(pokemon_id=self.id)
-            .filter_by(is_hidden=0)
-            .order_by(tb.PokemonAbility.slot)
-            .all()
-        )
-        if len(obtainable_abilities) == 1:
-            self.ability = obtainable_abilities[0]
+        _abilities = self._pokemon.abilities
+        if len(_abilities) == 1:
+            self.ability = _abilities[0]
         else:
-            self.ability = obtainable_abilities[self._pid % 2]
+            self.ability = _abilities[self._pid % 2]
 
         # Completely determined by the PID? Immutable once this Pokémon
         # is spawn?
@@ -358,44 +323,34 @@ class Pokemon:
 
         # fmt: off
         # Base stats and effort points will change upon evolution.
-        # effort values should be settable.
+        # effort values should be settable?
         self.base_stats = Stats(**dict(map(lambda x: (_stat_attr(x), x.base_stat), base_stats)))
         self.effort_points = Stats(**dict(map(lambda x: (_stat_attr(x), x.effort), base_stats)))
         self.effort_values = EffortValue(**dict(map(lambda x: (_stat_attr(x), 0), base_stats)))
         # fmt: on
         self._stats = self._calculate_stats()
 
-        # FIXME: use the actual minimum experience at spawn.
-        self._experience = (
-            self.session.query(tb.Experience)
-            .filter_by(
-                growth_rate_id=self._pokemon.species.growth_rate_id,
-                level=self._level,
-            )
-            .one()
-            .experience
-        )
-        self._experience_to_next = 0
+        self._experience = self._get_experience(level=self._level)
 
     def __repr__(self):
-        return f'<Level {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
+        return f'<A level {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
 
     # TODO: make the args (*args, **kwargs) to allow initialzing from
     # arbitrary criteria.
-    def _set_pokemon(self, identity):
+    def _get_pokemon(self, identity):
         """Set the pokemon property by the id or identifier.
 
         This method should be called first when initializing a Pokémon.
         """
         try:
             if isinstance(identity, str):
-                self._pokemon = (
+                return (
                     self.session.query(tb.Pokemon)
                     .filter_by(identifier=identity)
                     .one()
                 )
             elif isinstance(identity, int):
-                self._pokemon = (
+                return (
                     self.session.query(tb.Pokemon).filter_by(id=identity).one()
                 )
             else:
@@ -405,8 +360,64 @@ class Pokemon:
         except NoResultFound:
             raise ValueError(f'Cannot find pokemon {identity}.')
 
+    def _get_experience(self, level):
+        """Look up this Pokémon's experience at various levels."""
+        return (
+            self.session.query(tb.Experience)
+            .filter_by(
+                growth_rate_id=self._pokemon.species.growth_rate_id, level=level
+            )
+            .one()
+            .experience
+        )
+
+    @property
+    def _experience_to_next(self) -> int:
+        """The experience needed to get to the next level."""
+        if self._level < 100:
+            return (
+                self._get_experience(level=self._level + 1) - self._experience
+            )
+        else:
+            return 0
+
+    @property
+    def experience(self) -> int:
+        """The current experience points the Pokémon has."""
+        return self._experience
+
+    # XXX: use gain_exp of some sort instead? This can be confusing?
+    @experience.setter
+    def experience(self, new_exp: int):
+        """Set the experience. Level, experience-to-next will change if
+        needed.
+
+        Usage::
+            >>> pokemon.experience += 53
+        """
+        incremental_exp = new_exp - self._experience
+
+        # No known mechanism decreases the exp, right?
+        if incremental_exp < 0:
+            raise ValueError(
+                f'The new experience point, {new_exp}, needs to be no less than the current exp, {self._experience}.'
+            )
+        while self.level < 100 and incremental_exp >= self._experience_to_next:
+            incremental_exp -= self._experience_to_next
+            self.level_up()  # <- where evolution and other magic take place.
+
+        # At this point, the incremental_exp is not enough to let the
+        # Pokémon level up anymore.
+        self._experience += incremental_exp
+        ...
+
     def learnable(self, move: tb.Move) -> bool:
-        """Check if the Pokémon can learn a certain move or not."""
+        """Check if the Pokémon can learn a certain move or not.
+
+        This will probably be used when a player is trying to use a TM
+        or HM on a Pokémon, and display "XXX can't learn this move!" if
+        this method returns False.
+        """
         return move.id in map(lambda x: x.id, self._learnable_moves)
 
     def _calculate_stats(self) -> Stats:
@@ -431,6 +442,24 @@ class Pokemon:
                 ),
             )
         return stats
+
+    # XXX: Should `gender` return a tb.Gender or a Gender Enum?
+    @property
+    def gender(self) -> Gender:
+        if self._pokemon.species.gender_rate == -1:  # Genderless
+            return Gender.GENDERLESS
+        elif self._pokemon.species.gender_rate == 8:  # Female-only
+            return Gender.FEMALE
+        elif self._pokemon.species.gender_rate == 0:  # Male-only
+            return Gender.MALE
+        else:
+            # Gender is determined by the last byte of the PID.
+            p_gender = self._pid % 0x100
+            gender_threshold = 0xFF * self._pokemon.species.gender_rate // 8
+            if p_gender >= gender_threshold:
+                return Gender.MALE
+            else:
+                return Gender.FEMALE
 
     @property
     def stats(self):
@@ -457,16 +486,6 @@ class Pokemon:
             return False
 
     @property
-    def experience(self):
-        return self._experience
-
-    @experience.setter
-    def experience(self, exp):
-        """Set the experience. Level, experience-to-next will change if
-        needed.
-        """
-
-    @property
     def level(self):
         return self._level
 
@@ -475,7 +494,11 @@ class Pokemon:
         and `evolve` is True (i.e. not holding an Everstone, nor canceld
         by the player.)
         """
-        self._level += 1
+        if self._level < 100:
+            self._level += 1
+        else:
+            # Log no effect?
+            ...
         self._stats = self._calculate_stats()
 
     def _evolve(self):
@@ -484,3 +507,5 @@ class Pokemon:
         This method should not be called directly. Any evolution should
         be properly triggered upon meeting some condition.
         """
+        # self._pokemon = self._get_pokemon('')
+        ...
