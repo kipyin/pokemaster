@@ -210,7 +210,7 @@ class Pokemon:
     """A Pokémon"""
 
     session: ClassVar = get_session()
-    prng: ClassVar[PRNG] = None
+    prng: ClassVar[PRNG] = PRNG()
 
     def __init__(
         self, identity: Union[str, int], level=None, pid_method=2, is_egg=False
@@ -333,7 +333,7 @@ class Pokemon:
         self._experience = self._get_experience(level=self._level)
 
     def __repr__(self):
-        return f'<A level {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
+        return f'<A LVL {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
 
     # TODO: make the args (*args, **kwargs) to allow initialzing from
     # arbitrary criteria.
@@ -407,8 +407,10 @@ class Pokemon:
             self.level_up()  # <- where evolution and other magic take place.
 
         # At this point, the incremental_exp is not enough to let the
-        # Pokémon level up anymore.
-        self._experience += incremental_exp
+        # Pokémon level up anymore. But we still need to check if it
+        # overflows
+        if self._level < 100:
+            self._experience += incremental_exp
         ...
 
     def learnable(self, move: tb.Move) -> bool:
@@ -496,6 +498,7 @@ class Pokemon:
         """
         if self._level < 100:
             self._level += 1
+            self._experience = self._get_experience(self._level)
         else:
             # Log no effect?
             ...
