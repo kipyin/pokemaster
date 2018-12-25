@@ -159,29 +159,32 @@ class TestPokemonStats:
 
 
 class TestPokemonExperience:
+    """Level should change when gained enough experience.
+
+    Since the fixture only run once per test, not once per example,
+    we have to do manual setups. Also, the EV doesn't matter when
+    testing the exoeriences.
+    """
+
     def test_experience(self, garchomp):
         assert garchomp.experience == 593_190
 
     # 616_298 - 593_190 = 23_108
     @given(st.integers(0, 23_108))
     def test_pokemon_gaining_experience_without_leveling_up(self, exp):
-        # Since the fixture only run once per test, not once per example,
-        # we have to do manual setups. Also, the EV doesn't matter when
-        # testing the exoeriences.
         garchomp = Pokemon('garchomp', level=78)
         garchomp.experience += exp
         assert garchomp.experience == 593_190 + exp
         assert garchomp.level == 78
 
-    def test_pokemon_gaining_exact_experience_to_level_up(self):
-        garchomp = Pokemon('garchomp', level=78)
+    def test_pokemon_gaining_exact_experience_to_level_up(self, garchomp):
         garchomp.experience += 23_108
         assert garchomp.experience == 616_298
         assert garchomp.level == 79
 
     # 640_000 - 593_190 = 46_810
     @given(st.integers(23_108, 46_810))
-    def test_pokemon_gaining_experience_more_than_needed_to_level_up(self, exp):
+    def test_pokemon_gaining_experience_to_get_one_level_up(self, exp):
         garchomp = Pokemon('garchomp', level=78)
         garchomp.experience += exp
         assert garchomp.experience == 593_190 + exp
