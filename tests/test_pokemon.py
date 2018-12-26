@@ -6,7 +6,7 @@ import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
-from pokemaster.pokemon import PRNG, Gender, Pokemon, Stats, Trainer, get_move
+from pokemaster.pokemon import PRNG, Gender, Pokemon, Stats, Trainer
 
 
 @pytest.fixture(scope='class')
@@ -201,21 +201,9 @@ class TestPokemonExperience:
 
 
 class TestPokemonMoves:
-    def test_get_move(self):
-        assert get_move(1).identifier == 'pound'
-        assert get_move('pound').id == 1
-        with pytest.raises(TypeError):
-            get_move(b'pound')
-
-    @settings(max_examples=20)
-    @given(st.text())
-    def test_invalid_names_raise_error(self, random_move_name):
-        with pytest.raises(ValueError):
-            get_move(random_move_name)
-
     def test_pokemon_initial_moves(self, bulbasaur):
         assert list(map(lambda x: x.id, bulbasaur.moves)) == [45, 33]
 
-    def test_learnable_moves(self, bulbasaur):
-        assert bulbasaur.learnable(get_move('cut'))
-        assert not bulbasaur.learnable(get_move('pound'))
+    # def test_learnable_moves(self, bulbasaur):
+    #     assert bulbasaur.learnable(get_move('cut'))
+    #     assert not bulbasaur.learnable(get_move('pound'))
