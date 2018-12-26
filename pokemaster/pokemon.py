@@ -15,22 +15,6 @@ from sqlalchemy.orm.exc import NoResultFound
 from pokemaster.session import get_session
 
 
-def get_move(identity: Union[str, int]) -> tb.Move:
-    """Get a move by id or identifier."""
-    session = get_session()
-    try:
-        if isinstance(identity, str):
-            return session.query(tb.Move).filter_by(identifier=identity).one()
-        elif isinstance(identity, int):
-            return session.query(tb.Move).filter_by(id=identity).one()
-        else:
-            raise TypeError(
-                f'`identity` must be a str or an int, not {type(identity)}'
-            )
-    except NoResultFound:
-        raise ValueError(f'Cannot find move {identity}.')
-
-
 # FIXME: What's the point of using attr here?
 @attr.s(slots=True)
 class PRNG:
@@ -333,7 +317,7 @@ class Pokemon:
         self._experience = self._get_experience(level=self._level)
 
     def __repr__(self):
-        return f'<A LVL {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
+        return f'<A lvl {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
 
     # TODO: make the args (*args, **kwargs) to allow initialzing from
     # arbitrary criteria.
@@ -397,14 +381,15 @@ class Pokemon:
         """
         incremental_exp = new_exp - self._experience
 
-        # No known mechanism decreases the exp, right?
+        # XXX: No known mechanism decreases the exp, right?
         if incremental_exp < 0:
             raise ValueError(
-                f'The new experience point, {new_exp}, needs to be no less than the current exp, {self._experience}.'
+                f'The new experience point, {new_exp}, needs to be no less '
+                f'than the current exp, {self._experience}.'
             )
         while self.level < 100 and incremental_exp >= self._experience_to_next:
             incremental_exp -= self._experience_to_next
-            self.level_up()  # <- where evolution and other magic take place.
+            self._level_up()  # <- where evolution and other magic take place.
 
         # At this point, the incremental_exp is not enough to let the
         # Pokémon level up anymore. But we still need to check if it
@@ -491,24 +476,86 @@ class Pokemon:
     def level(self):
         return self._level
 
-    def level_up(self, evolve=True):
+    def _level_up(self, evolve=True):
         """Increase Pokémon's level by one. Evolve the Pokémon if needed
-        and `evolve` is True (i.e. not holding an Everstone, nor canceld
+        and `evolve` is True (i.e. not holding an Everstone, nor canceled
         by the player.)
         """
         if self._level < 100:
             self._level += 1
             self._experience = self._get_experience(self._level)
+            # Only re-calculate the stats upon leveling up.
+            self._stats = self._calculate_stats()
+            self._evolve_by_leveling_up()
         else:
             # Log no effect?
             ...
-        self._stats = self._calculate_stats()
 
-    def _evolve(self):
-        """Evolve the Pokémon. Many things will change.
-
-        This method should not be called directly. Any evolution should
-        be properly triggered upon meeting some condition.
-        """
+    def _evolve_by_leveling_up(self):
+        """Evolve the Pokémon triggered by leveling up."""
         # self._pokemon = self._get_pokemon('')
-        ...
+        child_species = self._pokemon.species.child_species
+        for species in child_species:
+            evolution = species.evolutions[0]
+            if evolution.trigger.identifier == 'level-up':
+                # Check all conditions
+                if self._check_evolution_condition(evolution):
+                    self._pokemon = self._get_pokemon(species.id)
+                break
+                ...
+
+    def _check_evolution_condition(self, evolution):
+        """Check the evolution conditions."""
+        evolve = False
+        if evolution.minimum_level:
+            # The minimum level for the Pokémon.
+            evolve = True if self._level >= evolution.minimum_level else False
+        if evolution.gender:
+            # the Pokémon’s required gender, or None if gender doesn’t matter
+            evolve = True if self._gender == evolution.gender.id else False
+        if evolution.location:
+            # the location the evolution must be triggered at.
+            ...
+        if evolution.held_item:
+            # the item the Pokémon must hold.
+            ...
+        if evolution.time_of_day:
+            # The required time of day. enum: [day, night]
+            ...
+        if evolution.known_move:
+            # the move the Pokémon must know.
+            ...
+        if evolution.known_move_type:
+            # the type the Pokémon must know a move of.
+            ...
+        if evolution.minimum_happiness:
+            # The minimum happiness value the Pokémon must have.
+            ...
+        if evolution.minimum_beauty:
+            # The minimum Beauty value the Pokémon must have.
+            ...
+        if evolution.minimum_affection:
+            # The minimum number of “affection” hearts the Pokémon must have
+            # in Pokémon-Amie.
+            ...
+        if evolution.relative_physical_stats:
+            # The required relation between the Pokémon’s Attack and Defense
+            # stats, as sgn(atk-def).
+            ...
+        if evolution.party_species:
+            # the species that must be present in the party.
+            ...
+        if evolution.party_type:
+            # a type that at least one party member must have.
+            ...
+        if evolution.trade_species:
+            # the species for which this one must be traded.
+            ...
+        if evolution.needs_overworld_rain:
+            # True iff it needs to be raining outside of battle.
+            ...
+        if evolution.turn_upside_down:
+            # True iff the 3DS needs to be turned upside-down as this Pokémon
+            # levels up.
+            ...
+        return evolve
