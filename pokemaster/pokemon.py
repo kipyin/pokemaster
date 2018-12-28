@@ -5,6 +5,7 @@
 """
 from enum import IntEnum
 from typing import AnyStr, ClassVar, List, Tuple, Union
+from collections import defaultdict
 
 import attr
 from attr.validators import instance_of as _instance_of
@@ -310,6 +311,15 @@ class Pokemon:
 
         self._experience = self._get_experience(level=self._level)
 
+        self._evolution_triggers = defaultdict(list)
+        for child in self._pokemon.species.child_species:
+            evolution = child.evolutions[0]
+            self._evolution_triggers[evolution.trigger.identifier].append(
+                evolution
+            )
+
+        self._held_item = None
+
     def __repr__(self):
         return f'<A Lv {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
 
@@ -398,7 +408,6 @@ class Pokemon:
         # overflows
         if self._level < 100:
             self._experience += incremental_exp
-        ...
 
     def learnable(self, move: tb.Move) -> bool:
         """Check if the Pokémon can learn a certain move or not.
@@ -478,33 +487,27 @@ class Pokemon:
     def level(self):
         return self._level
 
-    def _level_up(self, evolve=True):
+    def _level_up(self):
         """Increase Pokémon's level by one. Evolve the Pokémon if needed
         and `evolve` is True (i.e. not holding an Everstone, nor canceled
         by the player.)
         """
-        if self._level < 100:
-            self._level += 1
-            self._experience = self._get_experience(self._level)
-            # Only re-calculate the stats upon leveling up.
-            self._stats = self._calculate_stats()
-            self._evolve_by_leveling_up()
-        else:
-            # Log no effect?
-            ...
+        if self._level >= 100:
+            return
 
-    def _evolve_by_leveling_up(self):
-        """Evolve the Pokémon triggered by leveling up."""
-        # self._pokemon = self._get_pokemon('')
-        child_species = self._pokemon.species.child_species
-        for species in child_species:
-            evolution = species.evolutions[0]
-            if evolution.trigger.identifier == 'level-up':
-                # Check all conditions
-                if self._check_evolution_condition(evolution):
-                    self._pokemon = self._get_pokemon(species.id)
-                break
-                ...
+        self._level += 1
+        self._experience = self._get_experience(self._level)
+        self._stats = self._calculate_stats()
+
+        if self._held_item and self._held_item.identifier == 'everstone':
+            return
+        for evolution in self._evolution_triggers['level-up']:
+            if self._check_evolution_condition(evolution):
+                self._evolve()
+
+    def _evolve(self):
+        """Evolve the Pokémon."""
+        self._pokemon = self._get_pokemon(species.id)
 
     def _check_evolution_condition(self, evolution):
         """Check the evolution conditions."""
