@@ -11,6 +11,7 @@ pokedex = { git = "https://github.com/veekun/pokedex.git", branch = "master" }
 sqlalchemy = "^1.2"
 attrs = "^18.2"
 loguru = "^0.2.3"
+construct = "2.5.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.0"
