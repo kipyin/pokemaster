@@ -238,12 +238,6 @@ class Pokemon:
         else:
             self._level = level or 5
 
-        _abilities = self._pokemon.abilities
-        if len(_abilities) == 1:
-            self.ability = _abilities[0]
-        else:
-            self.ability = _abilities[self._pid % 2]
-
         # Completely determined by the PID? Immutable once this Pokémon
         # is spawn?
         self.nature = (
@@ -343,6 +337,14 @@ class Pokemon:
                 )
         except NoResultFound:
             raise ValueError(f'Cannot find pokemon {identity}.')
+
+    @property
+    def ability(self):
+        _abilities = self._pokemon.abilities
+        if len(_abilities) == 1:
+            return _abilities[0]
+        else:
+            return _abilities[self._pid % 2]
 
     def _get_experience(self, level):
         """Look up this Pokémon's experience at various levels."""
