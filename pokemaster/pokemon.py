@@ -311,7 +311,7 @@ class Pokemon:
         self._experience = self._get_experience(level=self._level)
 
     def __repr__(self):
-        return f'<A lvl {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
+        return f'<A Lv {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
 
     # TODO: make the args (*args, **kwargs) to allow initialzing from
     # arbitrary criteria.
