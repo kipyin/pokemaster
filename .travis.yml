@@ -12,7 +12,7 @@ install:
         - poetry install -v
 
 script:
-        - make test
+        - poetry run invoke test
 
 jobs:
         include:
