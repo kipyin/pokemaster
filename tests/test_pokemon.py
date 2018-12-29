@@ -6,7 +6,8 @@ import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
-from pokemaster.pokemon import PRNG, Gender, Pokemon, Stats, Trainer
+from pokemaster.pokemon import Gender, Pokemon, Trainer
+from pokemaster.prng import PRNG
 
 
 @pytest.fixture(scope='class')
