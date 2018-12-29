@@ -4,8 +4,7 @@
 
 """
 from enum import IntEnum
-from typing import AnyStr, ClassVar, List, Tuple, Union
-from collections import defaultdict
+from typing import AnyStr, ClassVar, List, Tuple, Union, NoReturn
 
 import attr
 from attr.validators import instance_of as _instance_of
@@ -201,7 +200,7 @@ class Pokemon:
         self, identity: Union[str, int], level=None, pid_method=2, is_egg=False
     ):
 
-        self._pokemon = self._get_pokemon(identity)
+        self._pokemon = self._query_pokemon(identity)
 
         if level is None:
             pass
@@ -223,12 +222,6 @@ class Pokemon:
         self.trainer = None
         self._original_trainer = None
         self._current_trainer = None
-
-        # These are mutable (upon evolution).
-        # Basically the underlying self._pokemon will change.
-        self.id = self._pokemon.id
-        self.identifier = self._pokemon.identifier
-        self.name = self._pokemon.name
 
         # XXX: Hmmm is there a more descriptive way to do this?
         self.is_egg = is_egg
@@ -264,7 +257,7 @@ class Pokemon:
             .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
             .join(tb.PokemonMove.version_group)
             .join(tb.PokemonMove.method)
-            .filter(tb.PokemonMove.pokemon_id == self.id)
+            .filter(tb.PokemonMove.pokemon_id == self._id)
             .filter(tb.VersionGroup.identifier == 'emerald')  # Hack
         )
 
@@ -291,7 +284,7 @@ class Pokemon:
         base_stats = (
             self.session.query(tb.PokemonStat)
             .join(tb.Stat)
-            .filter(tb.PokemonStat.pokemon_id == self.id)
+            .filter(tb.PokemonStat.pokemon_id == self._id)
             .filter(tb.Stat.is_battle_only == False)
             .all()
         )
@@ -309,7 +302,7 @@ class Pokemon:
         # fmt: on
         self._stats = self._calculate_stats()
 
-        self._experience = self._get_experience(level=self._level)
+        self._experience = self._query_experience(level=self._level)
 
         self._evolution_triggers = defaultdict(list)
         for child in self._pokemon.species.child_species:
@@ -318,14 +311,15 @@ class Pokemon:
                 evolution
             )
 
+        # TODO: use self._pokemon.items to genenrate random held items.
         self._held_item = None
 
     def __repr__(self):
-        return f'<A Lv {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
+        return f'<A Lv {self.level} No.{self._id} {self._pokemon.name} at {id(self)}>'
 
     # TODO: make the args (*args, **kwargs) to allow initialzing from
     # arbitrary criteria.
-    def _get_pokemon(self, identity):
+    def _query_pokemon(self, identity):
         """Set the pokemon property by the id or identifier.
 
         This method should be called first when initializing a Pokémon.
@@ -346,7 +340,22 @@ class Pokemon:
                     f'`identity` must be a str or an int, not {type(identity)}'
                 )
         except NoResultFound:
-            raise ValueError(f'Cannot find pokemon {identity}.')
+            raise ValueError(f'Cannot find Pokémon {identity}.')
+
+    @property
+    def _id(self) -> int:
+        """This Pokémon's id."""
+        return self._pokemon.id
+
+    @property
+    def _identifier(self) -> str:
+        """This Pokémon's identifier."""
+        return self._pokemon.identifier
+
+    @property
+    def name(self) -> str:
+        """This Pokémon's name."""
+        return self._pokemon.name
 
     @property
     def ability(self):
@@ -356,7 +365,7 @@ class Pokemon:
         else:
             return _abilities[self._pid % 2]
 
-    def _get_experience(self, level):
+    def _query_experience(self, level):
         """Look up this Pokémon's experience at various levels."""
         return (
             self.session.query(tb.Experience)
@@ -372,7 +381,7 @@ class Pokemon:
         """The experience needed to get to the next level."""
         if self._level < 100:
             return (
-                self._get_experience(level=self._level + 1) - self._experience
+                self._query_experience(level=self._level + 1) - self._experience
             )
         else:
             return 0
@@ -391,23 +400,23 @@ class Pokemon:
         Usage::
             >>> pokemon.experience += 53
         """
-        incremental_exp = new_exp - self._experience
+        earned_exp = new_exp - self._experience
 
         # XXX: No known mechanism decreases the exp, right?
-        if incremental_exp < 0:
+        if earned_exp < 0:
             raise ValueError(
                 f'The new experience point, {new_exp}, needs to be no less '
                 f'than the current exp, {self._experience}.'
             )
-        while self.level < 100 and incremental_exp >= self._experience_to_next:
-            incremental_exp -= self._experience_to_next
+        while self.level < 100 and earned_exp >= self._experience_to_next:
+            earned_exp -= self._experience_to_next
             self._level_up()  # <- where evolution and other magic take place.
 
         # At this point, the incremental_exp is not enough to let the
         # Pokémon level up anymore. But we still need to check if it
         # overflows
         if self._level < 100:
-            self._experience += incremental_exp
+            self._experience += earned_exp
 
     def learnable(self, move: tb.Move) -> bool:
         """Check if the Pokémon can learn a certain move or not.
@@ -496,7 +505,7 @@ class Pokemon:
             return
 
         self._level += 1
-        self._experience = self._get_experience(self._level)
+        self._experience = self._query_experience(self._level)
         self._stats = self._calculate_stats()
 
         if self._held_item and self._held_item.identifier == 'everstone':
@@ -507,9 +516,12 @@ class Pokemon:
 
     def _evolve(self):
         """Evolve the Pokémon."""
-        self._pokemon = self._get_pokemon(species.id)
+        self._pokemon = self._query_pokemon(species.id)
+        self._base_stats = self._calculate_stats()
 
-    def _check_evolution_condition(self, evolution):
+    def _check_evolution_condition(
+        self, evolution: tb.PokemonEvolution
+    ) -> bool:
         """Check the evolution conditions."""
         evolve = False
         if evolution.minimum_level:
@@ -523,7 +535,8 @@ class Pokemon:
             ...
         if evolution.held_item:
             # the item the Pokémon must hold.
-            ...
+            if self._held_item and self._held_item.id == evolution.held_item:
+                evolve = True
         if evolution.time_of_day:
             # The required time of day. enum: [day, night]
             ...
