@@ -62,39 +62,6 @@ def garchomp():
     yield garchomp
 
 
-class TestPRNG:
-    """Given a seed, the PRNG should have the exact same behavior.
-
-    The seed and the results are from the following link:
-    https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
-    """
-
-    def test_prng_default_seed_is_0(self):
-        prng = PRNG()
-        assert prng() == 0
-
-    @given(st.integers())
-    def test_prng_sanity(self, seed):
-        prng = PRNG(seed)
-        value = ((0x41C64E6D * seed + 0x6073) & 0xFFFFFFFF) >> 16
-        assert prng() == value
-
-    def test_next_5(self):
-        prng = PRNG(0x1A56B091)
-        assert prng.next(5) == [0x01DB, 0x7B06, 0x5233, 0xE470, 0x5CC4]
-
-    def test_reset_prng(self):
-        prng = PRNG()
-        assert prng() == 0
-        prng.next(10)
-        prng.reset()
-        assert prng() == 0
-
-    def test_pid_ivs_creation(self):
-        prng = PRNG(0x560B9CE3)
-        assert (0x7E482751, 0x5EE9629C) == prng.create_pid_ivs(method=2)
-
-
 def test_trainer_sanity():
     Trainer.prng = PRNG()
     t = Trainer('Kip')
