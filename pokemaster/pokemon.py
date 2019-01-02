@@ -22,18 +22,6 @@ class Gender(IntEnum):
     GENDERLESS = 3
 
 
-@attr.s(auto_attribs=True)
-class Trainer:
-    """A trainer"""
-
-    prng: ClassVar[PRNG] = None
-    name: AnyStr  # TODO: Restrict to charsets only.
-
-    def __attrs_post_init__(self):
-        self.id = self.prng()
-        self.secret_id = self.prng()
-
-
 class Pokemon:
     """A Pokémon"""
 
