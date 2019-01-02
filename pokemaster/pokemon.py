@@ -142,31 +142,6 @@ class Pokemon:
     def __repr__(self):
         return f'<A Lv {self.level} No.{self._id} {self._pokemon.name} at {id(self)}>'
 
-    # TODO: make the args (*args, **kwargs) to allow initialzing from
-    # arbitrary criteria.
-    def _query_pokemon(self, identity):
-        """Set the pokemon property by the id or identifier.
-
-        This method should be called first when initializing a Pokémon.
-        """
-        try:
-            if isinstance(identity, str):
-                return (
-                    self.session.query(tb.Pokemon)
-                    .filter_by(identifier=identity)
-                    .one()
-                )
-            elif isinstance(identity, int):
-                return (
-                    self.session.query(tb.Pokemon).filter_by(id=identity).one()
-                )
-            else:
-                raise TypeError(
-                    f'`identity` must be a str or an int, not {type(identity)}'
-                )
-        except NoResultFound:
-            raise ValueError(f'Cannot find Pokémon {identity}.')
-
     @property
     def _id(self) -> int:
         """This Pokémon's id."""
@@ -189,17 +164,6 @@ class Pokemon:
             return _abilities[0]
         else:
             return _abilities[self._pid % 2]
-
-    def _query_experience(self, level):
-        """Look up this Pokémon's experience at various levels."""
-        return (
-            self.session.query(tb.Experience)
-            .filter_by(
-                growth_rate_id=self._pokemon.species.growth_rate_id, level=level
-            )
-            .one()
-            .experience
-        )
 
     @property
     def _experience_to_next(self) -> int:
