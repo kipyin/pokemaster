@@ -15,13 +15,6 @@ from sqlalchemy.orm.exc import NoResultFound
 from pokemaster.session import get_session
 
 
-class Gender(IntEnum):
-
-    FEMALE = 1
-    MALE = 2
-    GENDERLESS = 3
-
-
 class Pokemon:
     """A Pokémon"""
 
