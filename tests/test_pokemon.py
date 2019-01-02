@@ -142,12 +142,14 @@ class TestPokemonExperience:
         assert garchomp.experience == 593190 + exp
         assert garchomp.level == 78
 
+    @pytest.mark.xfail(reason='permanent stats are not recalculated')
     def test_pokemon_gaining_exact_experience_to_level_up(self, garchomp):
         garchomp.experience += 23108
         assert garchomp.experience == 616298
         assert garchomp.level == 79
 
     # 640000 - 593190 = 46810
+    @pytest.mark.xfail(reason='permanent stats are not recalculated')
     @pytest.mark.parametrize('exp', [23108, 46809])
     def test_pokemon_gaining_experience_to_get_one_level_up(
         self, garchomp, exp
@@ -157,6 +159,7 @@ class TestPokemonExperience:
         assert garchomp.level == 79
 
     # 1250000 - 593190 = 656810
+    @pytest.mark.xfail(reason='permanent stats are not recalculated')
     @pytest.mark.parametrize('exp', [656810, 656811, 1656810])
     def test_pokemon_gaining_experience_to_get_to_level_100(
         self, garchomp, exp
