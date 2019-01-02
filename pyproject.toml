@@ -12,6 +12,7 @@ sqlalchemy = "^1.2"
 attrs = "^18.2"
 loguru = "^0.2.3"
 bidict = "^0.17.5"
+construct = "2.5.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.0"
