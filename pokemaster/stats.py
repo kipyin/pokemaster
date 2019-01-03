@@ -174,7 +174,7 @@ class EV:
             return value
 
     def _make_operator(self, op, other: 'EV') -> 'EV':
-        """Programmatically create point-wise operations."""
+        """Programmatically create point-wise operators."""
         if not isinstance(other, type(self)):
             raise TypeError(
                 f"unsupported operand type(s) for {op}: "
