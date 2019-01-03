@@ -198,7 +198,7 @@ class Pokemon:
             level=self.level,
         )
         pokemon = util.get(self.session, tb.Pokemon, id=self.species.id)
-        self.permanent_stats = PermanentStats.using_formulae(pokemon.stats)
+        self.permanent_stats.level_up()
 
         if self.held_item and self.held_item.identifier == 'everstone':
             return

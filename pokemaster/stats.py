@@ -217,6 +217,14 @@ class PermanentStats:
     special_attack: int
     special_defense: int
     speed: int
+    _metadata: dict = {}
+
+    def level_up(self):
+        if self._metadata[level] < 100:
+            self._metadata[level] += 1
+            new_stats = self.__class__.using_formulae(**self._metadata)
+            for stat in STAT_NAMES:
+                setattr(self, stat, getattr(new_stats, stat))
 
     @classmethod
     def using_formulae(
@@ -229,7 +237,14 @@ class PermanentStats:
         nature_modifiers: NatureModifiers,
     ) -> 'PermanentStats':
         """Create a PermanentStats instance."""
-        kwargs = {}
+        meta = {
+            'base_stats': base_stats,
+            'level': level,
+            'iv': iv,
+            'ev': ev,
+            'nature_modifiers': nature_modifiers,
+        }
+        kwargs = {'_metadata': meta}
         for stat in STAT_NAMES:
             if stat == 'hp':
                 func = formulae.calculated_hp
@@ -239,14 +254,10 @@ class PermanentStats:
                 base_stat=getattr(base_stats, stat),
                 level=level,
                 iv=getattr(iv, stat),
-                effort=getattr(ev, stat),
+                effort=getattr(effort, stat),
                 nature=getattr(nature_modifiers, stat),
             )
         return cls(**kwargs)
-
-    @classmethod
-    def from_leveling_up(cls, old_stats) -> 'PermanentStats':
-        return cls()
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -258,4 +269,4 @@ class Conditions:
     cuteness: int = 0
     smartness: int = 0
     toughness: int = 0
-    feel: int = 0
+    # feel: int = 0
