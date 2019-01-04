@@ -5,7 +5,7 @@ import pokedex.db.tables
 import pokedex.defaults
 import pytest
 
-from pokemaster.session import get_session
+from pokemaster.query import get_session
 
 
 def test_connect_to_default_db_if_uri_is_gibberish():
