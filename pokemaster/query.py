@@ -157,11 +157,16 @@ def wild_pokemon_moves(pokemon: tb.Pokemon, level: int) -> Tuple[tb.Move]:
     return tuple(map(lambda x: x.move, pokemon_moves))
 
 
-def nature(personality: int) -> tb.Nature:
+def nature(personality: int = None, identifier: str = None) -> tb.Nature:
     """Determine a Pokémon's nature from its personality value."""
-    return (
-        _SESSION.query(tb.Nature).filter_by(game_index=personality % 25).one()
-    )
+    conditions = {}
+    if personality is None and identifier is None:
+        raise ValueError('Gimme something to look up!')
+    if personality is not None:
+        conditions['game_index'] = personality % 25
+    if identifier is not None:
+        conditions['identifier'] = identifier
+    return _SESSION.query(tb.Nature).filter_by(**conditions).one()
 
 
 def ability(abilities: List[tb.Ability], personality: int) -> tb.Ability:
