@@ -51,15 +51,13 @@ class PRNG:
         """Generate the PID and IV's using the internal generator. Return
         a tuple of two integers, in the order of 'PID' and 'IVs'.
 
-        XXX: The two calls are consecutive?
-
         The generated 32-bit IVs is different from how it is actually
         stored.
 
         Checkout [this link](https://www.smogon.com/ingame/rng/pid_iv_creation#rng_pokemon_generation)
          for more information on Method 1, 2, and 4.
         """
-        return (self.create_personality(), self.create_gene(method))
+        return self.create_personality(), self.create_gene(method)
 
     def create_personality(self) -> int:
         pid_src_1, pid_src_2 = self.next(2)
