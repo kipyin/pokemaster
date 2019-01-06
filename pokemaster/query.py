@@ -60,28 +60,33 @@ def bind_session(session):
     _SESSION = session
 
 
-def pokemon(id: int = None, identifier: str = None, **kwargs) -> tb.Pokemon:
-    if id is None and identifier is None:
+def pokemon(
+    id: int = None, identifier: str = None, name: str = None, **kwargs
+) -> tb.Pokemon:
+    if id is None and identifier is None and name is None:
         raise ValueError('Gimme something to search!')
     if id is not None and isinstance(id, int):
         kwargs['id'] = id
     if identifier is not None and isinstance(identifier, str):
         kwargs['identifier'] = identifier
+    if name is not None and isinstance(name, str):
+        kwargs['name'] = name
     return _SESSION.query(tb.Pokemon).filter_by(**kwargs).one()
 
 
 def pokemon_species(
-    id: int = None, identifier: str = None
+    id: int = None, identifier: str = None, name: str = None, **kwargs
 ) -> tb.PokemonSpecies:
     """Get a ``PokemonSpecies`` table instance."""
-    conditions = {}
-    if id is None and identifier is None:
+    if id is None and identifier is None and name is None:
         raise ValueError('Gimme something to search!')
     if id is not None and isinstance(id, int):
-        conditions['id'] = id
+        kwargs['id'] = id
     if identifier is not None and isinstance(identifier, str):
-        conditions['identifier'] = identifier
-    return _SESSION.query(tb.PokemonSpecies).filter_by(**conditions).one()
+        kwargs['identifier'] = identifier
+    if name is not None and isinstance(name, str):
+        kwargs['name'] = name
+    return _SESSION.query(tb.PokemonSpecies).filter_by(**kwargs).one()
 
 
 def experience(level: int, growth_rate_id: int) -> int:
