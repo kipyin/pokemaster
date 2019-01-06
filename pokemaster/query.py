@@ -113,9 +113,10 @@ def experience(
 
 
 def wild_pokemon_held_item(
-    prng: "PRNG", species_id: int, compound_eyes: bool
+    prng: "PRNG", national_id: int, compound_eyes: bool
 ) -> tb.Item:
     """Determine the held item of a wild Pokémon."""
+    pokemon_ = pokemon(id=national_id)
 
     held_item_chance = prng() / 0xFFFF
 
