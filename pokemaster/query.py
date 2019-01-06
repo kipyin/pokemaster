@@ -89,14 +89,27 @@ def pokemon_species(
     return _SESSION.query(tb.PokemonSpecies).filter_by(**kwargs).one()
 
 
-def experience(level: int, growth_rate_id: int) -> int:
+def experience(
+    growth_rate_id: int, level: int = None, experience: int = None
+) -> tb.Experience:
     """Look up a Pokémon's experience at various levels."""
-    return (
-        _SESSION.query(tb.Experience)
-        .filter_by(growth_rate_id=growth_rate_id, level=level)
-        .one()
-        .experience
-    )
+    if level is None and experience is None:
+        raise ValueError('Gimme something to look up!')
+
+    conditions = {}
+    conditions['growth_rate_id'] = growth_rate_id
+
+    if level is not None:
+        conditions['level'] = level
+    _query = _SESSION.query(tb.Experience).filter_by(**conditions)
+
+    if experience is not None:
+        _query = (
+            _query.filter(tb.Experience.experience <= experience)
+            .order_by(tb.Experience.experience)
+            .desc()
+        )
+    return _query.one()
 
 
 def wild_pokemon_held_item(
