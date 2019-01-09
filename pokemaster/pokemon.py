@@ -62,62 +62,174 @@ class Pokemon:
     prng: ClassVar = PRNG()
 
     # Inputs
-    species: tb.PokemonSpecies = None
-    form_identifier: str = None
-    iv_method: int = attr.ib(validator=in_([1, 2, 4]), default=2)
+    national_id: int = _typed(int, kw_only=False, repr=True)
+    name: str = _typed(str, repr=True)
+    form: str = _typed(str, repr=True)
+    language: str = _typed(str)
 
     # Pokemon Genome Info
-    personality: int = None
-    gene: int = None
+    # I think it's better to let the program handle the PID & IV creation.
+    # If the user wants to alter a particular piece of information,
+    # override it via providing the corresponding keyword argument.
+    # personality = _typed(int)
+    # gene = _typed(int)
+    # iv_method = _typed(int, validator=in_([1, 2, 4]), default=2)
 
-    # The 'Header' secion in Pokémon data structure
-    _trainer: Trainer = None
-    original_trainer: Trainer = None
-    nickname: str = None
-    pp_bonuses: Tuple[int] = (0, 0, 0, 0)
+    # The 'Header' section in Pokémon data structure
+    _trainer: Trainer = _typed(Trainer)
+    original_trainer: Trainer = _typed(Trainer)
+    nickname: str = _typed(str)
+    pp_bonuses: List[int] = _typed(list)
 
     # Block A: Growth Data
-    held_item: tb.Item = None
+    held_item: str = _typed(str)
     # XXX: Check that `experience` is consistent with `level`,
     # if both are set.
-    _experience: int = None
-    happiness: int = None
+    experience: int = _typed(int)
+    happiness: int = _typed(int)
 
-    # Block B: Attacks Data
-    moves: Tuple[tb.Move] = (None, None, None, None)
-    pp: Tuple[int] = (None, None, None, None)
+    # Block B: Moves Data
+    moves: List[Union[int, str]] = _typed(list)
+    pp: List[int] = _typed(list)
 
     # Block C: EV and Conditions
-    ev: EV = EV()  # 0 most of the times.
-    conditions: Conditions = Conditions()
+    ev: EV = _typed(EV)
+    conditions: Conditions = _typed(Conditions)
 
     # Block D: Miscellaneous
-    pokerus: bool = False  # FIXME: use flags
-    met_location: str = None  # Captured only
-    pokeball: str = None  # Captured only
-    origin_game_id: int = None
-    level_met: int = None
-    iv: IV = None
-    egg: bool = False
-    ability: tb.Ability = None
-    ribbons: list = None
-    obedience: bool = False
+    pokerus: bool = _typed(bool)
+    met_location: str = _typed(str)
+    pokeball: str = _typed(str)
+    origin_game_id: int = _typed(int)
+    level_met: int = _typed(int)
+    iv: IV = _typed(IV)
+    egg: bool = _typed(bool)
+    ability: str = _typed(str)
+    ribbons: list = _typed(list)
+    obedience: bool = _typed(bool)
 
     # Footer
-    status_condition: Any = None  # TODO: Implement status conditions. Enums?
-    level: int = attr.ib(default=None, validator=in_(range(1, 101)))
-    current_hp: int = None
-    permanent_stats: PermanentStats = None
+    status_condition: str = _typed(str)
+    _level: int = _typed(int, repr=True)
+    current_hp: int = _typed(int)
+    permanent_stats: PermanentStats = _typed(PermanentStats)
 
     # Other
-    nature: tb.Nature = None
-    gender: tb.Gender = None
+    nature = _typed(str)
+    gender = _typed(str)
+    personality = _typed(int)
+    gene = _typed(int)
+
+    # Species Data
+    growth_rate_id: int = attr.ib(init=False)
+    height: int = attr.ib(init=False)
+    weight: int = attr.ib(init=False)
+    color: str = attr.ib(init=False)
+    shape: str = attr.ib(init=False)
+    habitat: str = attr.ib(init=False)
+    evolutions: MutableMapping[str, tb.PokemonEvolution] = attr.ib(
+        init=False, default=attr.Factory(dict)
+    )
+
+    def __attrs_post_init__(self):
+        # XXX: Implement forms and languages!
+        pokemon = query.pokemon(
+            id=self.national_id,
+            name=self.name,
+            # language=self.language
+        )
+        self.national_id = self.national_id or pokemon.id
+        self.name = self.name or pokemon.name
+        # self.language = self.language or pokemon.language
+        species: tb.PokemonSpecies = pokemon.species
+        self.growth_rate_id = species.growth_rate_id
+        self.height = species.height
+        self.weight = species.weight
+        self.color = species.color.identifier
+        self.shape = species.shape.identifier
+        self.habitat = species.habitat.identifier
+        for evolved_species in species.child_species:
+            conditions = evolved_species.evolutions[0]
+            self.evolutions[evolved_species.identifier] = conditions
+
+        self._level = self._level or 5
+        exp = query.experience(
+            level=self._level,
+            growth_rate_id=species.growth_rate_id,
+            experience=self.experience,
+        )
+        self.experience = self.experience or exp.experience
+        self.happiness = self.happiness or species.base_happiness
+
+        # FIXME: add query.moves or Move or whatever. Just make it work.
+        moves = query.wild_pokemon_moves(pokemon, self._level)
+        if self.moves:
+            # convert all elements into ...
+            pass
+        else:
+            self.moves = list(map(lambda x: x.identifier, moves))
+
+        if self.pp is None:
+            self.pp = list(map(lambda x: x.pp, moves))
+        else:
+            self.pp = list(map(lambda x, y: min(x, y.pp), self.pp, moves))
+
+        self.ev = self.ev or EV()
+        self.conditions = self.conditions or Conditions()
+
+        if self.level_met and self.level_met != self._level:
+            warn(
+                f'`level_met` ({self.level_met}) '
+                'is inconsistent with '
+                f'`level` ({self._level})!'
+            )
+        else:
+            self.level_met = self._level
+
+        personality, gene = self.prng.create_genome()
+        self.iv = self.iv or IV.from_gene(gene)
+
+        correct_ability = query.ability(pokemon.abilities, personality)
+        if self.ability and self.ability not in list(
+            map(lambda x: x.identifier, pokemon.abilities)
+        ):
+            warn(
+                f'{self.name} does not have ability {self.ability}! '
+                f'Overriding it with {correct_ability}.'
+            )
+            self.ability = correct_ability
+        elif self.ability is None:
+            self.ability = correct_ability
+
+        nature = (
+            query.nature(identifier=self.nature)
+            if self.nature
+            else query.nature(personality=personality)
+        )
+        self.nature = nature.identifier
+
+        if self.permanent_stats is None:
+            self.permanent_stats = PermanentStats.using_formulae(
+                base_stats=SpeciesStrengths.from_stats(pokemon.stats),
+                level=self._level,
+                iv=self.iv,
+                ev=self.ev,
+                nature_modifiers=NatureModifiers.from_nature(nature),
+            )
+        if self.current_hp:
+            self.current_hp = min(self.current_hp, self.permanent_stats.hp)
+        else:
+            self.current_hp = self.permanent_stats.hp
+
+        self.gender = self.gender or query.pokemon_gender(
+            species.gender_rate, personality
+        )
 
     def __repr__(self):
         return (
-            f'<A Lv {self.level} '
-            f'No.{self.species.id} '
-            f'{self.species.name} '
+            f'<A Lv {self._level} '
+            f'No.{self.national_id} '
+            f'{self.name} '
             f'at {id(self)}>'
         )
 
@@ -130,14 +242,6 @@ class Pokemon:
         if self._trainer is None:
             self.original_trainer = new_trainer
         self._trainer = new_trainer
-
-    @property
-    def ability(self):
-        _abilities = self._pokemon.abilities
-        if len(_abilities) == 1:
-            return _abilities[0]
-        else:
-            return _abilities[self._personality % 2]
 
     @property
     def experience_to_next(self) -> int:
@@ -173,9 +277,9 @@ class Pokemon:
         if earned_exp < 0:
             raise ValueError(
                 f'The new experience point, {new_exp}, needs to be no less '
-                f'than the current exp, {self._experience}.'
+                f'than the current exp, {self.experience}.'
             )
-        while self.level < 100 and earned_exp >= self.experience_to_next:
+        while self._level < 100 and earned_exp >= self.experience_to_next:
             earned_exp -= self.experience_to_next
             self.level_up()  # <- where evolution and other magic take place.
 
