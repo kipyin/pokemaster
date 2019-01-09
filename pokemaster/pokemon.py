@@ -246,34 +246,38 @@ class Pokemon:
     @property
     def experience_to_next(self) -> int:
         """The experience needed to get to the next level."""
-        if self.level < 100:
+        if self._level < 100:
             return (
                 query.experience(
-                    self.session,
-                    growth_rate_id=self.species.growth_rate_id,
-                    level=self.level + 1,
+                    growth_rate_id=self.growth_rate_id, level=self._level + 1
                 )
-                - self._experience
+                - self.experience
             )
         else:
             return 0
 
     @property
-    def experience(self) -> int:
-        """The current experience points the Pokémon has."""
-        return self._experience
+    def shiny(self) -> bool:
+        if self.trainer is not None:
+            return (
+                self.trainer.id
+                ^ self.trainer.secret_id
+                ^ (self.personality >> 16)
+                ^ (self.personality % 0xFFFF)
+            ) < 0b111
+        else:
+            return False
 
-    @experience.setter
-    def experience(self, new_exp: int):
+    def validate(self):
+        """Check if all fields are still valid."""
+        attr.validate(self)
+
+    def gain_exp(self, new_exp: int):
         """Set the experience. Level, experience-to-next will change if
         needed.
-
-        Usage::
-            >>> pokemon.experience += 53
         """
-        earned_exp = new_exp - self._experience
+        earned_exp = new_exp - self.experience
 
-        # XXX: No known mechanism decreases the exp, right?
         if earned_exp < 0:
             raise ValueError(
                 f'The new experience point, {new_exp}, needs to be no less '
@@ -286,57 +290,26 @@ class Pokemon:
         # At this point, the incremental_exp is not enough to let the
         # Pokémon level up anymore. But we still need to check if it
         # overflows
-        if self.level < 100:
-            self._experience += earned_exp
-
-    def learnable(self, move: tb.Move) -> bool:
-        """Check if the Pokémon can learn a certain move or not.
-
-        This will probably be used when a player is trying to use a TM
-        or HM on a Pokémon, and display "XXX can't learn this move!" if
-        this method returns False.
-        """
-        # return move.id in map(lambda x: x.id, self._learnable_moves)
-
-    @property
-    def shiny(self) -> bool:
-        if self.trainer is not None:
-            return (
-                self.trainer.id
-                ^ self.trainer.secret_id
-                ^ (self._personality >> 16)
-                ^ (self._personality % 0xFFFF)
-            ) < 0b111
-        else:
-            return False
-
-    def _validate_pokemon(self):
-        """Check the input consistencies."""
-        self.personality = self.personality or self.prng.create_personality()
-        self.gene = self.gene or self.prng.create_gene(self.iv_method)
+        if self._level < 100:
+            self.experience += earned_exp
 
     def level_up(self):
         """Increase Pokémon's level by one. Evolve the Pokémon if needed
         and `evolve` is True (i.e. not holding an Everstone, nor canceled
         by the player.)
         """
-        if self.level >= 100:
+        if self._level >= 100:
             return
 
-        self.level += 1
-        self._experience = query.experience(
-            self.session,
-            growth_rate_id=self.species.growth_rate_id,
-            level=self.level,
+        self._level += 1
+        self.experience = query.experience(
+            growth_rate_id=self.growth_rate_id, level=self._level
         )
-        pokemon = util.get(self.session, tb.Pokemon, id=self.species.id)
         self.permanent_stats.level_up()
 
-        if self.held_item and self.held_item.identifier == 'everstone':
+        if self.held_item and self.held_item == 'everstone':
             return
-        # for evolution in self._evolution_triggers['level-up']:
-        #     if self.check_evolution_condition(evolution):
-        #         self.evolve()
+        self.evolve('level-up')
 
     def evolve(self):
         """Evolve the Pokémon."""
@@ -405,6 +378,15 @@ class Pokemon:
 
     def use_item(self, item):
         """Consume an item and activate the effect, if any."""
+
+    def learnable(self, move: tb.Move) -> bool:
+        """Check if the Pokémon can learn a certain move or not.
+
+        This will probably be used when a player is trying to use a TM
+        or HM on a Pokémon, and display "XXX can't learn this move!" if
+        this method returns False.
+        """
+        # return move.id in map(lambda x: x.id, self._learnable_moves)
 
     @classmethod
     def from_wild_encounter(
