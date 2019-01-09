@@ -250,7 +250,7 @@ class Pokemon:
             return (
                 query.experience(
                     growth_rate_id=self.growth_rate_id, level=self._level + 1
-                )
+                ).experience
                 - self.experience
             )
         else:
@@ -311,7 +311,7 @@ class Pokemon:
             return
         self.evolve('level-up')
 
-    def evolve(self):
+    def evolve(self, trigger: str) -> NoReturn:
         """Evolve the Pokémon."""
         for species, conditions in self.evolutions.items():
             if self.check_evolution_condition(trigger, conditions):
