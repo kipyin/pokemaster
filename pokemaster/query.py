@@ -5,19 +5,20 @@ Note that tables should not be passed as arguments! That'll defeat
 the purpose of this module.
 """
 
-import os
 import warnings
-from pathlib import Path
 from typing import List, Tuple
 
 import pokedex
 import pokedex.db
 import pokedex.db.load
+import pokedex.defaults
 from pokedex.db import tables as tb
 from sqlalchemy.exc import OperationalError
 
 
-def get_session(engine_uri: str = None):
+def get_session(
+    engine_uri: str = None
+) -> pokedex.db.multilang.MultilangScopedSession:
     """Connect to a database with the given ``engine_uri``.
 
     :param engine_uri: The uri of the database. The default uri set by
@@ -27,7 +28,7 @@ def get_session(engine_uri: str = None):
     the program will check 1) whether or not the uri is concrete; 2)
     whether or not the database is non-empty.
 
-    :return: A :class:`~pokedex.db.multilang.MultilangScopedSession`.
+    :return: A ``pokedex.db.multilang.MultilangScopedSession``.
     """
 
     engine_uri = engine_uri or pokedex.defaults.get_default_db_uri()
