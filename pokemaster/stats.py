@@ -81,34 +81,28 @@ class EV:
     _speed: int = attr.ib(default=0)
 
     @_hp.validator
-    def _hp_validator(self, attribute, value):
+    def _hp_validator(self, _, value):
         self._validated('hp', value)
 
     @_attack.validator
-    def _attack_validator(self, attribute, value):
+    def _attack_validator(self, _, value):
         self._validated('attack', value)
 
     @_defense.validator
-    def _defense_validator(self, attribute, value):
+    def _defense_validator(self, _, value):
         self._validated('defense', value)
 
     @_special_attack.validator
-    def _special_attack_validator(self, attribute, value):
+    def _special_attack_validator(self, _, value):
         self._validated('special_attack', value)
 
     @_special_defense.validator
-    def _special_defense_validator(self, attribute, value):
+    def _special_defense_validator(self, _, value):
         self._validated('special_defense', value)
 
     @_speed.validator
-    def _speed_validator(self, attribute, value):
+    def _speed_validator(self, _, value):
         self._validated('speed', value)
-
-    def __add__(self, other: 'EV') -> 'EV':
-        return self._make_operator(operator.add, other)
-
-    def __sub__(self, other: 'EV') -> 'EV':
-        return self._make_operator(operator.sub, other)
 
     @property
     def hp(self):
@@ -157,6 +151,12 @@ class EV:
     @speed.setter
     def speed(self, value):
         self._speed = self._validated('speed', value)
+
+    def __add__(self, other: 'EV') -> 'EV':
+        return self._make_operator(operator.add, other)
+
+    def __sub__(self, other: 'EV') -> 'EV':
+        return self._make_operator(operator.sub, other)
 
     @classmethod
     def get_yield(cls, stats: List[tb.PokemonStat]) -> 'EV':
@@ -220,8 +220,8 @@ class PermanentStats:
     _metadata: dict = {}
 
     def level_up(self):
-        if self._metadata[level] < 100:
-            self._metadata[level] += 1
+        if self._metadata['level'] < 100:
+            self._metadata['level'] += 1
             new_stats = self.__class__.using_formulae(**self._metadata)
             for stat in STAT_NAMES:
                 setattr(self, stat, getattr(new_stats, stat))
@@ -230,7 +230,7 @@ class PermanentStats:
     def using_formulae(
         cls,
         *,
-        base_stats: BaseStats,
+        base_stats: SpeciesStrengths,
         level: int,
         iv: IV,
         ev: EV,
@@ -244,7 +244,7 @@ class PermanentStats:
             'ev': ev,
             'nature_modifiers': nature_modifiers,
         }
-        kwargs = {'_metadata': meta}
+        kwargs = {'metadata': meta}
         for stat in STAT_NAMES:
             if stat == 'hp':
                 func = formulae.calculated_hp
@@ -254,7 +254,7 @@ class PermanentStats:
                 base_stat=getattr(base_stats, stat),
                 level=level,
                 iv=getattr(iv, stat),
-                effort=getattr(effort, stat),
+                effort=getattr(ev, stat),
                 nature=getattr(nature_modifiers, stat),
             )
         return cls(**kwargs)
