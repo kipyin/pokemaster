@@ -313,27 +313,33 @@ class Pokemon:
 
     def evolve(self):
         """Evolve the Pokémon."""
-        for child in self.species.child_species:
-            evolution = child.evolutions[0]
-            self._evolution_triggers[evolution.trigger.identifier].append(
-                evolution
-            )
+        for species, conditions in self.evolutions.items():
+            if self.check_evolution_condition(trigger, conditions):
+                evolved_species = species
+                break
+        else:
+            return
+        species = query.pokemon_species(identifier=evolved_species)
 
-    def check_evolution_condition(self, evolution: tb.PokemonEvolution) -> bool:
+    def check_evolution_condition(
+        self, trigger: str, evolution: tb.PokemonEvolution
+    ) -> bool:
         """Check the evolution conditions."""
+        if trigger != evolution.evolution_trigger.identifier:
+            return False
         evolve = False
         if evolution.minimum_level:
             # The minimum level for the Pokémon.
-            evolve = True if self.level >= evolution.minimum_level else False
+            evolve = True if self._level >= evolution.minimum_level else False
         if evolution.gender:
             # the Pokémon’s required gender, or None if gender doesn’t matter
-            evolve = True if self._gender == evolution.gender.id else False
+            evolve = True if self.gender == evolution.gender.id else False
         if evolution.location:
             # the location the evolution must be triggered at.
             ...
         if evolution.held_item:
             # the item the Pokémon must hold.
-            if self._held_item and self._held_item.id == evolution.held_item:
+            if self.held_item and self.held_item == evolution.held_item:
                 evolve = True
         if evolution.time_of_day:
             # The required time of day. enum: [day, night]
@@ -346,10 +352,16 @@ class Pokemon:
             ...
         if evolution.minimum_happiness:
             # The minimum happiness value the Pokémon must have.
-            ...
+            evolve = (
+                True if self.happiness >= evolution.minimum_happiness else False
+            )
         if evolution.minimum_beauty:
             # The minimum Beauty value the Pokémon must have.
-            ...
+            evolve = (
+                True
+                if self.conditions.beauty >= evolution.minimum_beauty
+                else False
+            )
         if evolution.minimum_affection:
             # The minimum number of “affection” hearts the Pokémon must have
             # in Pokémon-Amie.
@@ -357,7 +369,10 @@ class Pokemon:
         if evolution.relative_physical_stats:
             # The required relation between the Pokémon’s Attack and Defense
             # stats, as sgn(atk-def).
-            ...
+            if evolution.relative_physical_stats == _sign(
+                self.permanent_stats.attack - self.permanent_stats.defense
+            ):
+                evolve = True
         if evolution.party_species:
             # the species that must be present in the party.
             ...
