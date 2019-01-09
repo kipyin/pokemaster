@@ -1,11 +1,12 @@
 import operator
 from functools import partial
-from typing import Any, List
+from typing import List
 
 import attr
 from pokedex import formulae
 from pokedex.db import tables as tb
 
+from pokemaster.dex import DexEntry
 from pokemaster.exceptions import MaxStatExceededError
 
 STAT_NAMES = (
@@ -34,6 +35,17 @@ class SpeciesStrengths:
         """Create an instance of SpeciesStrengths from PokemonStat table."""
         kwargs = {stat: stats[i].base_stat for i, stat in enumerate(STAT_NAMES)}
         return cls(**kwargs)
+
+    @classmethod
+    def from_dex(cls, dex_entry: DexEntry) -> 'SpeciesStrengths':
+        return cls(
+            hp=dex_entry.base_hp,
+            attack=dex_entry.base_attack,
+            defense=dex_entry.base_defense,
+            special_attack=dex_entry.base_special_attack,
+            special_defense=dex_entry.base_special_defense,
+            speed=dex_entry.base_speed,
+        )
 
 
 def _iv_attrib(**kwargs):
@@ -270,3 +282,49 @@ class Conditions:
     smartness: int = 0
     toughness: int = 0
     # feel: int = 0
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class EvolutionCondition:
+    trigger_item: str
+    minimum_level: int
+    gender: str
+    location: str
+    held_item: str
+    time_of_day: str
+    known_move: str
+    known_move_type: str
+    minimum_happiness: int
+    minimum_beauty: int
+    minimum_affection: int
+    relative_physical_stats: int
+    party_species: str
+    party_type: str
+    trade_species: str
+    needs_overworld_rain: bool
+    turn_upside_down: bool
+
+    @classmethod
+    def from_pokemon_evolution(
+        cls, evolution: tb.PokemonEvolution
+    ) -> 'EvolutionCondition':
+        """Create an ``EvolutionCondition`` class from the database."""
+        e = evolution
+        return cls(
+            trigger_item=e.trigger_item.identifier,
+            minimum_level=e.minimum_level,
+            gender=e.gender.identifier,
+            location=e.location.identifier,
+            held_item=e.held_item.identifier,
+            time_of_day=e.time_of_day,
+            known_move=e.known_move.identifier,
+            known_move_type=e.known_move_type.identifier,
+            minimum_happiness=e.minimum_happiness,
+            minimum_beauty=e.minimum_beauty,
+            minimum_affection=e.minimum_affection,
+            relative_physical_stats=e.relative_physical_stats,
+            party_species=e.party_species.identifier,
+            party_type=e.party_type.identifier,
+            needs_overworld_rain=e.needs_overworld_rain,
+            turn_upside_down=e.turn_upside_down,
+        )

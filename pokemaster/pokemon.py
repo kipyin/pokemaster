@@ -1,37 +1,65 @@
 """Basic Pokémon API"""
-
-from collections import OrderedDict, namedtuple
-from enum import IntEnum
-from itertools import combinations
-from typing import Any, AnyStr, ClassVar, List, NoReturn, Tuple, Union
+from typing import ClassVar, List, MutableMapping, NoReturn, Union
+from warnings import warn
 
 import attr
-from attr.validators import and_, in_, instance_of
+from attr.validators import instance_of, optional
 from pokedex.db import tables as tb
-from pokedex.db import util
-from sqlalchemy.orm.exc import NoResultFound
 
 from pokemaster import query
-from pokemaster.charset import Charset
 from pokemaster.prng import PRNG
-from pokemaster.session import get_session
 from pokemaster.stats import (
     EV,
     IV,
-    BaseStats,
     Conditions,
     NatureModifiers,
     PermanentStats,
+    SpeciesStrengths,
 )
 from pokemaster.trainer import Trainer
 
 
-@attr.s(auto_attribs=True, repr=False, cmp=False)
-class Pokemon:
-    """A Pokémon."""
+def _sign(x: int) -> int:
+    """Get the sign of ``x``."""
+    return int(abs(x) / x)
 
-    session: ClassVar = get_session()
-    prng: ClassVar[PRNG] = PRNG()
+
+def _typed(type_, **kwargs):
+    validator = [optional(instance_of(type_))]
+    new_validators = kwargs.pop('validator', None)
+
+    if isinstance(new_validators, list) and new_validators:
+        validator.extend(new_validators)
+    elif new_validators is not None:
+        validator.append(new_validators)
+
+    default = kwargs.pop('default', None)
+    kw_only = kwargs.pop('kw_only', True)
+    repr = kwargs.pop('repr', False)
+    cmp = kwargs.pop('cmp', False)
+
+    return attr.ib(
+        validator=validator,
+        default=default,
+        kw_only=kw_only,
+        repr=repr,
+        cmp=cmp,
+        **kwargs,
+    )
+
+
+@attr.s(repr=False)
+class Pokemon:
+    """An authentic, living Pokémon in game.
+
+    A ``Pokemon`` instance has the exact same attributes and behaviors
+    as the ones in game: a Pokémon knows up to four moves, holds some
+    kind of item, have stats (hp, attack, speed, etc.), can level up
+    and evolve to another Pokémon, can be in some status conditions,
+    can be cured by using medicines, and much more.
+    """
+
+    prng: ClassVar = PRNG()
 
     # Inputs
     species: tb.PokemonSpecies = None
