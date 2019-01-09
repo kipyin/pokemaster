@@ -97,8 +97,7 @@ def experience(
     if level is None and experience is None:
         raise ValueError('Gimme something to look up!')
 
-    conditions = {}
-    conditions['growth_rate_id'] = growth_rate_id
+    conditions = {'growth_rate_id': growth_rate_id}
 
     if level is not None:
         conditions['level'] = level
@@ -128,7 +127,7 @@ def wild_pokemon_held_item(
         rare_item_chance = 0.05
         common_item_chance = 0.5
 
-    for item in reversed(pokemon.items):
+    for item in reversed(pokemon_.items):
         if item.rarity == 5 and held_item_chance <= rare_item_chance:
             return item
         elif item.rarity == 50 and held_item_chance <= common_item_chance:
