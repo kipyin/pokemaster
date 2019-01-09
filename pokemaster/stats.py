@@ -19,7 +19,7 @@ STAT_NAMES = (
 
 
 @attr.s(auto_attribs=True, slots=True)
-class BaseStats:
+class SpeciesStrengths:
     """The base stats of a Pokémon."""
 
     hp: int
@@ -31,7 +31,7 @@ class BaseStats:
 
     @classmethod
     def from_stats(cls, stats: List[tb.PokemonStat]):
-        """Create an instance of BaseStats from PokemonStat table."""
+        """Create an instance of SpeciesStrengths from PokemonStat table."""
         kwargs = {stat: stats[i].base_stat for i, stat in enumerate(STAT_NAMES)}
         return cls(**kwargs)
 
