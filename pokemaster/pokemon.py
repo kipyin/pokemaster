@@ -257,7 +257,8 @@ class Pokemon:
             return 0
 
     @property
-    def shiny(self) -> bool:
+    def is_shiny(self) -> bool:
+        """Return True if this Pokémon is shiny."""
         if self.trainer is not None:
             return (
                 self.trainer.id
