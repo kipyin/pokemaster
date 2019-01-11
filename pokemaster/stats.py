@@ -231,12 +231,25 @@ class PermanentStats:
     speed: int
     _metadata: dict = {}
 
-    def level_up(self):
+    def level_up(self, ev: EV):
+        """Update the permanent stats if the level is increased by 1."""
         if self._metadata['level'] < 100:
             self._metadata['level'] += 1
+            self._metadata['ev'] = ev
             new_stats = self.__class__.using_formulae(**self._metadata)
             for stat in STAT_NAMES:
                 setattr(self, stat, getattr(new_stats, stat))
+
+    def evolve(self, evolved_pokemon: tb.Pokemon):
+        """Update the permanent stats with the evolved species' species
+        strengths.
+        """
+        self._metadata['base_stats'] = SpeciesStrengths.from_stats(
+            evolved_pokemon.stats
+        )
+        new_stats = self.__class__.using_formulae(**self._metadata)
+        for stat in STAT_NAMES:
+            setattr(self, stat, getattr(new_stats, stat))
 
     @classmethod
     def using_formulae(
