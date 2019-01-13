@@ -1,7 +1,5 @@
 import attr
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
 
 from pokemaster.pokemon import Pokemon
 from pokemaster.prng import PRNG
@@ -25,16 +23,16 @@ def bulbasaur():
     # # bulbasaur.pid = 833639025
     # # bulbasaur.ivs = 2948981452
     # bulbasaur.trainer = kip
-    yield Pokemon.from_wild_encounter(
-        species_id=1,
+    yield Pokemon(
+        national_id=1,
         level=5,
-        location='littleroot',
+        met_location='Little Root Town',
         personality=833639025,
         gene=2948981452,
     )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture
 def garchomp():
     """A Level 78 Garchomp with the following IVs and EVs and an
     Adamant nature:
@@ -54,8 +52,18 @@ def garchomp():
     https://bulbapedia.bulbagarden.net/wiki/Statistic#Example_2
     """
     Pokemon.prng = PRNG(0x1C262455)
-    garchomp = Pokemon.from_wild_encounter(
-        species_id=445, iv_method=4, level=78, location='nowhere'
+    garchomp = Pokemon(
+        national_id=445,
+        iv_method=4,
+        level=78,
+        ev=EV(
+            hp=74,
+            attack=190,
+            defense=91,
+            special_attack=48,
+            special_defense=84,
+            speed=23,
+        ),
     )
     garchomp.ev = EV(
         hp=74,
@@ -88,10 +96,10 @@ class TestPIDRelatedMechanisms:
         # assert magnemite.gender == Gender.GENDERLESS
 
     def test_pokemon_ablity(self, bulbasaur):
-        assert bulbasaur.ability.identifier == 'overgrow'
+        assert bulbasaur.ability == 'overgrow'
 
     def test_pokemon_nature(self, bulbasaur):
-        assert bulbasaur.nature.identifier == 'hardy'
+        assert bulbasaur.nature == 'hardy'
 
 
 #     def test_pokemon_shininess(self, bulbasaur):
@@ -112,14 +120,14 @@ class TestPokemonStats:
     def test_iv(self, garchomp):
         assert attr.astuple(garchomp.iv) == (24, 12, 30, 16, 23, 5)
 
-    # def test_permanent_stats(self, garchomp):
-    #     permanent_stats = garchomp.permanent_stats
-    #     assert permanent_stats.hp == 289
-    #     assert permanent_stats.attack == 278
-    #     assert permanent_stats.defense == 193
-    #     assert permanent_stats.special_attack == 135
-    #     assert permanent_stats.special_defense == 171
-    #     assert permanent_stats.speed == 171
+    def test_permanent_stats(self, garchomp):
+        permanent_stats = garchomp.permanent_stats
+        assert permanent_stats.hp == 289
+        assert permanent_stats.attack == 278
+        assert permanent_stats.defense == 193
+        assert permanent_stats.special_attack == 135
+        assert permanent_stats.special_defense == 171
+        assert permanent_stats.speed == 171
 
 
 class TestPokemonExperience:
@@ -127,7 +135,7 @@ class TestPokemonExperience:
 
     Since the fixture only run once per test, not once per example,
     we have to do manual setups. Also, the EV doesn't matter when
-    testing the exoeriences.
+    testing the experiences.
     """
 
     def test_experience(self, garchomp):
@@ -138,35 +146,42 @@ class TestPokemonExperience:
     def test_pokemon_gaining_experience_without_leveling_up(
         self, garchomp, exp
     ):
-        garchomp.experience += exp
+        garchomp.gain_exp(exp)
         assert garchomp.experience == 593190 + exp
         assert garchomp.level == 78
 
-    @pytest.mark.xfail(reason='permanent stats are not recalculated')
+    # @pytest.mark.xfail(reason='permanent stats are not recalculated')
     def test_pokemon_gaining_exact_experience_to_level_up(self, garchomp):
-        garchomp.experience += 23108
+        garchomp.gain_exp(23108)
         assert garchomp.experience == 616298
         assert garchomp.level == 79
 
     # 640000 - 593190 = 46810
-    @pytest.mark.xfail(reason='permanent stats are not recalculated')
+    # @pytest.mark.xfail(reason='permanent stats are not recalculated')
     @pytest.mark.parametrize('exp', [23108, 46809])
     def test_pokemon_gaining_experience_to_get_one_level_up(
         self, garchomp, exp
     ):
-        garchomp.experience += exp
+        garchomp.gain_exp(exp)
         assert garchomp.experience == 593190 + exp
         assert garchomp.level == 79
 
     # 1250000 - 593190 = 656810
-    @pytest.mark.xfail(reason='permanent stats are not recalculated')
+    # @pytest.mark.xfail(reason='permanent stats are not recalculated')
     @pytest.mark.parametrize('exp', [656810, 656811, 1656810])
     def test_pokemon_gaining_experience_to_get_to_level_100(
         self, garchomp, exp
     ):
-        garchomp.experience += exp
+        garchomp.gain_exp(exp)
         assert garchomp.experience == 1250000
         assert garchomp.level == 100
+
+
+class TestPokemonEvolution:
+    def test_evolution(self):
+        bulbasaur = Pokemon(national_id=1, level=15)
+        bulbasaur.level_up()
+        assert 2 == bulbasaur.national_id
 
 
 #
