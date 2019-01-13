@@ -3,7 +3,7 @@ from typing import ClassVar, List, MutableMapping, NoReturn, Union
 from warnings import warn
 
 import attr
-from attr.validators import instance_of, optional
+from attr.validators import instance_of, optional, in_
 from pokedex.db import tables as tb
 
 from pokemaster import query
@@ -41,7 +41,7 @@ def _typed(type_, **kwargs):
     return attr.ib(
         validator=validator,
         default=default,
-        kw_only=kw_only,
+        # kw_only=kw_only,
         repr=repr,
         cmp=cmp,
         **kwargs,
@@ -85,7 +85,7 @@ class Pokemon:
     held_item: str = _typed(str)
     # XXX: Check that `experience` is consistent with `level`,
     # if both are set.
-    experience: int = _typed(int)
+    _experience: int = _typed(int)
     happiness: int = _typed(int)
 
     # Block B: Moves Data
@@ -119,6 +119,7 @@ class Pokemon:
     gender = _typed(str)
     personality = _typed(int)
     gene = _typed(int)
+    iv_method = _typed(int, validator=optional(in_([1, 2, 4])))
 
     # Species Data
     growth_rate_id: int = attr.ib(init=False)
@@ -143,11 +144,14 @@ class Pokemon:
         # self.language = self.language or pokemon.language
         species: tb.PokemonSpecies = pokemon.species
         self.growth_rate_id = species.growth_rate_id
-        self.height = species.height
-        self.weight = species.weight
+        self.height = pokemon.height
+        self.weight = pokemon.weight
         self.color = species.color.identifier
         self.shape = species.shape.identifier
-        self.habitat = species.habitat.identifier
+        if species.habitat is not None:
+            self.habitat = species.habitat.identifier
+        else:
+            self.habitat = None
         for evolved_species in species.child_species:
             conditions = evolved_species.evolutions[0]
             self.evolutions[evolved_species.identifier] = conditions
@@ -157,8 +161,8 @@ class Pokemon:
             level=self._level,
             growth_rate_id=species.growth_rate_id,
             experience=self.experience,
-        )
-        self.experience = self.experience or exp.experience
+        ).experience
+        self._experience = self._experience or exp
         self.happiness = self.happiness or species.base_happiness
 
         # FIXME: add query.moves or Move or whatever. Just make it work.
@@ -186,25 +190,27 @@ class Pokemon:
         else:
             self.level_met = self._level
 
-        personality, gene = self.prng.create_genome()
-        self.iv = self.iv or IV.from_gene(gene)
+        self.iv_method = self.iv_method or 2
+        self.personality = self.personality or self.prng.create_personality()
+        self.gene = self.gene or self.prng.create_gene(self.iv_method)
+        self.iv = self.iv or IV.from_gene(self.gene)
 
-        correct_ability = query.ability(pokemon.abilities, personality)
-        if self.ability and self.ability not in list(
-            map(lambda x: x.identifier, pokemon.abilities)
+        correct_ability = query.ability(pokemon.abilities, self.personality)
+        if self.ability and self.ability not in map(
+            lambda x: x.identifier, pokemon.abilities
         ):
             warn(
                 f'{self.name} does not have ability {self.ability}! '
                 f'Overriding it with {correct_ability}.'
             )
-            self.ability = correct_ability
+            self.ability = correct_ability.identifier
         elif self.ability is None:
-            self.ability = correct_ability
+            self.ability = correct_ability.identifier
 
         nature = (
             query.nature(identifier=self.nature)
             if self.nature
-            else query.nature(personality=personality)
+            else query.nature(personality=self.personality)
         )
         self.nature = nature.identifier
 
@@ -222,7 +228,7 @@ class Pokemon:
             self.current_hp = self.permanent_stats.hp
 
         self.gender = self.gender or query.pokemon_gender(
-            species.gender_rate, personality
+            species.gender_rate, self.personality
         )
 
     def __repr__(self):
@@ -244,6 +250,10 @@ class Pokemon:
         self._trainer = new_trainer
 
     @property
+    def experience(self):
+        return self._experience
+
+    @property
     def experience_to_next(self) -> int:
         """The experience needed to get to the next level."""
         if self._level < 100:
@@ -251,7 +261,7 @@ class Pokemon:
                 query.experience(
                     growth_rate_id=self.growth_rate_id, level=self._level + 1
                 ).experience
-                - self.experience
+                - self._experience
             )
         else:
             return 0
@@ -269,20 +279,24 @@ class Pokemon:
         else:
             return False
 
+    @property
+    def level(self):
+        return self._level
+
     def validate(self):
         """Check if all fields are still valid."""
         attr.validate(self)
 
-    def gain_exp(self, new_exp: int):
+    def gain_exp(self, earned_exp: int):
         """Set the experience. Level, experience-to-next will change if
         needed.
         """
-        earned_exp = new_exp - self.experience
+        # earned_exp = new_exp - self._experience
 
         if earned_exp < 0:
             raise ValueError(
-                f'The new experience point, {new_exp}, needs to be no less '
-                f'than the current exp, {self.experience}.'
+                f'The new experience point, {self._experience + earned_exp}, needs to be no less '
+                f'than the current exp, {self._experience}.'
             )
         while self._level < 100 and earned_exp >= self.experience_to_next:
             earned_exp -= self.experience_to_next
@@ -292,7 +306,7 @@ class Pokemon:
         # Pokémon level up anymore. But we still need to check if it
         # overflows
         if self._level < 100:
-            self.experience += earned_exp
+            self._experience += earned_exp
 
     def level_up(self):
         """Increase Pokémon's level by one. Evolve the Pokémon if needed
@@ -303,10 +317,10 @@ class Pokemon:
             return
 
         self._level += 1
-        self.experience = query.experience(
+        self._experience = query.experience(
             growth_rate_id=self.growth_rate_id, level=self._level
-        )
-        self.permanent_stats.level_up()
+        ).experience
+        self.permanent_stats.level_up(self.ev)
 
         if self.held_item and self.held_item == 'everstone':
             return
@@ -321,12 +335,25 @@ class Pokemon:
         else:
             return
         species = query.pokemon_species(identifier=evolved_species)
+        pokemon = query.pokemon(identifier=evolved_species)
+        self.national_id = species.id
+        self.name = species.name
+        self.ability = query.ability(pokemon.abilities, self.personality)
+        self.permanent_stats.evolve(pokemon)
+        self.height = pokemon.height
+        self.weight = pokemon.weight
+        self.color = species.color.identifier
+        self.shape = species.shape.identifier
+        self.habitat = species.habitat.identifier
+        for evolved_species in species.child_species:
+            conditions = evolved_species.evolutions[0]
+            self.evolutions[evolved_species.identifier] = conditions
 
     def check_evolution_condition(
         self, trigger: str, evolution: tb.PokemonEvolution
     ) -> bool:
         """Check the evolution conditions."""
-        if trigger != evolution.evolution_trigger.identifier:
+        if trigger != evolution.trigger.identifier:
             return False
         evolve = False
         if evolution.minimum_level:
