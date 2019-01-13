@@ -4,15 +4,22 @@ from typing import ClassVar, List, Union
 
 import attr
 
+from pokemaster import query
+
+
+def _no_init(**kwargs):
+    return attr.ib(init=False, **kwargs)
+
 
 @attr.s(repr=False, auto_attribs=True)
-class PokedexEntry:
+class DexEntry:
     """A Pokédex entry."""
 
     national_id: int
 
 
-class SearchMode(IntEnum):
+
+class SearchMode(enum.IntEnum):
 
     BY_NAME = 1
     BY_COLOR = 2
@@ -27,7 +34,7 @@ class OrderMode(enum.Enum):
     HEAVIEST = enum.auto()
     LIGHTEST = enum.auto()
     TALLEST = enum.auto()
-    SMALLEST = emum.auto()
+    SMALLEST = enum.auto()
 
 
 @attr.s(repr=False, auto_attribs=True)
@@ -46,5 +53,5 @@ class Pokedex:
         criterion: Union[str, int],
         mode=SearchMode.BY_NAME,
         order_by=OrderMode.HOENN,
-    ) -> List[PokedexEntry]:
+    ) -> List[DexEntry]:
         """Look up a Pokédex entry by a specific criterion."""
