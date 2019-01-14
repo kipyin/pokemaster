@@ -3,7 +3,7 @@ from typing import ClassVar, List, MutableMapping, NoReturn, Union
 from warnings import warn
 
 import attr
-from attr.validators import instance_of, optional, in_
+from attr.validators import in_, instance_of, optional
 from pokedex.db import tables as tb
 
 from pokemaster import query
@@ -50,7 +50,7 @@ def _typed(type_, **kwargs):
 
 @attr.s(repr=False)
 class Pokemon:
-    """An authentic, living Pokémon in game.
+    """A Real, Living™ Pokémon in game.
 
     A ``Pokemon`` instance has the exact same attributes and behaviors
     as the ones in game: a Pokémon knows up to four moves, holds some
@@ -359,12 +359,6 @@ class Pokemon:
         if evolution.minimum_level:
             # The minimum level for the Pokémon.
             evolve = True if self._level >= evolution.minimum_level else False
-        if evolution.gender:
-            # the Pokémon’s required gender, or None if gender doesn’t matter
-            evolve = True if self.gender == evolution.gender.id else False
-        if evolution.location:
-            # the location the evolution must be triggered at.
-            ...
         if evolution.held_item:
             # the item the Pokémon must hold.
             if self.held_item and self.held_item == evolution.held_item:
@@ -374,9 +368,6 @@ class Pokemon:
             ...
         if evolution.known_move:
             # the move the Pokémon must know.
-            ...
-        if evolution.known_move_type:
-            # the type the Pokémon must know a move of.
             ...
         if evolution.minimum_happiness:
             # The minimum happiness value the Pokémon must have.
@@ -390,10 +381,6 @@ class Pokemon:
                 if self.conditions.beauty >= evolution.minimum_beauty
                 else False
             )
-        if evolution.minimum_affection:
-            # The minimum number of “affection” hearts the Pokémon must have
-            # in Pokémon-Amie.
-            ...
         if evolution.relative_physical_stats:
             # The required relation between the Pokémon’s Attack and Defense
             # stats, as sgn(atk-def).
@@ -403,19 +390,6 @@ class Pokemon:
                 evolve = True
         if evolution.party_species:
             # the species that must be present in the party.
-            ...
-        if evolution.party_type:
-            # a type that at least one party member must have.
-            ...
-        if evolution.trade_species:
-            # the species for which this one must be traded.
-            ...
-        if evolution.needs_overworld_rain:
-            # True iff it needs to be raining outside of battle.
-            ...
-        if evolution.turn_upside_down:
-            # True iff the 3DS needs to be turned upside-down as this Pokémon
-            # levels up.
             ...
         return evolve
 
