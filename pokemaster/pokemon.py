@@ -329,7 +329,7 @@ class Pokemon:
     def evolve(self, trigger: str) -> NoReturn:
         """Evolve the Pokémon."""
         for species, conditions in self.evolutions.items():
-            if self.check_evolution_condition(trigger, conditions):
+            if self._check_evolution_condition(trigger, conditions):
                 evolved_species = species
                 break
         else:
@@ -349,7 +349,7 @@ class Pokemon:
             conditions = evolved_species.evolutions[0]
             self.evolutions[evolved_species.identifier] = conditions
 
-    def check_evolution_condition(
+    def _check_evolution_condition(
         self, trigger: str, evolution: tb.PokemonEvolution
     ) -> bool:
         """Check the evolution conditions."""
