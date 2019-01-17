@@ -1,11 +1,12 @@
 import operator
 from functools import partial
-from typing import List
+from typing import List, Union
 
 import attr
 from pokedex import formulae
 from pokedex.db import tables as tb
 
+from pokemaster import query
 from pokemaster.dex import DexEntry
 from pokemaster.exceptions import MaxStatExceededError
 
@@ -295,3 +296,37 @@ class Conditions:
     smartness: int = 0
     toughness: int = 0
     # feel: int = 0
+
+
+@attr.s(auto_attribs=True)
+class Statistics:
+
+    hp: Union[int, float]
+    attack: Union[int, float]
+    defense: Union[int, float]
+    special_attack: Union[int, float]
+    special_defense: Union[int, float]
+    speed: Union[int, float]
+
+    @classmethod
+    def make_nature_modifiers(cls, nature: str) -> 'Statistics':
+        """Create a NatureModifiers instance from the Nature table."""
+        nature_row = query.nature(identifier=nature)
+        nature_class = cls(1, 1, 1, 1, 1, 1)
+        if nature_row.is_neutral:
+            return nature_class
+        increased_stat = nature_row.increased_stat.identifier.replace('-', '_')
+        decreased_stat = nature_row.decreased_stat.identifier.replace('-', '_')
+        setattr(nature_class, increased_stat, 1.1)
+        setattr(nature_class, decreased_stat, 0.9)
+        return nature_class
+
+    @classmethod
+    def make_species_strengths(cls, species: str):
+        """Create an instance of SpeciesStrengths from PokemonStat table."""
+        pokemon = query.pokemon(identifier=species)
+        kwargs = {
+            stat: pokemon.stats[i].base_stat
+            for i, stat in enumerate(STAT_NAMES)
+        }
+        return cls(**kwargs)
