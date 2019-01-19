@@ -1,6 +1,6 @@
 import operator
 from functools import partial
-from typing import List, Union
+from typing import List, Union, Tuple, ClassVar
 
 import attr
 from pokedex import formulae
@@ -10,7 +10,7 @@ from pokemaster import query
 from pokemaster.dex import DexEntry
 from pokemaster.exceptions import MaxStatExceededError
 
-STAT_NAMES = (
+STAT_NAMES: Tuple[str, ...] = (
     'hp',
     'attack',
     'defense',
@@ -299,7 +299,17 @@ class Conditions:
 
 
 @attr.s(auto_attribs=True)
-class Statistics:
+class Stats:
+    """A generic statistics representation."""
+
+    NAMES: ClassVar[Tuple[str, ...]] = (
+        'hp',
+        'attack',
+        'defense',
+        'special_attack',
+        'special_defense',
+        'speed',
+    )
 
     hp: Union[int, float]
     attack: Union[int, float]
@@ -309,7 +319,7 @@ class Statistics:
     speed: Union[int, float]
 
     @classmethod
-    def make_nature_modifiers(cls, nature: str) -> 'Statistics':
+    def make_nature_modifiers(cls, nature: str) -> 'Stats':
         """Create a NatureModifiers instance from the Nature table."""
         nature_row = query.nature(identifier=nature)
         nature_class = cls(1, 1, 1, 1, 1, 1)
@@ -322,11 +332,32 @@ class Statistics:
         return nature_class
 
     @classmethod
-    def make_species_strengths(cls, species: str):
-        """Create an instance of SpeciesStrengths from PokemonStat table."""
+    def make_species_strengths(cls, species: str) -> 'Stats':
+        """Create a Pokémon's species strengths stats."""
         pokemon = query.pokemon(identifier=species)
-        kwargs = {
-            stat: pokemon.stats[i].base_stat
-            for i, stat in enumerate(STAT_NAMES)
-        }
+        kwargs = {}
+        for i, stat in enumerate(cls.NAMES):
+            kwargs[stat] = pokemon.stats[i].base_stat
         return cls(**kwargs)
+
+    @classmethod
+    def make_iv(cls, gene: int) -> 'Stats':
+        """Create IV stats from a Pokémon's gene."""
+        return cls(
+            hp=gene % 32,
+            attack=(gene >> 5) % 32,
+            defense=(gene >> 10) % 32,
+            speed=(gene >> 16) % 32,
+            special_attack=(gene >> 21) % 32,
+            special_defense=(gene >> 26) % 32,
+        )
+
+    def validate_iv(self) -> bool:
+        """Check if each IV is between 0 and 32."""
+        for stat in self.NAMES:
+            if not (0 <= getattr(self, stat) <= 32):
+                raise ValueError(
+                    f"The {stat} IV ({getattr(self, stat)}) must be a number "
+                    "between 0 and 32 inclusive."
+                )
+        return True
