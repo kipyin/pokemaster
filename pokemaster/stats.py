@@ -1,13 +1,12 @@
 import operator
 from functools import partial
-from typing import List, Union, Tuple, ClassVar
+from typing import ClassVar, List, Tuple, Union
 
 import attr
 from pokedex import formulae
 from pokedex.db import tables as tb
 
 from pokemaster import query
-from pokemaster.dex import DexEntry
 from pokemaster.exceptions import MaxStatExceededError
 
 STAT_NAMES: Tuple[str, ...] = (
@@ -36,17 +35,6 @@ class SpeciesStrengths:
         """Create an instance of SpeciesStrengths from PokemonStat table."""
         kwargs = {stat: stats[i].base_stat for i, stat in enumerate(STAT_NAMES)}
         return cls(**kwargs)
-
-    @classmethod
-    def from_dex(cls, dex_entry: DexEntry) -> 'SpeciesStrengths':
-        return cls(
-            hp=dex_entry.base_hp,
-            attack=dex_entry.base_attack,
-            defense=dex_entry.base_defense,
-            special_attack=dex_entry.base_special_attack,
-            special_defense=dex_entry.base_special_defense,
-            speed=dex_entry.base_speed,
-        )
 
 
 def _iv_attrib(**kwargs):
