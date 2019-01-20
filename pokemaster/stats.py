@@ -331,14 +331,16 @@ class Stats:
         :return: A ``Stats`` instance.
         """
         nature_row = query.nature(identifier=nature)
-        nature_class = cls(1, 1, 1, 1, 1, 1)
+        modifiers = {}
+        for stat in cls.NAMES:
+            modifiers[stat] = 1
         if nature_row.is_neutral:
-            return nature_class
+            return cls(**modifiers)
         increased_stat = nature_row.increased_stat.identifier.replace('-', '_')
         decreased_stat = nature_row.decreased_stat.identifier.replace('-', '_')
-        setattr(nature_class, increased_stat, 1.1)
-        setattr(nature_class, decreased_stat, 0.9)
-        return nature_class
+        modifiers[increased_stat] = 1.1
+        modifiers[decreased_stat] = 0.9
+        return cls(**modifiers)
 
     @classmethod
     def make_species_strengths(cls, species: str) -> 'Stats':
