@@ -365,6 +365,18 @@ class Stats:
             special_defense=(gene >> 26) % 32,
         )
 
+    @classmethod
+    def make_ev_yield(cls, species: str) -> 'Stats':
+        """Create an EV instance from PokemonStats table.
+
+        :param species: The identifier of a Pokémon species.
+        :return: A ``Stats`` instance.
+        """
+        pokemon = query.pokemon(identifier=species)
+        stats = pokemon.stats
+        kwargs = {stat: stats[i].effort for i, stat in enumerate(cls.NAMES)}
+        return cls(**kwargs)
+
     def validate_iv(self) -> bool:
         """Check if each IV is between 0 and 32."""
         for stat in self.NAMES:
