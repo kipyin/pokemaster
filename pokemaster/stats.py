@@ -4,6 +4,7 @@ from numbers import Real
 from typing import Callable, ClassVar, List, Tuple, Union
 
 import attr
+from attr.validators import instance_of
 from pokedex import formulae
 from pokedex.db import tables as tb
 
@@ -287,7 +288,7 @@ class Conditions:
     # feel: int = 0
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class Stats:
     """A generic statistics representation."""
 
@@ -300,24 +301,31 @@ class Stats:
         'speed',
     )
 
-    hp: Union[int, float] = 0
-    attack: Union[int, float] = 0
-    defense: Union[int, float] = 0
-    special_attack: Union[int, float] = 0
-    special_defense: Union[int, float] = 0
-    speed: Union[int, float] = 0
+    hp: Union[int, float] = attr.ib(validator=instance_of(Real), default=0)
+    attack: Union[int, float] = attr.ib(validator=instance_of(Real), default=0)
+    defense: Union[int, float] = attr.ib(validator=instance_of(Real), default=0)
+    special_attack: Union[int, float] = attr.ib(
+        validator=instance_of(Real), default=0
+    )
+    special_defense: Union[int, float] = attr.ib(
+        validator=instance_of(Real), default=0
+    )
+    speed: Union[int, float] = attr.ib(validator=instance_of(Real), default=0)
 
     def __add__(self, other):
-        self._make_operator(operator.add, other)
+        return self._make_operator(operator.add, other)
 
     def __sub__(self, other):
-        self._make_operator(operator.sub, other)
+        return self._make_operator(operator.sub, other)
 
     def __mul__(self, other):
-        self._make_operator(operator.mul, other)
+        return self._make_operator(operator.mul, other)
 
     def __floordiv__(self, other):
-        self._make_operator(operator.floordiv, other)
+        return self._make_operator(operator.floordiv, other)
+
+    __radd__ = __add__
+    __rmul__ = __mul__
 
     @classmethod
     def make_nature_modifiers(cls, nature: str) -> 'Stats':
@@ -400,7 +408,7 @@ class Stats:
             number, then a scalar operation will be applied.
         :return: A ``Stats`` instance.
         """
-        if not isinstance(other, type(self)) or not isinstance(other, Real):
+        if not isinstance(other, type(self)) and not isinstance(other, Real):
             raise TypeError(
                 f"unsupported operand type(s) for {operator}: "
                 f"'{type(self)}' and '{type(other)}'"
