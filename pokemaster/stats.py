@@ -350,10 +350,10 @@ class Stats:
         :return: A ``Stats`` instance.
         """
         pokemon = query.pokemon(identifier=species)
-        kwargs = {}
+        strengths = {}
         for i, stat in enumerate(cls.NAMES):
-            kwargs[stat] = pokemon.stats[i].base_stat
-        return cls(**kwargs)
+            strengths[stat] = pokemon.stats[i].base_stat
+        return cls(**strengths)
 
     @classmethod
     def make_iv(cls, gene: int) -> 'Stats':
@@ -380,8 +380,8 @@ class Stats:
         """
         pokemon = query.pokemon(identifier=species)
         stats = pokemon.stats
-        kwargs = {stat: stats[i].effort for i, stat in enumerate(cls.NAMES)}
-        return cls(**kwargs)
+        yields = {stat: stats[i].effort for i, stat in enumerate(cls.NAMES)}
+        return cls(**yields)
 
     def validate_iv(self) -> bool:
         """Check if each IV is between 0 and 32."""
@@ -411,12 +411,12 @@ class Stats:
                 f"unsupported operand type(s) for {operator}: "
                 f"'{type(self)}' and '{type(other)}'"
             )
-        kwargs = {}
+        result_stats = {}
         for stat in self.NAMES:
             if isinstance(other, type(self)):
-                kwargs[stat] = operator(
+                result_stats[stat] = operator(
                     getattr(self, stat), getattr(other, stat)
                 )
             elif isinstance(other, Real):
-                kwargs[stat] = operator(getattr(self, stat), other)
-        return self.__class__(**kwargs)
+                result_stats[stat] = operator(getattr(self, stat), other)
+        return self.__class__(**result_stats)
