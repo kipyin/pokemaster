@@ -4,7 +4,6 @@ from numbers import Real
 from typing import Callable, ClassVar, List, Tuple, Union
 
 import attr
-from attr.validators import instance_of
 from pokedex import formulae
 from pokedex.db import tables as tb
 
@@ -301,16 +300,12 @@ class Stats:
         'speed',
     )
 
-    hp: Union[int, float] = attr.ib(validator=instance_of(Real), default=0)
-    attack: Union[int, float] = attr.ib(validator=instance_of(Real), default=0)
-    defense: Union[int, float] = attr.ib(validator=instance_of(Real), default=0)
-    special_attack: Union[int, float] = attr.ib(
-        validator=instance_of(Real), default=0
-    )
-    special_defense: Union[int, float] = attr.ib(
-        validator=instance_of(Real), default=0
-    )
-    speed: Union[int, float] = attr.ib(validator=instance_of(Real), default=0)
+    hp: Real = 0
+    attack: Real = 0
+    defense: Real = 0
+    special_attack: Real = 0
+    special_defense: Real = 0
+    speed: Real = 0
 
     def __add__(self, other):
         return self._make_operator(operator.add, other)
