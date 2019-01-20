@@ -1,6 +1,7 @@
 import operator
 from functools import partial
-from typing import ClassVar, List, Tuple, Union
+from numbers import Real
+from typing import ClassVar, List, Tuple, Union, Callable
 
 import attr
 from pokedex import formulae
@@ -299,12 +300,24 @@ class Stats:
         'speed',
     )
 
-    hp: Union[int, float]
-    attack: Union[int, float]
-    defense: Union[int, float]
-    special_attack: Union[int, float]
-    special_defense: Union[int, float]
-    speed: Union[int, float]
+    hp: Union[int, float] = 0
+    attack: Union[int, float] = 0
+    defense: Union[int, float] = 0
+    special_attack: Union[int, float] = 0
+    special_defense: Union[int, float] = 0
+    speed: Union[int, float] = 0
+
+    def __add__(self, other):
+        self._make_operator(operator.add, other)
+
+    def __sub__(self, other):
+        self._make_operator(operator.sub, other)
+
+    def __mul__(self, other):
+        self._make_operator(operator.mul, other)
+
+    def __floordiv__(self, other):
+        self._make_operator(operator.floordiv, other)
 
     @classmethod
     def make_nature_modifiers(cls, nature: str) -> 'Stats':
@@ -349,3 +362,29 @@ class Stats:
                     "between 0 and 32 inclusive."
                 )
         return True
+
+    def _make_operator(
+            self,
+            operator: Callable[[Real, Real], Real],
+            other: Union['Stats', Real]
+    ) -> 'Stats':
+        """Programmatically create point-wise operators.
+
+        :param operator: A callable (Real, Real) -> Real.
+        :param other: If ``other`` is a ``Stats`` instance, then the
+            operator will be applied point-wisely. If ``other`` is a
+            number, then a scalar operation will be applied.
+        :return: A ``Stats`` instance.
+        """
+        if not isinstance(other, type(self)) or not isinstance(other, Real):
+            raise TypeError(
+                f"unsupported operand type(s) for {operator}: "
+                f"'{type(self)}' and '{type(other)}'"
+            )
+        kwargs = {}
+        for stat in self.NAMES:
+            if isinstance(other, type(self)):
+                kwargs[stat] = operator(getattr(self, stat), getattr(other, stat))
+            elif isinstance(other, Real):
+                kwargs[stat] = operator(getattr(self, stat), other)
+        return self.__class__(**kwargs)
