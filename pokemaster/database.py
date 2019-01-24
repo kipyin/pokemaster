@@ -54,17 +54,28 @@ def bind_session(session):
 
 
 def get_pokemon(
-    id: int = None, identifier: str = None, name: str = None, **kwargs
+    national_id: int = None, species: str = None, form: str = None
 ) -> tb.Pokemon:
-    if id is None and identifier is None and name is None:
+    """Query a ``pokedex.db.tables.Pokemon`` row.
+
+    :param national_id: The National Pokédex ID.
+    :param species: Pokémon's species, the standard 386, 493, etc.
+    :param form: The form identifier of a Pokémon, such as 'a' for
+        'unown', 'attack' for 'deoxys', etc.
+    :return: a ``pokedex.db.tables.Pokemon`` row.
+    """
+    if national_id is None and species is None:
         raise ValueError('Gimme something to search!')
-    if id is not None and isinstance(id, int):
-        kwargs['id'] = id
-    if identifier is not None and isinstance(identifier, str):
-        kwargs['identifier'] = identifier
-    if name is not None and isinstance(name, str):
-        kwargs['name'] = name
-    return SESSION.query(tb.Pokemon).filter_by(**kwargs).one()
+    query = SESSION.query(tb.Pokemon).join(tb.PokemonForm, tb.PokemonSpecies)
+    if national_id is not None:
+        query = query.filter(tb.PokemonSpecies.id == national_id)
+    if species is not None:
+        query = query.filter(tb.PokemonSpecies.identifier == species)
+    if form is not None:
+        query = query.filter(tb.PokemonForm.form_identifier == form)
+    else:
+        query = query.filter(tb.Pokemon.is_default == 1)
+    return query.one()
 
 
 def pokemon_species(
