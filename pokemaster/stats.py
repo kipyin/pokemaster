@@ -1,3 +1,6 @@
+"""Provides general ``Stats`` class for statistics-related functionality
+and ``Conditions`` class for contests.
+"""
 import operator
 from numbers import Real
 from typing import Callable, ClassVar, Tuple, Union
@@ -17,14 +20,31 @@ class Conditions:
     cuteness: int = 0
     smartness: int = 0
     toughness: int = 0
-    # feel: int = 0
 
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)
 class Stats:
-    """A generic statistics representation."""
+    """A generic statistics representation.
 
-    NAMES: ClassVar[Tuple[str, ...]] = (
+    ``Stats`` instances are "immutable".
+
+    For IV, species strengths (a.k.a. base stats), and EV yields,
+    having ``Stats`` immutable makes perfect sense, since they are
+    either bound to individual Pokémon or shared within a species.
+    For EV and permanent stats, since they should get updated only from
+    adding/subtracting/multiplying/dividing another ``Stats`` instance,
+    being mutable does not do much good for ``Stats``.
+
+    Usage::
+
+        >>> ev = Stats()
+        >>> iv = Stats.make_iv(gene=0x00ff)
+        >>> max_iv = Stats(32, 32, 32, 32, 32, 32)
+        >>> species_strengths = Stats.make_species_strengths('eevee')
+
+    """
+
+    _NAMES: ClassVar[Tuple[str, ...]] = (
         'hp',
         'attack',
         'defense',
@@ -62,9 +82,9 @@ class Stats:
         :param nature: The identifier of a nature.
         :return: A ``Stats`` instance.
         """
-        nature_row = database.nature(identifier=nature)
+        nature_row = database.get_nature(identifier=nature)
         modifiers = {}
-        for stat in cls.NAMES:
+        for stat in cls._NAMES:
             modifiers[stat] = 1
         if nature_row.is_neutral:
             return cls(**modifiers)
@@ -83,7 +103,7 @@ class Stats:
         """
         pokemon = database.get_pokemon(species=species)
         strengths = {}
-        for i, stat in enumerate(cls.NAMES):
+        for i, stat in enumerate(cls._NAMES):
             strengths[stat] = pokemon.stats[i].base_stat
         return cls(**strengths)
 
@@ -112,12 +132,12 @@ class Stats:
         """
         pokemon = database.get_pokemon(species=species)
         stats = pokemon.stats
-        yields = {stat: stats[i].effort for i, stat in enumerate(cls.NAMES)}
+        yields = {stat: stats[i].effort for i, stat in enumerate(cls._NAMES)}
         return cls(**yields)
 
     def validate_iv(self) -> bool:
         """Check if each IV is between 0 and 32."""
-        for stat in self.NAMES:
+        for stat in self._NAMES:
             if not (0 <= getattr(self, stat) <= 32):
                 raise ValueError(
                     f"The {stat} IV ({getattr(self, stat)}) must be a number "
@@ -144,7 +164,7 @@ class Stats:
                 f"'{type(self)}' and '{type(other)}'"
             )
         result_stats = {}
-        for stat in self.NAMES:
+        for stat in self._NAMES:
             if isinstance(other, type(self)):
                 result_stats[stat] = operator(
                     getattr(self, stat), getattr(other, stat)
