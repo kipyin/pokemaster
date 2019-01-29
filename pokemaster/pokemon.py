@@ -1,5 +1,6 @@
 """Basic Pokémon API"""
-from typing import MutableMapping, NoReturn
+from collections import deque
+from typing import MutableMapping, NoReturn, List
 
 from pokedex.db import tables as tb
 
@@ -14,7 +15,7 @@ def _sign(x: int) -> int:
 
 
 class Pokemon:
-    """A Real, Living™ Pokémon in game.
+    """A Real, Living™ Pokémon in the games.
 
     A ``Pokemon`` instance has the exact same attributes and behaviors
     as the ones in game: a Pokémon knows up to four moves, holds some
@@ -79,13 +80,20 @@ class Pokemon:
             national_id=national_id, species=species, form=form
         )
         _growth = database.get_experience(
-            species_identifier=self._species, level=level, exp=experience
+            national_id=national_id,
+            species=species,
+            level=level,
+            exp=experience,
         )
 
         _species = _pokemon.species
         self._national_id = _species.id
         self._species = _species.identifier
         self._form = form
+
+        self._height = _pokemon.height / 10  # In meters
+        self._weight = _pokemon.weight / 10  # In meters
+        self._types = list(map(lambda x: x.identifier, _pokemon.types))
 
         self._level = _growth.level
         self._experience = _growth.experience
@@ -100,12 +108,14 @@ class Pokemon:
             raise TypeError(f"`iv` must be of type `pokemaster.Stats`.")
 
         self._personality = self.prng.create_personality()
-        self._nature = nature or database.nature(self._personality).identifier
+        self._nature = (
+            nature or database.get_nature(self._personality).identifier
+        )
         self._ability = (
             ability
-            or database.ability(self._species, self._personality).identifier
+            or database.get_ability(self._species, self._personality).identifier
         )
-        self._gender = gender or database.pokemon_gender(
+        self._gender = gender or database.get_pokemon_gender(
             _species.gender_rate, self._personality
         )
 
@@ -116,11 +126,10 @@ class Pokemon:
         self._current_hp = self._stats.hp
         self._conditions = Conditions()
 
-        self._height = _pokemon.height / 10  # In meters
-        self._weight = _pokemon.weight / 10  # In meters
-
-        _moves = database.wild_pokemon_moves(_pokemon, self._level)
-        self._moves = list(map(lambda x: x.identifier, _moves))
+        _moves = database.get_pokemon_default_moves(
+            species=self._species, level=self._level
+        )
+        self._moves = deque(map(lambda x: x.identifier, _moves), maxlen=4)
         self._pp = list(map(lambda x: x.pp, _moves))
 
         self._held_item = None
@@ -146,7 +155,7 @@ class Pokemon:
         if self._level < 100:
             return (
                 database.get_experience(
-                    species_identifier=self._species, level=self._level + 1
+                    species=self._species, level=self._level + 1
                 ).experience
                 - self._experience
             )
@@ -170,7 +179,7 @@ class Pokemon:
 
     @property
     def national_id(self) -> int:
-        """Get the Pokémon's national ID."""
+        """The Pokémon's national ID."""
         return self._national_id
 
     @property
@@ -180,13 +189,18 @@ class Pokemon:
 
     @property
     def species(self) -> str:
-        """Get the Pokémon's species."""
+        """The Pokémon's species."""
         return self._species
 
     @property
     def stats(self) -> Stats:
-        """Get the statistics of the Pokémon."""
+        """The statistics of the Pokémon."""
         return self._stats
+
+    @property
+    def types(self) -> List[str]:
+        """The Pokémon's types."""
+        return self._types
 
     def _calculate_stats(self) -> Stats:
         """Get the calculated permanent stats."""
@@ -255,21 +269,36 @@ class Pokemon:
         return evolve
 
     def _evolve(self, trigger: str) -> NoReturn:
-        """Evolve the Pokémon.
+        """A general method for Pokémon evolutions.
 
-        :param trigger:
+        :param trigger: the event that triggers the evolution. Valid
+            triggers are: level-up, trade, use-item, and shed.
         :return: Nothing.
         """
-        for species, conditions in self.evolutions.items():
-            if self._check_evolution_condition(trigger, conditions):
-                evolved_species = species
+        pokemon = database.get_pokemon(species=self._species)
+        for child_species in pokemon.speices.child_species:
+            if self._check_evolution_condition(
+                trigger=trigger, evolution=child_species.evolutions[0]
+            ):
+                evolved_species = child_species
                 break
         else:
             return
-        species = database.pokemon_species(identifier=evolved_species)
-        for evolved_species in species.child_species:
-            conditions = evolved_species.evolutions[0]
-            self.evolutions[evolved_species.identifier] = conditions
+
+        evolved_pokemon = database.get_pokemon(species=evolved_species)
+        self._ability = database.get_ability(
+            species=evolved_pokemon.speices.identifier,
+            personality=self._personality,
+        )
+        self._form = evolved_pokemon.default_form  # TODO: use the correct form
+        self._height = evolved_pokemon.height
+        self._national_id = evolved_pokemon.species.id
+        self._species = evolved_pokemon.species.identifier
+        self._species_strengths = Stats.make_species_strengths(
+            species=evolved_pokemon.species.identifier
+        )
+        self._stats = self._calculate_stats()
+        self._weight = evolved_pokemon.weight
 
     def gain_exp(self, earned_exp: int):
         """Set the get_experience. Level, get_experience-to-next will change if
@@ -297,16 +326,42 @@ class Pokemon:
         if self._level < 100:
             self._experience += earned_exp
 
-    def learn_move(self, move_to_learn: str, move_to_forget: str = None):
+    def _learn_move(
+        self, learn: str, forget: str = None, move_method: str = None
+    ):
         """Learn a new move.
 
         If ``move_to_forget`` is not given, then the last move in the
         move set will be forgotten. HM moves are skipped.
 
-        :param str move_to_learn:
-        :param str move_to_forget:
-        :return:
+        :param str learn: The identifier of the move to learn.
+        :param str forget: The identifier of the move to forget.
+        :return: Nothing.
         """
+        if forget is not None:
+            self._moves.remove(forget)
+        move_pool = database.get_move_pool(
+            species=self._species, move_method=move_method
+        )
+        if learn in map(lambda x: x.move.identifier, move_pool):
+            self._moves.append(learn)
+        else:
+            raise ValueError(f'{self._species} cannot learn move {learn}!')
+
+    def use_machine(self, machine: int, forget: str = None):
+        """Use a TM or HM to learn a new move.
+
+        :param machine: The machine number. For TM's, it is the TM
+            number as-is. For HM's, it is the HM number plus 100. For
+            example, the machine number of TM50 is 50, and the machine
+            number of HM08 is 108.
+        :param forget: The move to forget. If this is ``None``, then
+            the earliest learned move will be forgotten.
+        :return: NoReturn.
+        """
+        self._learn_move(
+            learn=database.get_machine(machine).move.identifier, forget=forget
+        )
 
     def _level_up(self):
         """Increase Pokémon's level by one. Evolve the Pokémon if needed
@@ -318,7 +373,7 @@ class Pokemon:
 
         self._level += 1
         self._experience = database.get_experience(
-            growth_rate_id=self.growth_rate_id, level=self._level
+            species=self._species, level=self._level
         ).experience
         self._stats = self._calculate_stats()
         if self.held_item and self.held_item == 'everstone':
