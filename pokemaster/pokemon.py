@@ -1,6 +1,7 @@
 """Basic Pokémon API"""
 from collections import deque
-from typing import MutableMapping, NoReturn, List
+from numbers import Real
+from typing import MutableMapping, NoReturn, List, Deque
 
 from pokedex.db import tables as tb
 
@@ -15,7 +16,8 @@ def _sign(x: int) -> int:
 
 
 class Pokemon:
-    """A Real, Living™ Pokémon in the games.
+    """
+    A Real, Living™ Pokémon in the games.
 
     A ``Pokemon`` instance has the exact same attributes and behaviors
     as the ones in game: a Pokémon knows up to four moves, holds some
@@ -50,13 +52,13 @@ class Pokemon:
         :param str form: The variant of the Pokémon, in lowercase ASCII.
         :param int level: The current level of the Pokémon. Must be an
             ``int`` between 1 and 100. Needs to be consistent with
-            ``get_experience``, if specified.
+            ``exp``, if specified.
         :param int exp: The current get_experience of the Pokémon.
-            If the level is also specified, the level and the get_experience
-            need to be consistent. At least one of ``level`` and
-            ``get_experience`` must be specified to instantiate a Pokémon.
+            If the level is also specified, the level and the exp.
+            points need to be consistent. At least one of ``level`` and
+            ``exp`` must be specified to instantiate a Pokémon.
             Leaving this to None while having ``level`` set will
-            automatically set the get_experience to the minimum amount
+            automatically set the exp. points to the minimum amount
             required to be at the specified level.
         :param str gender: The Pokémon's gender. It needs to be
             consistent with the Pokémon's gender rate. If the gender
@@ -132,23 +134,23 @@ class Pokemon:
         self._held_item = None
 
     @property
-    def ability(self):
+    def ability(self) -> str:
         """The Pokémon's ability."""
         return self._ability
 
     @property
-    def current_hp(self):
+    def current_hp(self) -> Real:
         """The amount of HP the Pokémon currently has."""
         return self._current_hp
 
     @property
     def exp(self) -> int:
-        """Get the current get_experience points."""
+        """The current exp. points."""
         return self._exp
 
     @property
     def exp_to_next_level(self) -> int:
-        """The get_experience needed to get to the next level."""
+        """The exp. points needed to get to the next level."""
         if self._level < 100:
             return (
                 database.get_experience(
@@ -161,7 +163,7 @@ class Pokemon:
 
     @property
     def form(self) -> str:
-        """Get the Pokémon's form."""
+        """The Pokémon's form."""
         return self._form
 
     @property
@@ -200,7 +202,7 @@ class Pokemon:
         return self._types
 
     def _calculate_stats(self) -> Stats:
-        """Get the calculated permanent stats."""
+        """Calculate the Pokémon's stats."""
         residual_stats = Stats(
             hp=10 + self._level,
             attack=5,
@@ -266,25 +268,25 @@ class Pokemon:
         return evolve
 
     def _evolve(self, trigger: str) -> NoReturn:
-        """A general method for Pokémon evolutions.
+        """Evolve the Pokémon via ``trigger``.
 
         :param trigger: the event that triggers the evolution. Valid
             triggers are: level-up, trade, use-item, and shed.
         :return: Nothing.
         """
         pokemon = database.get_pokemon(species=self._species)
-        for child_species in pokemon.speices.child_species:
+        for child_species in pokemon.species.child_species:
             if self._check_evolution_condition(
                 trigger=trigger, evolution=child_species.evolutions[0]
             ):
-                evolved_species = child_species
+                evolved_species = child_species.identifier
                 break
         else:
             return
 
         evolved_pokemon = database.get_pokemon(species=evolved_species)
         self._ability = database.get_ability(
-            species=evolved_pokemon.speices.identifier,
+            species=evolved_pokemon.species.identifier,
             personality=self._personality,
         )
         self._form = evolved_pokemon.default_form  # TODO: use the correct form
@@ -297,9 +299,8 @@ class Pokemon:
         self._stats = self._calculate_stats()
         self._weight = evolved_pokemon.weight
 
-    def gain_exp(self, earned_exp: int):
-        """Set the get_experience. Level, get_experience-to-next will change if
-        needed.
+    def gain_exp(self, earned_exp: int) -> NoReturn:
+        """Add ``earned_exp`` to the Pokémon's exp. points.
 
         :param earned_exp: The earned get_experience points upon defeating
             an opponent Pokémon.
@@ -309,7 +310,7 @@ class Pokemon:
 
         if earned_exp < 0:
             raise ValueError(
-                f'The new get_experience point, {self._exp + earned_exp}, '
+                f'The new exp. points, {self._exp + earned_exp}, '
                 f'needs to be no less '
                 f'than the current exp, {self._exp}.'
             )
@@ -325,15 +326,15 @@ class Pokemon:
 
     def _learn_move(
         self, learn: str, forget: str = None, move_method: str = None
-    ):
+    ) -> NoReturn:
         """Learn a new move.
 
         If ``move_to_forget`` is not given, then the last move in the
         move set will be forgotten. HM moves are skipped.
 
-        :param str learn: The identifier of the move to learn.
-        :param str forget: The identifier of the move to forget.
-        :return: Nothing.
+        :param str learn: The name of the move to learn.
+        :param str forget: The name of the move to forget.
+        :return: NoReturn.
         """
         if forget is not None:
             self._moves.remove(forget)
@@ -345,7 +346,7 @@ class Pokemon:
         else:
             raise ValueError(f'{self._species} cannot learn move {learn}!')
 
-    def use_machine(self, machine: int, forget: str = None):
+    def use_machine(self, machine: int, forget: str = None) -> NoReturn:
         """Use a TM or HM to learn a new move.
 
         :param machine: The machine number. For TMs, it is the TM
@@ -361,9 +362,8 @@ class Pokemon:
         )
 
     def _level_up(self):
-        """Increase Pokémon's level by one. Evolve the Pokémon if needed
-        and `evolve` is True (i.e. not holding an Everstone, nor canceled
-        by the player.)
+        """
+        Increase Pokémon's level by one. Evolve the Pokémon as needed.
         """
         if self._level >= 100:
             return
