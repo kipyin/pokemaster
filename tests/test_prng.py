@@ -4,23 +4,12 @@ Given a seed, the PRNG should have the exact same behavior.
 The seed and the results are from the following link:
 https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
 """
-
-from hypothesis import given
-from hypothesis.strategies import integers
-
 from pokemaster.prng import PRNG
 
 
 def test_prng_default_seed_is_0():
     prng = PRNG()
     assert prng() == 0
-
-
-@given(integers())
-def test_prng_sanity(seed):
-    prng = PRNG(seed)
-    value = ((0x41C64E6D * seed + 0x6073) & 0xFFFFFFFF) >> 16
-    assert prng() == value
 
 
 def test_next_5():
