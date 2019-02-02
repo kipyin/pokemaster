@@ -1,7 +1,7 @@
 """Basic Pokémon API"""
 from collections import deque
 from numbers import Real
-from typing import MutableMapping, NoReturn, List, Deque
+from typing import Deque, List, MutableMapping, NoReturn
 
 from pokedex.db import tables as tb
 

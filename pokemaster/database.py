@@ -5,7 +5,7 @@ Note that tables should not be passed as arguments! That'll defeat
 the purpose of this module.
 """
 import warnings
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import pokedex
 import pokedex.db
