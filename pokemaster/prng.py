@@ -1,3 +1,6 @@
+"""
+Provides the pseudo-random number generator used in various places.
+"""
 from typing import List, Tuple
 
 
@@ -37,10 +40,14 @@ class PRNG:
 
     def __call__(self) -> int:
         # FIXME: will eventually return StopIteration!
-        return next(self._generator())
+        try:
+            return next(self._generator())
+        except StopIteration:
+            self._seed = 0
+            return next(self._generator())
 
     def reset(self, seed=None):
-        """Reset the generator with seed, if given."""
+        """Reset the generator with a seed, if given."""
         self._seed = seed or 0
 
     def next(self, n=1) -> List[int]:
@@ -48,22 +55,33 @@ class PRNG:
         return [self() for _ in range(n)]
 
     def create_genome(self, method=2) -> Tuple[int, int]:
-        """Generate the PID and IV's using the internal generator. Return
+        """
+        Generate the PID and IVs using the internal generator. Return
         a tuple of two integers, in the order of 'PID' and 'IVs'.
 
         The generated 32-bit IVs is different from how it is actually
         stored.
 
         Checkout [this link](https://www.smogon.com/ingame/rng/pid_iv_creation#rng_pokemon_generation)
-         for more information on Method 1, 2, and 4.
+        for more information on Method 1, 2, and 4.
         """
         return self.create_personality(), self.create_gene(method)
 
     def create_personality(self) -> int:
+        """Create the Personality ID (PID) for a Pokémon.
+
+        :return: int
+        """
         pid_src_1, pid_src_2 = self.next(2)
         return pid_src_1 + (pid_src_2 << 16)
 
-    def create_gene(self, method=2) -> int:
+    def create_gene(self, method: int = 2) -> int:
+        """Create the number used to generate a Pokémon's IVs.
+
+        :param method: the Pokémon generation method. Valid values
+            are 1, 2, and 4.
+        :return: int
+        """
         if method not in (1, 2, 4):
             raise ValueError(
                 'Only methods 1, 2, 4 are supported. For more information on '
