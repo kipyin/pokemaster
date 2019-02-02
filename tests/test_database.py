@@ -33,8 +33,6 @@ def test_get_pokemon_by_national_id():
     """
     A Pokémon's National Pokédex ID alone is enough to determine the
     exact Pokémon we want to get.
-
-    Note that there is only one form for Bulbasaur.
     """
     bulbasaur = database.get_pokemon(national_id=1)
     assert 'bulbasaur' == bulbasaur.identifier
@@ -42,7 +40,7 @@ def test_get_pokemon_by_national_id():
 
 def test_get_pokemon_by_species():
     """
-    A Pokémon's speices (kind) alone is enough to determine the exact
+    A Pokémon's species (kind) alone is enough to determine the exact
     Pokémon we want to get.
     """
     bulbasaur = database.get_pokemon(species='bulbasaur')
