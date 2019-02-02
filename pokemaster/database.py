@@ -227,6 +227,7 @@ def get_ability(species: str, personality: int) -> pokedex.db.tables.Ability:
     return abilities[min(len(abilities) - 1, personality % 2)]
 
 
+# FIXME: change `gender_rate` to `species` (issue #6)
 def get_pokemon_gender(
     gender_rate: int, personality: int
 ) -> pokedex.db.tables.Gender:
@@ -263,6 +264,7 @@ def get_move(move: str = None, move_id: int = None) -> pokedex.db.tables.Move:
     return (SESSION.query(pokedex.db.tables.Move).filter_by(**conditions)).one()
 
 
+# TODO: get it via the machine no. or the move name
 def get_machine(machine_number: int) -> pokedex.db.tables.Machine:
     """Get a TM or HM by the machine number."""
     return (
