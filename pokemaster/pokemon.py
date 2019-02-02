@@ -177,6 +177,11 @@ class Pokemon:
         return self._level
 
     @property
+    def moves(self) -> Deque[str]:
+        """The Pokémon's learned moves."""
+        return self._moves
+
+    @property
     def national_id(self) -> int:
         """The Pokémon's national ID."""
         return self._national_id
