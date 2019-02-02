@@ -32,7 +32,7 @@ class Pokemon:
         national_id: int = None,
         form: str = None,
         level: int = None,
-        experience: int = None,
+        exp: int = None,
         gender: str = None,
         ability: str = None,
         nature: str = None,
@@ -51,7 +51,7 @@ class Pokemon:
         :param int level: The current level of the Pokémon. Must be an
             ``int`` between 1 and 100. Needs to be consistent with
             ``get_experience``, if specified.
-        :param int experience: The current get_experience of the Pokémon.
+        :param int exp: The current get_experience of the Pokémon.
             If the level is also specified, the level and the get_experience
             need to be consistent. At least one of ``level`` and
             ``get_experience`` must be specified to instantiate a Pokémon.
@@ -80,10 +80,7 @@ class Pokemon:
             national_id=national_id, species=species, form=form
         )
         _growth = database.get_experience(
-            national_id=national_id,
-            species=species,
-            level=level,
-            exp=experience,
+            national_id=national_id, species=species, level=level, exp=exp
         )
 
         _species = _pokemon.species
@@ -96,7 +93,7 @@ class Pokemon:
         self._types = list(map(lambda x: x.identifier, _pokemon.types))
 
         self._level = _growth.level
-        self._experience = _growth.experience
+        self._exp = _growth.experience if exp is None else exp
         self._happiness = 0
 
         if iv is None:
@@ -145,19 +142,19 @@ class Pokemon:
         return self._current_hp
 
     @property
-    def experience(self) -> int:
+    def exp(self) -> int:
         """Get the current get_experience points."""
-        return self._experience
+        return self._exp
 
     @property
-    def experience_to_next(self) -> int:
+    def exp_to_next_level(self) -> int:
         """The get_experience needed to get to the next level."""
         if self._level < 100:
             return (
                 database.get_experience(
                     species=self._species, level=self._level + 1
                 ).experience
-                - self._experience
+                - self._exp
             )
         else:
             return 0
@@ -308,23 +305,23 @@ class Pokemon:
             an opponent Pokémon.
         :return: Nothing.
         """
-        # earned_exp = new_exp - self._experience
+        # earned_exp = new_exp - self._exp
 
         if earned_exp < 0:
             raise ValueError(
-                f'The new get_experience point, {self._experience + earned_exp}, '
+                f'The new get_experience point, {self._exp + earned_exp}, '
                 f'needs to be no less '
-                f'than the current exp, {self._experience}.'
+                f'than the current exp, {self._exp}.'
             )
-        while self._level < 100 and earned_exp >= self.experience_to_next:
-            earned_exp -= self.experience_to_next
+        while self._level < 100 and earned_exp >= self.exp_to_next_level:
+            earned_exp -= self.exp_to_next_level
             self._level_up()  # <- where evolution and other magic take place.
 
         # At this point, the incremental_exp is not enough to let the
         # Pokémon level up anymore. But we still need to check if it
         # overflows
         if self._level < 100:
-            self._experience += earned_exp
+            self._exp += earned_exp
 
     def _learn_move(
         self, learn: str, forget: str = None, move_method: str = None
@@ -351,8 +348,8 @@ class Pokemon:
     def use_machine(self, machine: int, forget: str = None):
         """Use a TM or HM to learn a new move.
 
-        :param machine: The machine number. For TM's, it is the TM
-            number as-is. For HM's, it is the HM number plus 100. For
+        :param machine: The machine number. For TMs, it is the TM
+            number as-is. For HMs, it is the HM number plus 100. For
             example, the machine number of TM50 is 50, and the machine
             number of HM08 is 108.
         :param forget: The move to forget. If this is ``None``, then
@@ -372,7 +369,7 @@ class Pokemon:
             return
 
         self._level += 1
-        self._experience = database.get_experience(
+        self._exp = database.get_experience(
             species=self._species, level=self._level
         ).experience
         self._stats = self._calculate_stats()
