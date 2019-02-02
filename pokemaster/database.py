@@ -60,8 +60,6 @@ def _check_completeness(
 ) -> Optional[bool]:
     """Return True if at least one argument in args is not None."""
     for arg in args:
-        if isinstance(arg, Iterable):
-            return _check_completeness(*arg)
         if arg is not None:
             return True
     else:
@@ -133,7 +131,6 @@ def get_experience_table(
 def get_experience(
     national_id: int = None,
     species: str = None,
-    growth_rate_id: int = None,
     level: int = None,
     exp: int = None,
 ) -> pokedex.db.tables.Experience:
