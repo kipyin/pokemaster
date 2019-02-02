@@ -26,7 +26,7 @@ class Pokemon:
     can be cured by using medicines, and much more.
     """
 
-    prng = PRNG()
+    _prng = PRNG()
 
     def __init__(
         self,
@@ -99,14 +99,14 @@ class Pokemon:
         self._happiness = 0
 
         if iv is None:
-            _gene = self.prng.create_gene()
+            _gene = self._prng.create_gene()
             self._iv = Stats.make_iv(_gene)
         elif isinstance(iv, Stats) and iv.validate_iv():
             self._iv = iv
         else:
             raise TypeError(f"`iv` must be of type `pokemaster.Stats`.")
 
-        self._personality = self.prng.create_personality()
+        self._personality = self._prng.create_personality()
         self._nature = (
             nature or database.get_nature(self._personality).identifier
         )
