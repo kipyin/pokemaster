@@ -1,561 +1,387 @@
-#!/usr/bin/env python3
-"""
-    Basic Pokémon API
+"""Basic Pokémon API"""
+from collections import deque
+from numbers import Real
+from typing import Deque, List, MutableMapping, NoReturn
 
-"""
-from enum import IntEnum
-from typing import AnyStr, ClassVar, List, Tuple, Union
-
-import attr
-from attr.validators import instance_of as _instance_of
-from pokedex import formulae
 from pokedex.db import tables as tb
-from sqlalchemy.orm.exc import NoResultFound
 
-from pokemaster.session import get_session
-
-
-# FIXME: What's the point of using attr here?
-@attr.s(slots=True)
-class PRNG:
-    """A linear congruential random number generator.
-
-    Usage::
-
-        >>> prng = PRNG()
-        >>> prng()
-        0
-        >>> prng()
-        59774
-        >>> prng.reset(seed=0x1A56B091)
-        >>> prng()
-        475
-        >>> prng = PRNG(seed=0x1A56B091)
-        >>> prng()
-        475
-
-    References:
-        https://bulbapedia.bulbagarden.net/wiki/Pseudorandom_number_generation_in_Pokémon
-        https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
-    """
-
-    # In Emerald, the initial seed is always 0.
-    _seed: int = attr.ib(default=0, validator=_instance_of(int))
-
-    # XXX: __iter__?
-    def _generator(self):
-        while True:
-            self._seed = (0x41C64E6D * self._seed + 0x6073) & 0xFFFFFFFF
-            yield self._seed >> 16
-
-    def __call__(self) -> int:
-        # FIXME: will eventually return StopIteration!
-        return next(self._generator())
-
-    def reset(self, seed=None):
-        """Reset the generator with seed, if given."""
-        self._seed = seed or 0
-
-    def next(self, n=1) -> List[int]:
-        """Generate the next n random numbers."""
-        return [self() for _ in range(n)]
-
-    # FIXME: Can we have a better name, plz?
-    # XXX: ivs -> genome?
-    def create_pid_ivs(self, method=2) -> Tuple[int, int]:
-        """Generate the PID and IV's using the internal generator. Return
-        a tuple of two integers, in the order of 'PID' and 'IVs'.
-
-        XXX: The two calls are consecutive?
-
-        The generated 32-bit IVs is different from how it is actually
-        stored.
-
-        Checkout [this link](https://www.smogon.com/ingame/rng/pid_iv_creation#rng_pokemon_generation)
-         for more information on Method 1, 2, and 4.
-        """
-        if method not in (1, 2, 4):
-            raise ValueError(
-                'Only methods 1, 2, 4 are supported. For more information on '
-                'the meaning of the methods, see '
-                'https://www.smogon.com/ingame/rng/pid_iv_creation#rng_pokemon_generation'
-                ' for help.'
-            )
-        elif method == 1:
-            pid1, pid2, iv1, iv2 = self.next(4)
-        elif method == 2:
-            pid1, pid2, _, iv1, iv2 = self.next(5)
-        else:  # method == 4:
-            pid1, pid2, iv1, _, iv2 = self.next(5)
-
-        pid = pid1 + (pid2 << 16)
-        ivs = iv1 + (iv2 << 16)
-
-        return (pid, ivs)
+from pokemaster import database
+from pokemaster.prng import PRNG
+from pokemaster.stats import Conditions, Stats
 
 
-class Gender(IntEnum):
-
-    FEMALE = 1
-    MALE = 2
-    GENDERLESS = 3
-
-
-@attr.s(slots=True, auto_attribs=True)
-class Stats:
-    """A Pokémon stats vector."""
-
-    hp: int = 0
-    attack: int = 0
-    defense: int = 0
-    special_attack: int = 0
-    special_defense: int = 0
-    speed: int = 0
-
-    stat_names: tuple = attr.ib(
-        default=(
-            'hp',
-            'attack',
-            'defense',
-            'special_attack',
-            'special_defense',
-            'speed',
-        ),
-        repr=False,
-        init=False,
-    )
-
-    # # Aliases
-    # @property
-    # def atk(self):
-    #     return self.attack
-
-    # @property
-    # def def(self):
-    #     return self.defense
-
-    # @property
-    # def spatk(self):
-    #     return self.special_attack
-
-    # @property
-    # def spdef(self):
-    #     return self.special_defense
-
-    # @property
-    # def spd(self):
-    #     return self.speed
-
-    def astuple(self) -> tuple:
-        """Return a tuple of the 8 stats."""
-        return tuple([getattr(self, stat) for stat in self.stat_names])
-
-    def asdict(self) -> dict:
-        """Return a dict of the 8 stats."""
-        return {stat: getattr(self, stat) for stat in self.stat_names}
-
-
-@attr.s
-class EffortValue(Stats):
-    def set(self, **stats):
-        """Set the effort value.
-
-        Each stat cannot exceed 255, and the sum cannot exceed 510.
-        """
-        total = 0
-        for stat, value in stats.items():
-            added_value = getattr(self, stat) + value
-            if added_value > 255:
-                raise ValueError(
-                    f'{stat} cannot exceed 255. Current: {added_value}.'
-                )
-            total += added_value
-
-        if total > 510:
-            raise ValueError(f'Total EVs cannot exceed 510. Current: {total}.')
-
-        for stat, value in stats.items():
-            setattr(self, stat, value)
-
-
-@attr.s(auto_attribs=True)
-class Trainer:
-    """A trainer"""
-
-    prng: ClassVar[PRNG] = None
-    name: AnyStr  # TODO: Restrict to charsets only.
-
-    def __attrs_post_init__(self):
-        self.id = self.prng()
-        self.secret_id = self.prng()
+def _sign(x: int) -> int:
+    """Get the sign of ``x``."""
+    return int(abs(x) / x)
 
 
 class Pokemon:
-    """A Pokémon"""
+    """
+    A Real, Living™ Pokémon in the games.
 
-    session: ClassVar = get_session()
-    prng: ClassVar[PRNG] = PRNG()
+    A ``Pokemon`` instance has the exact same attributes and behaviors
+    as the ones in game: a Pokémon knows up to four moves, holds some
+    kind of item, have stats (hp, attack, speed, etc.), can level up
+    and evolve to another Pokémon, can be in some status conditions,
+    can be cured by using medicines, and much more.
+    """
+
+    _prng = PRNG()
 
     def __init__(
-        self, identity: Union[str, int], level=None, pid_method=2, is_egg=False
+        self,
+        species: str = None,
+        national_id: int = None,
+        form: str = None,
+        level: int = None,
+        exp: int = None,
+        gender: str = None,
+        ability: str = None,
+        nature: str = None,
+        iv: Stats = None,
     ):
+        """Instantiate a Pokémon.
 
-        self._pokemon = self._get_pokemon(identity)
-
-        if level is None:
-            pass
-        elif isinstance(level, int):
-            if level not in range(0, 101):
-                raise ValueError(
-                    f'Invalid level {level}. Level must be between 0 and 100.'
-                )
-        else:
-            raise TypeError(f'Level must be an int, not a {type(level)}')
-
-        # The PRNG should not be wasted on invalid Pokémon calls, so this
-        # is called after a Pokémon is validated.
-        self._pid, self._ivs = self.prng.create_pid_ivs(method=pid_method)
-
-        # TODO: @property? Assigning a trainer to a Pokémon will change
-        # the Pokémon's current trainer and the original trainer.
-        # Does shininess change?
-        self.trainer = None
-        self._original_trainer = None
-        self._current_trainer = None
-
-        # These are mutable (upon evolution).
-        # Basically the underlying self._pokemon will change.
-        self.id = self._pokemon.id
-        self.identifier = self._pokemon.identifier
-        self.name = self._pokemon.name
-
-        # XXX: Hmmm is there a more descriptive way to do this?
-        self.is_egg = is_egg
-        # Can only be changed via gaining experience and applying Rare
-        # Candies?
-        if self.is_egg:
-            self._level = 0
-        else:
-            self._level = level or 5
-
-        _abilities = self._pokemon.abilities
-        if len(_abilities) == 1:
-            self.ability = _abilities[0]
-        else:
-            self.ability = _abilities[self._pid % 2]
-
-        # Completely determined by the PID? Immutable once this Pokémon
-        # is spawn?
-        self.nature = (
-            self.session.query(tb.Nature)
-            .filter_by(game_index=self._pid % 25)
-            .one()
-        )
-        # fmt: off
-        if self.nature.is_neutral:
-            self._nature_modifiers = Stats()
-        else:
-            self._nature_modifiers = Stats(
-                **{
-                    self.nature.increased_stat.identifier.replace('-', '_'): 1.1,
-                    self.nature.decreased_stat.identifier.replace('-', '_'): 0.9
-                }
-            )
-        # fmt: on
-
-        # Also mutable upon evolution.
-        self._learnable_moves = (
-            self.session.query(tb.Move)
-            .join(tb.PokemonMove, tb.Move.id == tb.PokemonMove.move_id)
-            .join(tb.PokemonMove.version_group)
-            .join(tb.PokemonMove.method)
-            .filter(tb.PokemonMove.pokemon_id == self.id)
-            .filter(tb.VersionGroup.identifier == 'emerald')  # Hack
-        )
-
-        # Should be settable, but only in certain ways.
-        self.moves = (
-            self._learnable_moves.filter(tb.PokemonMove.level <= self._level)
-            .filter(tb.PokemonMoveMethod.identifier == 'level-up')
-            .order_by(tb.PokemonMove.level.desc(), tb.PokemonMove.order)
-            .limit(4)
-            .all()
-        )
-
-        # Will never ever change.
-        self.individual_values = Stats(
-            hp=self._ivs % 32,
-            attack=(self._ivs >> 5) % 32,
-            defense=(self._ivs >> 10) % 32,
-            speed=(self._ivs >> 16) % 32,
-            special_attack=(self._ivs >> 21) % 32,
-            special_defense=(self._ivs >> 26) % 32,
-        )
-
-        # Will change upon evolution.
-        base_stats = (
-            self.session.query(tb.PokemonStat)
-            .join(tb.Stat)
-            .filter(tb.PokemonStat.pokemon_id == self.id)
-            .filter(tb.Stat.is_battle_only == False)
-            .all()
-        )
-
-        def _stat_attr(base_stat) -> str:
-            """Get the stat attributes (hp, attack, etc.) from identifiers."""
-            return base_stat.stat.identifier.replace('-', '_')
-
-        # fmt: off
-        # Base stats and effort points will change upon evolution.
-        # effort values should be settable?
-        self.base_stats = Stats(**dict(map(lambda x: (_stat_attr(x), x.base_stat), base_stats)))
-        self.effort_points = Stats(**dict(map(lambda x: (_stat_attr(x), x.effort), base_stats)))
-        self.effort_values = EffortValue(**dict(map(lambda x: (_stat_attr(x), 0), base_stats)))
-        # fmt: on
-        self._stats = self._calculate_stats()
-
-        self._experience = self._get_experience(level=self._level)
-
-    def __repr__(self):
-        return f'<A lvl {self.level} No.{self.id} {self._pokemon.name} at {id(self)}>'
-
-    # TODO: make the args (*args, **kwargs) to allow initialzing from
-    # arbitrary criteria.
-    def _get_pokemon(self, identity):
-        """Set the pokemon property by the id or identifier.
-
-        This method should be called first when initializing a Pokémon.
+        :param str species: The species of the Pokémon, in lowercase
+            ASCII.
+        :param int national_id: The Pokémon's index number in the
+            National Pokédex. At least one of ``species`` and
+            ``national_id`` must be specified to instantiate a Pokémon.
+            If both are present, then they need to be consistent with
+            each other.
+        :param str form: The variant of the Pokémon, in lowercase ASCII.
+        :param int level: The current level of the Pokémon. Must be an
+            ``int`` between 1 and 100. Needs to be consistent with
+            ``exp``, if specified.
+        :param int exp: The current get_experience of the Pokémon.
+            If the level is also specified, the level and the exp.
+            points need to be consistent. At least one of ``level`` and
+            ``exp`` must be specified to instantiate a Pokémon.
+            Leaving this to None while having ``level`` set will
+            automatically set the exp. points to the minimum amount
+            required to be at the specified level.
+        :param str gender: The Pokémon's gender. It needs to be
+            consistent with the Pokémon's gender rate. If the gender
+            is not set, a random gender will be assigned based on the
+            Pokémon's gender rate and the personality ID.
+        :param str ability: The Pokémon's ability. The ability needs
+            to be consistent with the Pokémon's species. If this is not
+            specified, a random ability will be determined from the
+            personality ID.
+        :param str nature: The Pokémon's nature. If this is not
+            specified, a random nature will be determined from the
+            personality ID.
+        :param MutableMapping[str, int] iv: A dictionary of the
+            Pokémon's individual values. The keys are the names of the
+            statistics (hp, attack, defense, special-attack,
+            special-defense, speed). Each individual value must not
+            exceed 32. If it is not specified, a random set of IV's will
+            be generated using the PRNG.
         """
-        try:
-            if isinstance(identity, str):
-                return (
-                    self.session.query(tb.Pokemon)
-                    .filter_by(identifier=identity)
-                    .one()
-                )
-            elif isinstance(identity, int):
-                return (
-                    self.session.query(tb.Pokemon).filter_by(id=identity).one()
-                )
-            else:
-                raise TypeError(
-                    f'`identity` must be a str or an int, not {type(identity)}'
-                )
-        except NoResultFound:
-            raise ValueError(f'Cannot find pokemon {identity}.')
-
-    def _get_experience(self, level):
-        """Look up this Pokémon's experience at various levels."""
-        return (
-            self.session.query(tb.Experience)
-            .filter_by(
-                growth_rate_id=self._pokemon.species.growth_rate_id, level=level
-            )
-            .one()
-            .experience
+        _pokemon = database.get_pokemon(
+            national_id=national_id, species=species, form=form
         )
+        _growth = database.get_experience(
+            national_id=national_id, species=species, level=level, exp=exp
+        )
+
+        _species = _pokemon.species
+        self._national_id = _species.id
+        self._species = _species.identifier
+        self._form = form
+
+        self._height = _pokemon.height / 10  # In meters
+        self._weight = _pokemon.weight / 10  # In meters
+        self._types = list(map(lambda x: x.identifier, _pokemon.types))
+
+        self._level = _growth.level
+        self._exp = _growth.experience if exp is None else exp
+        self._happiness = 0
+
+        if iv is None:
+            _gene = self._prng.create_gene()
+            self._iv = Stats.make_iv(_gene)
+        elif isinstance(iv, Stats) and iv.validate_iv():
+            self._iv = iv
+        else:
+            raise TypeError(f"`iv` must be of type `pokemaster.Stats`.")
+
+        self._personality = self._prng.create_personality()
+        self._nature = (
+            nature or database.get_nature(self._personality).identifier
+        )
+        self._ability = (
+            ability
+            or database.get_ability(self._species, self._personality).identifier
+        )
+        self._gender = gender or database.get_pokemon_gender(
+            _species.gender_rate, self._personality
+        )
+
+        self._species_strengths = Stats.make_species_strengths(self._species)
+        self._nature_modifiers = Stats.make_nature_modifiers(self._nature)
+        self._ev = Stats()
+        self._stats = self._calculate_stats()
+        self._current_hp = self._stats.hp
+        self._conditions = Conditions()
+
+        _moves = database.get_pokemon_default_moves(
+            species=self._species, level=self._level
+        )
+        self._moves = deque(map(lambda x: x.identifier, _moves), maxlen=4)
+        self._pp = list(map(lambda x: x.pp, _moves))
+
+        self._held_item = None
 
     @property
-    def _experience_to_next(self) -> int:
-        """The experience needed to get to the next level."""
+    def ability(self) -> str:
+        """The Pokémon's ability."""
+        return self._ability
+
+    @property
+    def current_hp(self) -> Real:
+        """The amount of HP the Pokémon currently has."""
+        return self._current_hp
+
+    @property
+    def exp(self) -> int:
+        """The current exp. points."""
+        return self._exp
+
+    @property
+    def exp_to_next_level(self) -> int:
+        """The exp. points needed to get to the next level."""
         if self._level < 100:
             return (
-                self._get_experience(level=self._level + 1) - self._experience
+                database.get_experience(
+                    species=self._species, level=self._level + 1
+                ).experience
+                - self._exp
             )
         else:
             return 0
 
     @property
-    def experience(self) -> int:
-        """The current experience points the Pokémon has."""
-        return self._experience
-
-    # XXX: use gain_exp of some sort instead? This can be confusing?
-    @experience.setter
-    def experience(self, new_exp: int):
-        """Set the experience. Level, experience-to-next will change if
-        needed.
-
-        Usage::
-            >>> pokemon.experience += 53
-        """
-        incremental_exp = new_exp - self._experience
-
-        # XXX: No known mechanism decreases the exp, right?
-        if incremental_exp < 0:
-            raise ValueError(
-                f'The new experience point, {new_exp}, needs to be no less '
-                f'than the current exp, {self._experience}.'
-            )
-        while self.level < 100 and incremental_exp >= self._experience_to_next:
-            incremental_exp -= self._experience_to_next
-            self._level_up()  # <- where evolution and other magic take place.
-
-        # At this point, the incremental_exp is not enough to let the
-        # Pokémon level up anymore. But we still need to check if it
-        # overflows
-        if self._level < 100:
-            self._experience += incremental_exp
-        ...
-
-    def learnable(self, move: tb.Move) -> bool:
-        """Check if the Pokémon can learn a certain move or not.
-
-        This will probably be used when a player is trying to use a TM
-        or HM on a Pokémon, and display "XXX can't learn this move!" if
-        this method returns False.
-        """
-        return move.id in map(lambda x: x.id, self._learnable_moves)
-
-    def _calculate_stats(self) -> Stats:
-        """Return the calculated stats."""
-        stats = Stats()
-        for stat in stats.stat_names:
-            if stat == 'hp':
-                func = formulae.calculated_hp
-            else:
-                func = formulae.calculated_stat
-            # A nature modifier with value 0 is OK, it will fail the clause
-            # `if nature:` and skip the stats modification.
-            setattr(
-                stats,
-                stat,
-                func(
-                    base_stat=getattr(self.base_stats, stat),
-                    level=self.level,
-                    iv=getattr(self.individual_values, stat),
-                    effort=getattr(self.effort_values, stat),
-                    nature=getattr(self._nature_modifiers, stat),
-                ),
-            )
-        return stats
-
-    # XXX: Should `gender` return a tb.Gender or a Gender Enum?
-    @property
-    def gender(self) -> Gender:
-        if self._pokemon.species.gender_rate == -1:  # Genderless
-            return Gender.GENDERLESS
-        elif self._pokemon.species.gender_rate == 8:  # Female-only
-            return Gender.FEMALE
-        elif self._pokemon.species.gender_rate == 0:  # Male-only
-            return Gender.MALE
-        else:
-            # Gender is determined by the last byte of the PID.
-            p_gender = self._pid % 0x100
-            gender_threshold = 0xFF * self._pokemon.species.gender_rate // 8
-            if p_gender >= gender_threshold:
-                return Gender.MALE
-            else:
-                return Gender.FEMALE
+    def form(self) -> str:
+        """The Pokémon's form."""
+        return self._form
 
     @property
-    def stats(self):
-        """The calculated stats. Stats are re-calculated only when
-        leveling up, or taking a Vitamin.
-        """
+    def held_item(self) -> str:
+        """The item the Pokémon is currently holding."""
+        return self._held_item
+
+    @property
+    def level(self) -> int:
+        """The Pokémon's level."""
+        return self._level
+
+    @property
+    def moves(self) -> Deque[str]:
+        """The Pokémon's learned moves."""
+        return self._moves
+
+    @property
+    def national_id(self) -> int:
+        """The Pokémon's national ID."""
+        return self._national_id
+
+    @property
+    def nature(self) -> str:
+        """The Pokémon's nature."""
+        return self._nature
+
+    @property
+    def species(self) -> str:
+        """The Pokémon's species."""
+        return self._species
+
+    @property
+    def stats(self) -> Stats:
+        """The statistics of the Pokémon."""
         return self._stats
 
     @property
-    def iv(self):
-        """Alias to individual_values."""
-        return self.individual_values
+    def types(self) -> List[str]:
+        """The Pokémon's types."""
+        return self._types
 
-    @property
-    def shiny(self):
-        if self.trainer is not None:
-            return (
-                self.trainer.id
-                ^ self.trainer.secret_id
-                ^ (self._pid >> 16)
-                ^ (self._pid % 0xFFFF)
-            ) < 0b111
-        else:
-            return False
+    def _calculate_stats(self) -> Stats:
+        """Calculate the Pokémon's stats."""
+        residual_stats = Stats(
+            hp=10 + self._level,
+            attack=5,
+            defense=5,
+            special_attack=5,
+            special_defense=5,
+            speed=5,
+        )
+        stats = (
+            (self._species_strengths * 2 + self._iv + self._ev // 4)
+            * self._level
+            // 100
+            + residual_stats
+        ) * self._nature_modifiers
+        if self._species_strengths.hp == 1:
+            stats.hp = 1
+        return stats
 
-    @property
-    def level(self):
-        return self._level
-
-    def _level_up(self, evolve=True):
-        """Increase Pokémon's level by one. Evolve the Pokémon if needed
-        and `evolve` is True (i.e. not holding an Everstone, nor canceled
-        by the player.)
-        """
-        if self._level < 100:
-            self._level += 1
-            self._experience = self._get_experience(self._level)
-            # Only re-calculate the stats upon leveling up.
-            self._stats = self._calculate_stats()
-            self._evolve_by_leveling_up()
-        else:
-            # Log no effect?
-            ...
-
-    def _evolve_by_leveling_up(self):
-        """Evolve the Pokémon triggered by leveling up."""
-        # self._pokemon = self._get_pokemon('')
-        child_species = self._pokemon.species.child_species
-        for species in child_species:
-            evolution = species.evolutions[0]
-            if evolution.trigger.identifier == 'level-up':
-                # Check all conditions
-                if self._check_evolution_condition(evolution):
-                    self._pokemon = self._get_pokemon(species.id)
-                break
-                ...
-
-    def _check_evolution_condition(self, evolution):
+    def _check_evolution_condition(
+        self, trigger: str, evolution: tb.PokemonEvolution
+    ) -> bool:
         """Check the evolution conditions."""
+        if trigger != evolution.trigger.identifier:
+            return False
         evolve = False
         if evolution.minimum_level:
             # The minimum level for the Pokémon.
             evolve = True if self._level >= evolution.minimum_level else False
-        if evolution.gender:
-            # the Pokémon’s required gender, or None if gender doesn’t matter
-            evolve = True if self._gender == evolution.gender.id else False
-        if evolution.location:
-            # the location the evolution must be triggered at.
-            ...
         if evolution.held_item:
             # the item the Pokémon must hold.
-            ...
+            if self.held_item and self.held_item == evolution.held_item:
+                evolve = True
         if evolution.time_of_day:
             # The required time of day. enum: [day, night]
             ...
         if evolution.known_move:
             # the move the Pokémon must know.
             ...
-        if evolution.known_move_type:
-            # the type the Pokémon must know a move of.
-            ...
         if evolution.minimum_happiness:
             # The minimum happiness value the Pokémon must have.
-            ...
+            evolve = (
+                True
+                if self._happiness >= evolution.minimum_happiness
+                else False
+            )
         if evolution.minimum_beauty:
             # The minimum Beauty value the Pokémon must have.
-            ...
-        if evolution.minimum_affection:
-            # The minimum number of “affection” hearts the Pokémon must have
-            # in Pokémon-Amie.
-            ...
+            evolve = (
+                True
+                if self._conditions.beauty >= evolution.minimum_beauty
+                else False
+            )
         if evolution.relative_physical_stats:
             # The required relation between the Pokémon’s Attack and Defense
             # stats, as sgn(atk-def).
-            ...
+            if evolution.relative_physical_stats == _sign(
+                self.stats.attack - self.stats.defense
+            ):
+                evolve = True
         if evolution.party_species:
             # the species that must be present in the party.
             ...
-        if evolution.party_type:
-            # a type that at least one party member must have.
-            ...
-        if evolution.trade_species:
-            # the species for which this one must be traded.
-            ...
-        if evolution.needs_overworld_rain:
-            # True iff it needs to be raining outside of battle.
-            ...
-        if evolution.turn_upside_down:
-            # True iff the 3DS needs to be turned upside-down as this Pokémon
-            # levels up.
-            ...
         return evolve
+
+    def _evolve(self, trigger: str) -> NoReturn:
+        """Evolve the Pokémon via ``trigger``.
+
+        :param trigger: the event that triggers the evolution. Valid
+            triggers are: level-up, trade, use-item, and shed.
+        :return: Nothing.
+        """
+        pokemon = database.get_pokemon(species=self._species)
+        for child_species in pokemon.species.child_species:
+            if self._check_evolution_condition(
+                trigger=trigger, evolution=child_species.evolutions[0]
+            ):
+                evolved_species = child_species.identifier
+                break
+        else:
+            return
+
+        evolved_pokemon = database.get_pokemon(species=evolved_species)
+        self._ability = database.get_ability(
+            species=evolved_pokemon.species.identifier,
+            personality=self._personality,
+        )
+        self._form = evolved_pokemon.default_form  # TODO: use the correct form
+        self._height = evolved_pokemon.height
+        self._national_id = evolved_pokemon.species.id
+        self._species = evolved_pokemon.species.identifier
+        self._species_strengths = Stats.make_species_strengths(
+            species=evolved_pokemon.species.identifier
+        )
+        self._stats = self._calculate_stats()
+        self._weight = evolved_pokemon.weight
+
+    def gain_exp(self, earned_exp: int) -> NoReturn:
+        """Add ``earned_exp`` to the Pokémon's exp. points.
+
+        :param earned_exp: The earned get_experience points upon defeating
+            an opponent Pokémon.
+        :return: Nothing.
+        """
+        # earned_exp = new_exp - self._exp
+
+        if earned_exp < 0:
+            raise ValueError(
+                f'The new exp. points, {self._exp + earned_exp}, '
+                f'needs to be no less '
+                f'than the current exp, {self._exp}.'
+            )
+        while self._level < 100 and earned_exp >= self.exp_to_next_level:
+            earned_exp -= self.exp_to_next_level
+            self._level_up()  # <- where evolution and other magic take place.
+
+        # At this point, the incremental_exp is not enough to let the
+        # Pokémon level up anymore. But we still need to check if it
+        # overflows
+        if self._level < 100:
+            self._exp += earned_exp
+
+    def _learn_move(
+        self, learn: str, forget: str = None, move_method: str = None
+    ) -> NoReturn:
+        """Learn a new move.
+
+        If ``move_to_forget`` is not given, then the last move in the
+        move set will be forgotten. HM moves are skipped.
+
+        :param str learn: The name of the move to learn.
+        :param str forget: The name of the move to forget.
+        :return: NoReturn.
+        """
+        if forget is not None:
+            self._moves.remove(forget)
+        move_pool = database.get_move_pool(
+            species=self._species, move_method=move_method
+        )
+        if learn in map(lambda x: x.move.identifier, move_pool):
+            self._moves.append(learn)
+        else:
+            raise ValueError(f'{self._species} cannot learn move {learn}!')
+
+    def use_machine(self, machine: int, forget: str = None) -> NoReturn:
+        """Use a TM or HM to learn a new move.
+
+        :param machine: The machine number. For TMs, it is the TM
+            number as-is. For HMs, it is the HM number plus 100. For
+            example, the machine number of TM50 is 50, and the machine
+            number of HM08 is 108.
+        :param forget: The move to forget. If this is ``None``, then
+            the earliest learned move will be forgotten.
+        :return: NoReturn.
+        """
+        self._learn_move(
+            learn=database.get_machine(machine).move.identifier, forget=forget
+        )
+
+    def _level_up(self):
+        """
+        Increase Pokémon's level by one. Evolve the Pokémon as needed.
+        """
+        if self._level >= 100:
+            return
+
+        self._level += 1
+        self._exp = database.get_experience(
+            species=self._species, level=self._level
+        ).experience
+        self._stats = self._calculate_stats()
+        if self.held_item and self.held_item == 'everstone':
+            return
+        self._evolve('level-up')
+
+
+if __name__ == '__main__':
+    p = Pokemon('eevee', level=5)
