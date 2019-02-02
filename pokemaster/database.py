@@ -5,7 +5,7 @@ Note that tables should not be passed as arguments! That'll defeat
 the purpose of this module.
 """
 import warnings
-from typing import List, Tuple, Optional, Iterable
+from typing import List, Tuple, Optional
 
 import pokedex
 import pokedex.db
@@ -193,7 +193,7 @@ def get_pokemon_default_moves(
 ) -> Tuple[pokedex.db.tables.Move]:
     """Determine the moves of a wild Pokémon."""
     pokemon = get_pokemon(national_id, species, form)
-    pokemon_moves: List[pokedex.db.tables.PokemonMove] = (
+    pokemon_moves: List[pokedex.db.tables.PokemonMove] = reversed(
         SESSION.query(pokedex.db.tables.PokemonMove)
         .join(pokedex.db.tables.PokemonMoveMethod)
         .join(pokedex.db.tables.VersionGroup)
