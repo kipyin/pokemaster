@@ -98,11 +98,8 @@ def get_pokemon(
     return query.one()
 
 
-def get_experience_table(
-    national_id: int = None,
-    species: str = None,
-    form: str = None,
-    growth_rate_id: int = None,
+def _get_experience_table(
+    national_id: int = None, species: str = None
 ) -> sqlalchemy.orm.query.Query:
     """Get an experience table specific to the species.
 
@@ -132,9 +129,7 @@ def get_experience(
     if level is None and exp is None:
         raise ValueError('Gimme something to look up!')
 
-    query = get_experience_table(
-        national_id=national_id, species=species, growth_rate_id=growth_rate_id
-    )
+    query = _get_experience_table(national_id=national_id, species=species)
     if level is not None:
         query = query.filter_by(level=level)
     if exp is not None:
@@ -259,11 +254,13 @@ def get_pokemon_gender(
 
 def get_move(move: str = None, move_id: int = None) -> pokedex.db.tables.Move:
     """"""
-    return (
-        SESSION.query(pokedex.db.tables.Move).filter_by(
-            identifier=move, id=move_id
-        )
-    ).one()
+    _check_completeness(move, move_id)
+    conditions = {'generation': 3}
+    if move is not None:
+        conditions['identifier'] = move
+    if move_id is not None:
+        conditions['id'] = move_id
+    return (SESSION.query(pokedex.db.tables.Move).filter_by(**conditions)).one()
 
 
 def get_machine(machine_number: int) -> pokedex.db.tables.Machine:
