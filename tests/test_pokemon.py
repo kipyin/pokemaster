@@ -1,194 +1,95 @@
-import attr
-import pytest
-
+"""
+Tests for `pokemaster.Pokemon`.
+"""
 from pokemaster.pokemon import Pokemon
-from pokemaster.prng import PRNG
-from pokemaster.stats import EV
 
 
-@pytest.fixture(scope='class')
-def bulbasaur():
-    """Instantiate a Bulbasaur.
-
-    According to the PID, this is a male bulbasaur with Overgrow ability,
-    hardy nature, and not shiny.
+def test_instantiate_pokemon_with_exp():
     """
-    # prng = PRNG()
-    # Pokemon.prng = prng
-    # Trainer.prng = prng
-    # kip = Trainer('Kip')
-    # # kip.id = 0
-    # # kip.secret_id = 59774
-    # bulbasaur = Pokemon(1)
-    # # bulbasaur.pid = 833639025
-    # # bulbasaur.ivs = 2948981452
-    # bulbasaur.trainer = kip
-    yield Pokemon(
-        national_id=1,
-        level=5,
-        met_location='Little Root Town',
-        personality=833639025,
-        gene=2948981452,
+    A ``Pokemon`` instance can be created by specifying the desired
+    exp. points it has, and its level will be inferred automatically.
+    """
+    eevee = Pokemon(species='eevee', exp=2000)
+    assert 12 == eevee.level
+    assert 2000 == eevee.exp
+
+
+def test_gain_exp():
+    """
+    ``Pokemon.gain_exp()`` adds the earned exp. points to the Pokémon's
+    current exp. points.
+    """
+    eevee = Pokemon(species='eevee', exp=2000)
+    eevee.gain_exp(1)
+    assert 2001 == eevee.exp
+
+
+def test_exp_to_next_level():
+    """
+    ``Pokemon.exp_to_next_level`` calculates the amount of exp. points
+    required to get to the next level dynamically, i.e. it is
+    calculated every time it is called.
+    """
+    eevee = Pokemon(species='eevee', exp=2000)
+    assert 197 == eevee.exp_to_next_level
+    eevee.gain_exp(1)
+    assert 196 == eevee.exp_to_next_level
+
+
+def test_exp_to_next_level_is_0_for_max_level():
+    """
+    ``Pokemon.exp_to_next_level`` is 0 if the Pokémon reaches level 100.
+    """
+    eevee = Pokemon(species='eevee', level=100)
+    assert 0 == eevee.exp_to_next_level
+
+
+def test_level_100_pokemon_cannot_gain_exp_points():
+    """
+    Level 100 ``Pokemon`` cannot gain any more exp. points.
+    """
+    eevee = Pokemon(species='eevee', level=100)
+    eevee.gain_exp(1)
+    assert 100 == eevee.level
+    assert 1000000 == eevee.exp
+
+
+def test_pokemon_level_up():
+    """
+    If a Pokémon gains the exact exp. points to the next level,
+    it should level up.
+    """
+    bulbasaur = Pokemon(species='bulbasaur', level=5)
+    bulbasaur.gain_exp(earned_exp=bulbasaur.exp_to_next_level)
+    assert 6 == bulbasaur.level
+
+
+def test_pokemon_evolution_by_level_up():
+    """
+    A Pokémon have the ability to evolve when it attains to
+    a certain level.
+    """
+    bulbasaur = Pokemon(national_id=1, level=15)
+    bulbasaur.gain_exp(earned_exp=bulbasaur.exp_to_next_level)
+    assert 'ivysaur' == bulbasaur.species
+    assert 2 == bulbasaur.national_id
+
+
+def test_pokemon_default_moves():
+    """
+    A ``Pokemon`` will always know the last 4 moves it learned by
+    level-up.
+    """
+    eevee = Pokemon(species='eevee', level=42)
+    assert ['quick-attack', 'bite', 'baton-pass', 'take-down'] == list(
+        eevee.moves
     )
 
 
-@pytest.fixture
-def garchomp():
-    """A Level 78 Garchomp with the following IVs and EVs and an
-    Adamant nature:
-
-    +===========+=====+========+=========+========+========+========+=======+
-    |           |  HP | Attack | Defense | Sp.Atk | Sp.Def |  Speed | Total |
-    +===========+=====+========+=========+========+========+========+=======+
-    | Base stat | 108 |   130  |    95   |   80   |   85   |   102  |  600  |
-    +-----------+-----+--------+---------+--------+--------+--------+-------+
-    |    IV     |  24 |    12  |    30   |   16   |   23   |     5  |  110  |
-    +-----------+-----+--------+---------+--------+--------+--------+-------+
-    |    EV     |  74 |   190  |    91   |   48   |   84   |    23  |  510  |
-    +-----------+-----+--------+---------+--------+--------+--------+-------+
-    |   Total   | 289 |   278  |   193   |  135   |  171   |   171  |       |
-    +-----------+-----+--------+---------+--------+--------+--------+-------+
-
-    https://bulbapedia.bulbagarden.net/wiki/Statistic#Example_2
+def test_pokemon_use_machine_to_learn_moves():
     """
-    Pokemon.prng = PRNG(0x1C262455)
-    garchomp = Pokemon(
-        national_id=445,
-        iv_method=4,
-        level=78,
-        ev=EV(
-            hp=74,
-            attack=190,
-            defense=91,
-            special_attack=48,
-            special_defense=84,
-            speed=23,
-        ),
-    )
-    garchomp.ev = EV(
-        hp=74,
-        attack=190,
-        defense=91,
-        special_attack=48,
-        special_defense=84,
-        speed=23,
-    )
-    yield garchomp
-
-
-class TestPIDRelatedMechanisms:
-    #     def test_bulbasaur_ids(self, bulbasaur):
-    #         assert bulbasaur.trainer.id == 0
-    #         assert bulbasaur.trainer.secret_id == 59774
-    #         assert bulbasaur._pid == 833639025
-    #         assert bulbasaur._ivs == 2948981452
-    #
-    def test_pokemon_gender(self, bulbasaur):
-        assert bulbasaur.gender.identifier == 'male'
-        # nidoran_f = Pokemon('nidoran-f')
-        # nidoran_f.trainer = bulbasaur.trainer
-        # assert nidoran_f.gender == Gender.FEMALE
-        # nidoran_m = Pokemon('nidoran-m')
-        # nidoran_m.trainer = bulbasaur.trainer
-        # assert nidoran_m.gender == Gender.MALE
-        # magnemite = Pokemon('magnemite')
-        # magnemite.trainer = bulbasaur.trainer
-        # assert magnemite.gender == Gender.GENDERLESS
-
-    def test_pokemon_ablity(self, bulbasaur):
-        assert bulbasaur.ability == 'overgrow'
-
-    def test_pokemon_nature(self, bulbasaur):
-        assert bulbasaur.nature == 'hardy'
-
-
-#     def test_pokemon_shininess(self, bulbasaur):
-#         """See https://bulbapedia.bulbagarden.net/wiki/Personality_value#Example"""
-#         assert not bulbasaur.shiny
-#
-#
-class TestPokemonStats:
-    #     def test_ivs(self):
-    #         """Seed and IVs can be found in:
-    #         https://sites.google.com/site/ivtopidapplet/home
-    #         """
-    #         Pokemon.prng = PRNG(0x35CC77B9)
-    #         weedle = Pokemon(13)
-    #         assert weedle._pid == 0xEF72C69F
-    #         assert weedle._ivs == 0xFFFFFFFF
-    #
-    def test_iv(self, garchomp):
-        assert attr.astuple(garchomp.iv) == (24, 12, 30, 16, 23, 5)
-
-    def test_permanent_stats(self, garchomp):
-        permanent_stats = garchomp.permanent_stats
-        assert permanent_stats.hp == 289
-        assert permanent_stats.attack == 278
-        assert permanent_stats.defense == 193
-        assert permanent_stats.special_attack == 135
-        assert permanent_stats.special_defense == 171
-        assert permanent_stats.speed == 171
-
-
-class TestPokemonExperience:
-    """Level should change when gained enough experience.
-
-    Since the fixture only run once per test, not once per example,
-    we have to do manual setups. Also, the EV doesn't matter when
-    testing the experiences.
+    A ``Pokemon`` can learn new moves by using TMs/HMs.
     """
-
-    def test_experience(self, garchomp):
-        assert garchomp.experience == 593190
-
-    # 616298 - 593190 = 23108
-    @pytest.mark.parametrize('exp', [0, 23107])
-    def test_pokemon_gaining_experience_without_leveling_up(
-        self, garchomp, exp
-    ):
-        garchomp.gain_exp(exp)
-        assert garchomp.experience == 593190 + exp
-        assert garchomp.level == 78
-
-    # @pytest.mark.xfail(reason='permanent stats are not recalculated')
-    def test_pokemon_gaining_exact_experience_to_level_up(self, garchomp):
-        garchomp.gain_exp(23108)
-        assert garchomp.experience == 616298
-        assert garchomp.level == 79
-
-    # 640000 - 593190 = 46810
-    # @pytest.mark.xfail(reason='permanent stats are not recalculated')
-    @pytest.mark.parametrize('exp', [23108, 46809])
-    def test_pokemon_gaining_experience_to_get_one_level_up(
-        self, garchomp, exp
-    ):
-        garchomp.gain_exp(exp)
-        assert garchomp.experience == 593190 + exp
-        assert garchomp.level == 79
-
-    # 1250000 - 593190 = 656810
-    # @pytest.mark.xfail(reason='permanent stats are not recalculated')
-    @pytest.mark.parametrize('exp', [656810, 656811, 1656810])
-    def test_pokemon_gaining_experience_to_get_to_level_100(
-        self, garchomp, exp
-    ):
-        garchomp.gain_exp(exp)
-        assert garchomp.experience == 1250000
-        assert garchomp.level == 100
-
-
-class TestPokemonEvolution:
-    def test_evolution(self):
-        bulbasaur = Pokemon(national_id=1, level=15)
-        bulbasaur.level_up()
-        assert 2 == bulbasaur.national_id
-
-
-#
-# class TestPokemonMoves:
-#     def test_pokemon_initial_moves(self, bulbasaur):
-#         assert list(map(lambda x: x.id, bulbasaur.moves)) == [45, 33]
-#
-#     # def test_learnable_moves(self, bulbasaur):
-#     #     assert bulbasaur.learnable(get_move('cut'))
-#     #     assert not bulbasaur.learnable(get_move('pound'))
+    eevee = Pokemon(species='eevee', level=42)
+    eevee.use_machine(6)  # toxic
+    assert ['bite', 'baton-pass', 'take-down', 'toxic'] == list(eevee.moves)
