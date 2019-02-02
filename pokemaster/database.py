@@ -106,24 +106,17 @@ def get_experience_table(
 ) -> sqlalchemy.orm.query.Query:
     """Get an experience table specific to the species.
 
-    :param form:
     :param national_id: The National Pokédex ID.
     :param species: The Pokémon's species.
-    :param growth_rate_id: The Pokémon's growth rate.
     :return: sqlalchemy.orm.query.Query
     """
     # _check_completeness([national_id, species], growth_rate_id)
-    if growth_rate_id is not None:
-        # If `growth_rate_id` is given, then ignore `species_identifier`.
-        conditions = {'growth_rate_id': growth_rate_id}
-    elif species is not None or national_id is not None:
-        pokemon = get_pokemon(
-            species=species, national_id=national_id, form=form
-        )
+    if species is not None or national_id is not None:
+        pokemon = get_pokemon(species=species, national_id=national_id)
         conditions = {'growth_rate_id': pokemon.species.growth_rate_id}
     else:
         raise ValueError(
-            'Must specify either the species or the growth rate ID.'
+            'Must specify either the species or the National Pokédex ID.'
         )
     return SESSION.query(pokedex.db.tables.Experience).filter_by(**conditions)
 
@@ -205,7 +198,12 @@ def get_pokemon_default_moves(
         .limit(4)
         .all()
     )
-    return tuple(map(lambda x: x.move, pokemon_moves))
+
+    # Just to get the signatures.
+    def _get_move(x: pokedex.db.tables.PokemonMove) -> pokedex.db.tables.Move:
+        return x.move
+
+    return tuple(map(_get_move, pokemon_moves))
 
 
 def get_nature(
