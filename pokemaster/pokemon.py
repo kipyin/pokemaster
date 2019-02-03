@@ -113,11 +113,11 @@ class Pokemon:
         self._ability = (
             ability
             or _database.get_ability(
-                self._species, self._personality
+                species=self._species, personality=self._personality
             ).identifier
         )
         self._gender = gender or _database.get_pokemon_gender(
-            _species.gender_rate, self._personality
+            species=_species.gender_rate, personality=self._personality
         )
 
         self._species_strengths = Stats.make_species_strengths(self._species)

@@ -215,23 +215,33 @@ def get_nature(
     return SESSION.query(pokedex.db.tables.Nature).filter_by(**conditions).one()
 
 
-def get_ability(species: str, personality: int) -> pokedex.db.tables.Ability:
+def get_ability(
+    national_id: int = None,
+    species: str = None,
+    form: str = None,
+    personality: int = None,
+) -> pokedex.db.tables.Ability:
     """Not quite a query, but definitely hides the mess.
 
     If a Pokémon only have one ability, then that'll be its
     ability straight away; if it has more than one ability,
     then the last bit of `personality` comes to play.
     """
-    pokemon_ = get_pokemon(species=species)
+    pokemon_ = get_pokemon(species=species, national_id=national_id, form=form)
     abilities = pokemon_.abilities
     return abilities[min(len(abilities) - 1, personality % 2)]
 
 
 # FIXME: change `gender_rate` to `species` (issue #6)
 def get_pokemon_gender(
-    gender_rate: int, personality: int
+    national_id: int = None,
+    species: str = None,
+    form: str = None,
+    personality: int = None,
 ) -> pokedex.db.tables.Gender:
     """Determine a Pokémon's gender by its gender rate and personality."""
+    pokemon = get_pokemon(national_id=national_id, species=species, form=form)
+    gender_rate = pokemon.species.gender_rate
     if gender_rate == -1:
         gender = 'genderless'
     elif gender_rate == 8:
