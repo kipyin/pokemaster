@@ -1,0 +1,10 @@
+.DS_Store
+.*_cache
+.python-version
+*.egg-info
+__pycache__
+.coverage
+htmlcov/
+.hypothesis/
+.idea/
+dist/
