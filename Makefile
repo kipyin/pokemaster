@@ -1,18 +1,11 @@
 .PHONY: test
 test:
-	@poetry run pytest -q --cov=pokemaster tests/
+	@poetry run pytest -q --cov=pokemaster --no-cov-on-fail tests/
 
-.PHONY: test-pdb
-test-pdb:
-	@poetry run pytest -q --pdb tests/
-
-.PHONY: test-ff
-test-ff:
-	@poetry run pytest -qx --ff tests/
-
-.PHONY: test-pokemon
-test-pokemon:
-	@poetry run pytest -qx --ff tests/test_pokemon.py
+.PHONY: test-html
+test-html:
+	@poetry run pytest -q --cov=pokemaster --cov-report=html --no-cov-on-fail tests/
+	@open htmlcov/index.html
 
 .PHONY: format
 format:
