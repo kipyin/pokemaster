@@ -22,13 +22,15 @@ and much, much more.
 
 ## Installation
 
-Install with [`poetry`](https://poetry.eustace.io) is highly recommended:
+Install with [`poetry`](https://poetry.eustace.io)
+is highly recommended:
 
 ```shell
 $ poetry install -v
 ```
 
-If `poetry` is not your thing, then you can install via `requirements.txt:
+If `poetry` is not your thing,
+then you can install via `requirements.txt`:
 
 ```shell
 $ pip install -r requirements.txt
