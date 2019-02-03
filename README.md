@@ -22,17 +22,23 @@ and much, much more.
 
 ## Installation
 
-Install with `pip`:
+Install with [`poetry`](https://poetry.eustace.io) is highly recommended:
 
 ```shell
-$ pip install pokemaster
+$ poetry install -v
+```
+
+If `poetry` is not your thing, then you can install via `requirements.txt:
+
+```shell
+$ pip install -r requirements.txt
 ```
 
 ## Basic Usage
 
 To summon a Real, Living™ Pokémon:
 
-```pydocstring
+```python
 >>> from pokemaster import Pokemon
 >>> bulbasaur = Pokemon(national_id=1, level=5)
 >>> eevee = Pokemon('eevee', level=10, gender='female')
