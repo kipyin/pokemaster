@@ -15,7 +15,6 @@ construct = "2.5.3"
 [tool.poetry.dev-dependencies]
 pytest = "^4.0"
 black = { version = "^18.3-alpha.0", allows-prereleases = true }
-mypy = "^0.650.0"
 pre-commit = "^1.12"
 pytest-cov = "^2.6"
 isort = "^4.3"
