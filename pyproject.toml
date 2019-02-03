@@ -5,6 +5,12 @@ description = "Get Real, Living™ Pokémon in Python"
 authors = ["Kip Yin <kipyty@outlook.com>"]
 license = "MIT"
 
+readme = "README.md"
+
+respository = "https://github.com/kipyin/pokemaster"
+
+keywords = ["pokemon", "pokedex", "pokemaster"]
+
 [tool.poetry.dependencies]
 python = "^3.6"
 pokedex = { git = "https://github.com/veekun/pokedex.git", branch = "master" }
