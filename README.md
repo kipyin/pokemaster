@@ -46,6 +46,49 @@ To summon a Real, Living™ Pokémon:
 >>> eevee = Pokemon('eevee', level=10, gender='female')
 ```
 
+## Development
+
+### Installing
+
+To make contribution,
+make sure you have the latest `poetry` installed.
+
+Then install the dev dependencies:
+
+```shell
+$ poetry install -D
+```
+
+This will equip everything you need for the development.
+
+### Linting
+
+We use `black` to format the code,
+and `isort` to sort the imports.
+
+To format the code,
+use [invoke](http://docs.pyinvoke.org/en/stable/):
+
+```shell
+$ invoke lint
+```
+
+### Testing
+
+After making commits,
+make sure all tests are passed.
+To run tests, do
+
+```shell
+$ invoke test
+```
+
+If you want to see the coverage:
+
+```shell
+$ invoke test-html
+```
+
 ## LICENSE
 
 MIT License
