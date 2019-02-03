@@ -8,7 +8,7 @@ from typing import Callable, ClassVar, Tuple, Union
 import attr
 from attr.validators import instance_of
 
-from pokemaster import database
+from pokemaster import _database
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -82,7 +82,7 @@ class Stats:
         :param nature: The identifier of a nature.
         :return: A ``Stats`` instance.
         """
-        nature_row = database.get_nature(identifier=nature)
+        nature_row = _database.get_nature(identifier=nature)
         modifiers = {}
         for stat in cls._NAMES:
             modifiers[stat] = 1
@@ -101,7 +101,7 @@ class Stats:
         :param species: The identifier of a Pokémon species.
         :return: A ``Stats`` instance.
         """
-        pokemon = database.get_pokemon(species=species)
+        pokemon = _database.get_pokemon(species=species)
         strengths = {}
         for i, stat in enumerate(cls._NAMES):
             strengths[stat] = pokemon.stats[i].base_stat
@@ -130,7 +130,7 @@ class Stats:
         :param species: The identifier of a Pokémon species.
         :return: A ``Stats`` instance.
         """
-        pokemon = database.get_pokemon(species=species)
+        pokemon = _database.get_pokemon(species=species)
         stats = pokemon.stats
         yields = {stat: stats[i].effort for i, stat in enumerate(cls._NAMES)}
         return cls(**yields)

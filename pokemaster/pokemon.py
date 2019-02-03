@@ -5,7 +5,7 @@ from typing import Deque, List, MutableMapping, NoReturn
 
 from pokedex.db import tables as tb
 
-from pokemaster import database
+from pokemaster import _database
 from pokemaster.prng import PRNG
 from pokemaster.stats import Conditions, Stats
 
@@ -78,10 +78,10 @@ class Pokemon:
             exceed 32. If it is not specified, a random set of IV's will
             be generated using the PRNG.
         """
-        _pokemon = database.get_pokemon(
+        _pokemon = _database.get_pokemon(
             national_id=national_id, species=species, form=form
         )
-        _growth = database.get_experience(
+        _growth = _database.get_experience(
             national_id=national_id, species=species, level=level, exp=exp
         )
 
@@ -108,13 +108,15 @@ class Pokemon:
 
         self._personality = self._prng.create_personality()
         self._nature = (
-            nature or database.get_nature(self._personality).identifier
+            nature or _database.get_nature(self._personality).identifier
         )
         self._ability = (
             ability
-            or database.get_ability(self._species, self._personality).identifier
+            or _database.get_ability(
+                self._species, self._personality
+            ).identifier
         )
-        self._gender = gender or database.get_pokemon_gender(
+        self._gender = gender or _database.get_pokemon_gender(
             _species.gender_rate, self._personality
         )
 
@@ -125,7 +127,7 @@ class Pokemon:
         self._current_hp = self._stats.hp
         self._conditions = Conditions()
 
-        _moves = database.get_pokemon_default_moves(
+        _moves = _database.get_pokemon_default_moves(
             species=self._species, level=self._level
         )
         self._moves = deque(map(lambda x: x.identifier, _moves), maxlen=4)
@@ -153,7 +155,7 @@ class Pokemon:
         """The exp. points needed to get to the next level."""
         if self._level < 100:
             return (
-                database.get_experience(
+                _database.get_experience(
                     species=self._species, level=self._level + 1
                 ).experience
                 - self._exp
@@ -279,7 +281,7 @@ class Pokemon:
             triggers are: level-up, trade, use-item, and shed.
         :return: Nothing.
         """
-        pokemon = database.get_pokemon(species=self._species)
+        pokemon = _database.get_pokemon(species=self._species)
         for child_species in pokemon.species.child_species:
             if self._check_evolution_condition(
                 trigger=trigger, evolution=child_species.evolutions[0]
@@ -289,8 +291,8 @@ class Pokemon:
         else:
             return
 
-        evolved_pokemon = database.get_pokemon(species=evolved_species)
-        self._ability = database.get_ability(
+        evolved_pokemon = _database.get_pokemon(species=evolved_species)
+        self._ability = _database.get_ability(
             species=evolved_pokemon.species.identifier,
             personality=self._personality,
         )
@@ -343,7 +345,7 @@ class Pokemon:
         """
         if forget is not None:
             self._moves.remove(forget)
-        move_pool = database.get_move_pool(
+        move_pool = _database.get_move_pool(
             species=self._species, move_method=move_method
         )
         if learn in map(lambda x: x.move.identifier, move_pool):
@@ -363,7 +365,7 @@ class Pokemon:
         :return: NoReturn.
         """
         self._learn_move(
-            learn=database.get_machine(machine).move.identifier, forget=forget
+            learn=_database.get_machine(machine).move.identifier, forget=forget
         )
 
     def _level_up(self):
@@ -374,7 +376,7 @@ class Pokemon:
             return
 
         self._level += 1
-        self._exp = database.get_experience(
+        self._exp = _database.get_experience(
             species=self._species, level=self._level
         ).experience
         self._stats = self._calculate_stats()

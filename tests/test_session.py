@@ -5,7 +5,7 @@ import pokedex.db.tables
 import pokedex.defaults
 import pytest
 
-from pokemaster.database import get_session
+from pokemaster._database import get_session
 
 
 @pytest.mark.skip
