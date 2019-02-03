@@ -21,7 +21,7 @@ def get_session(database_uri: str = None) -> sqlalchemy.orm.session.Session:
     """Connect to a database with the given ``engine_uri``.
 
     :param database_uri: The uri of the database. The default uri set by
-    :mod:`pokedex.defaults` will be used if not specified..
+        :mod:`pokedex.defaults` will be used if not specified.
     :return: A ``sqlalchemy.orm.session.Session``.
     """
 
