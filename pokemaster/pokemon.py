@@ -117,7 +117,7 @@ class Pokemon:
             ).identifier
         )
         self._gender = gender or _database.get_pokemon_gender(
-            species=_species.gender_rate, personality=self._personality
+            species=self.species, personality=self._personality
         )
 
         self._species_strengths = Stats.make_species_strengths(self._species)
@@ -167,6 +167,15 @@ class Pokemon:
     def form(self) -> str:
         """The Pokémon's form."""
         return self._form
+
+    @property
+    def gender(self) -> str:
+        """
+        The Pokémon's gender.
+
+        Possible values are: 'male', 'female', and 'genderless'.
+        """
+        return self._gender
 
     @property
     def held_item(self) -> str:
