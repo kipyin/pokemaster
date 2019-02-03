@@ -7,3 +7,4 @@ __pycache__
 htmlcov/
 .hypothesis/
 .idea/
+dist/

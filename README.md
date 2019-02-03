@@ -22,36 +22,18 @@ and much, much more.
 
 ## Installation
 
-1. This project uses [`poetry`](https://poetry.eustace.io) to manage dependencies. Install it via
-```shell
-$ curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-```
-2. Clone this repo:
-```shell
-$ git clone https://github.com/kipyin/pokemaster.git
-```
-3. Install dependencies using `poetry` (it will spqwn an virtualenv for you):
-```shell
-$ poetry install -v
-```
+Install with `pip`:
 
-## Testing
-
-To run tests, use
 ```shell
-$ make test
-```
-or
-```shell
-$ poetry run pytest tests/
+$ pip install pokemaster
 ```
 
 ## Basic Usage
 
 To summon a Real, Living™ Pokémon:
 
-```python
+```pydocstring
 >>> from pokemaster import Pokemon
 >>> bulbasaur = Pokemon(national_id=1, level=5)
->>> eevee = Pokemon(identifier='eevee')
+>>> eevee = Pokemon('eevee', level=10, gender='female')
 ```
