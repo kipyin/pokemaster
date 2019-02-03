@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pokemaster"
-version = "0.1.1"
+version = "0.1.2"
 description = "Get Real, Living™ Pokémon in Python"
 authors = ["Kip Yin <kipyty@outlook.com>"]
 license = "MIT"
