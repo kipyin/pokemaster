@@ -1,7 +1,44 @@
 """
 Tests for `pokemaster.Pokemon`.
 """
+import pytest
+
 from pokemaster.pokemon import Pokemon
+
+
+@pytest.fixture
+def bulbasaur():
+    """
+    A level 5 bulbasaur
+    """
+    yield Pokemon('bulbasaur', level=5)
+
+
+def test_instantiate_pokemon_with_specified_ability():
+    """
+    Since a Pokémon's ability is controlled by the PRNG, and coming up
+    with a valid PRNG to get the desired ability is just backwards.
+    Therefore, one can just pass the desired ability when instantiating
+    a Pokémon. The same reasoning applies to ``Pokemon.gender`` and
+    ``Pokemon.nature``.
+    """
+    nidorina = Pokemon('nidorina', ability='rivalry', level=10)
+    assert 'rivalry' == nidorina.ability
+
+
+def test_instantiate_pokemon_with_specified_nature():
+    """
+    A Pokémon's nature can be specified upon instantiation.
+    """
+    nidorina = Pokemon('nidorina', nature='gentle', level=10)
+    assert 'gentle' == nidorina.nature
+
+
+# XXX: Should we allow *any* gender value? e.g. a male Nidorina?
+def test_instantiate_pokemon_with_specified_gender():
+    """A Pokémon's gender can be specified upon instantiation."""
+    nidorina = Pokemon('nidorina', gender='male', level=10)
+    assert 'male' == nidorina.gender
 
 
 def test_instantiate_pokemon_with_exp():
