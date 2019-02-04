@@ -8,3 +8,5 @@ htmlcov/
 .hypothesis/
 .idea/
 dist/
+.tox/
+pip-wheel-metadata
