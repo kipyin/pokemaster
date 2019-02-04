@@ -18,8 +18,8 @@ script:
 
 jobs:
         include:
-                - python: "3.6"
-                - python: "3.7"
+                - python: "3.6.5"
+                - python: "3.7.1"
                   dist: xenial
 
 after_success:
