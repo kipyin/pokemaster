@@ -9,10 +9,12 @@ before_install:
 install:
         - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
         - source $HOME/.poetry/env
+        - pip install pip -U
+        - pip install git+https://github.com/kipyin/pokedex
         - poetry install -v
 
 script:
-        - poetry run invoke test
+        - invoke test
 
 jobs:
         include:
