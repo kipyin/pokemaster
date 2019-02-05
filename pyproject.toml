@@ -46,8 +46,8 @@ envlist = py36, py37
 whitelist_externals = poetry
 skip_install = true
 commands =
-    pip install invoke
-    invoke install
+    poetry install -v
+    pip install git+https://github.com/kipyin/pokedex
     invoke test
 """
 
