@@ -35,3 +35,17 @@ def test(c, tests=None, report=False):
     )
     if report:
         c.run('open htmlcov/index.html')
+
+
+@task
+def install(c):
+    """
+    Install the packages needed.
+    """
+    c.run(
+        "curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python"
+    )
+    c.run("source $HOME/.poetry/env")
+    c.run("pip install pip -U")
+    c.run("pip install git+https://github.com/kipyin/pokedex")
+    c.run("poetry install -v")
