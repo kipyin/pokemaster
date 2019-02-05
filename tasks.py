@@ -39,7 +39,7 @@ def test(c, tests=None, report=False):
 
 
 @task
-def install(c):
+def install(c, dev=False):
     """
     Install the packages using ``invoke``::
 
@@ -52,4 +52,4 @@ def install(c):
     c.run(f"source {Path.home()}/.poetry/env")
     c.run("pip install pip -U")
     c.run("pip install git+https://github.com/kipyin/pokedex")
-    c.run("poetry install -v")
+    c.run(f"poetry install -v {'-D' if dev else ''}")
