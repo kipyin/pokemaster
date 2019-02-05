@@ -5,13 +5,10 @@ cache:
 
 before_install:
         - pip install codecov
+        - pip install invoke
 
 install:
-        - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-        - source $HOME/.poetry/env
-        - pip install pip -U
-        - pip install git+https://github.com/kipyin/pokedex
-        - poetry install -v
+        - invoke install
 
 script:
         - invoke test

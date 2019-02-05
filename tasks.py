@@ -1,6 +1,7 @@
 """
 Provides short-hand commands to aid testing and developing.
 """
+from pathlib import Path
 
 from invoke import task
 
@@ -35,3 +36,20 @@ def test(c, tests=None, report=False):
     )
     if report:
         c.run('open htmlcov/index.html')
+
+
+@task
+def install(c, dev=False):
+    """
+    Install the packages using ``invoke``::
+
+        $ pip install invoke
+        $ invoke install
+    """
+    c.run(
+        "curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python"
+    )
+    c.run(f"source {Path.home()}/.poetry/env")
+    c.run("pip install pip -U")
+    c.run("pip install git+https://github.com/kipyin/pokedex")
+    c.run(f"poetry install -v {'-D' if dev else ''}")
