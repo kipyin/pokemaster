@@ -22,18 +22,12 @@ and much, much more.
 
 ## Installation
 
-Install with [`poetry`](https://poetry.eustace.io)
-is highly recommended:
+`pokemaster` can be installed via `pip`, but you have to have `pokedex`
+installed first:
 
 ```shell
-$ poetry install -v
-```
-
-If `poetry` is not your thing,
-then you can install via `requirements.txt`:
-
-```shell
-$ pip install -r requirements.txt
+$ pip install git+https://github.com/kipyin/pokedex
+$ pip install pokemaster
 ```
 
 ## Basic Usage
@@ -51,13 +45,30 @@ To summon a Real, Living™ Pokémon:
 ### Installing
 
 To make contribution,
-make sure you have the latest `poetry` installed.
-
-Then install the dev dependencies:
+you need to clone the repo first, of course:
 
 ```shell
-$ poetry install -D
+$ git clone https://github.com/kipyin/pokemaster.git
+$ cd pokemaster
 ```
+
+If you have `poetry` installed,
+you can install the dependencies directly:
+
+```shell
+$ poetry install -Dv
+$ pip install git+https://github.com/kipyin/pokedex
+```
+
+If you have `invoke` already,
+you can install the dependencies with:
+
+```shell
+$ invoke install --dev
+```
+
+This command installs `poetry` and `pokedex`, 
+and then runs `poetry install` for you.
 
 This will equip everything you need for the development.
 
