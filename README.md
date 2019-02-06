@@ -1,6 +1,6 @@
 # `pokemaster` - Get Real, Living™ Pokémon in Python
 
-[![codecov](https://codecov.io/gh/kipyin/pokemaster/branch/develop/graph/badge.svg)](https://codecov.io/gh/kipyin/pokemaster) [![Travis CI](https://img.shields.io/travis/com/kipyin/pokemaster/develop.svg?label=Travis%20CI)](https://travis-ci.com/kipyin/pokemaster) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![codecov](https://codecov.io/gh/kipyin/pokemaster/branch/master/graph/badge.svg)](https://codecov.io/gh/kipyin/pokemaster) [![Travis CI](https://img.shields.io/travis/com/kipyin/pokemaster/master.svg?label=Travis%20CI)](https://travis-ci.com/kipyin/pokemaster) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 ## What is this?
 
@@ -56,7 +56,7 @@ If you have `poetry` installed,
 you can install the dependencies directly:
 
 ```shell
-$ poetry install -Dv
+$ poetry install -v
 $ pip install git+https://github.com/kipyin/pokedex
 ```
 
@@ -64,7 +64,7 @@ If you have `invoke` already,
 you can install the dependencies with:
 
 ```shell
-$ invoke install --dev
+$ invoke install
 ```
 
 This command installs `poetry` and `pokedex`, 
