@@ -52,6 +52,11 @@ commands =
     invoke test
 """
 
+[tool.towncrier]
+    package = "pokemaster"
+    filename = "CHANGELOG.md"
+    directory = "newsfragments"
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
