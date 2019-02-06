@@ -56,7 +56,7 @@ If you have `poetry` installed,
 you can install the dependencies directly:
 
 ```shell
-$ poetry install -Dv
+$ poetry install -v
 $ pip install git+https://github.com/kipyin/pokedex
 ```
 
@@ -64,7 +64,7 @@ If you have `invoke` already,
 you can install the dependencies with:
 
 ```shell
-$ invoke install --dev
+$ invoke install
 ```
 
 This command installs `poetry` and `pokedex`, 
