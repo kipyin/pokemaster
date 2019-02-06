@@ -353,7 +353,13 @@ class Pokemon:
         :return: NoReturn.
         """
         if forget is not None:
-            self._moves.remove(forget)
+            if forget in self._moves:
+                self._moves.remove(forget)
+            else:
+                raise ValueError(
+                    'Cannot forget a move: '
+                    f'{self.species} does not know move {forget}.'
+                )
         move_pool = _database.get_move_pool(
             species=self._species, move_method=move_method
         )
