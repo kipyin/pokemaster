@@ -22,9 +22,11 @@ and much, much more.
 
 ## Installation
 
-Install with `pip`:
+`pokemaster` can be installed via `pip`, but you have to have `pokedex`
+installed first:
 
 ```shell
+$ pip install git+https://github.com/kipyin/pokedex
 $ pip install pokemaster
 ```
 
@@ -32,9 +34,92 @@ $ pip install pokemaster
 
 To summon a Real, Living™ Pokémon:
 
-```pydocstring
+```python
 >>> from pokemaster import Pokemon
 >>> bulbasaur = Pokemon(national_id=1, level=5)
 >>> eevee = Pokemon('eevee', level=10, gender='female')
 ```
 
+## Development
+
+### Installing
+
+To make contribution,
+you need to clone the repo first, of course:
+
+```shell
+$ git clone https://github.com/kipyin/pokemaster.git
+$ cd pokemaster
+```
+
+If you have `poetry` installed,
+you can install the dependencies directly:
+
+```shell
+$ poetry install -Dv
+$ pip install git+https://github.com/kipyin/pokedex
+```
+
+If you have `invoke` already,
+you can install the dependencies with:
+
+```shell
+$ invoke install --dev
+```
+
+This command installs `poetry` and `pokedex`, 
+and then runs `poetry install` for you.
+
+This will equip everything you need for the development.
+
+### Linting
+
+We use `black` to format the code,
+and `isort` to sort the imports.
+
+To format the code,
+use [invoke](http://docs.pyinvoke.org/en/stable/):
+
+```shell
+$ invoke lint
+```
+
+### Testing
+
+After making commits,
+make sure all tests are passed.
+To run tests, do
+
+```shell
+$ invoke test
+```
+
+If you want to see the coverage:
+
+```shell
+$ invoke test-html
+```
+
+## LICENSE
+
+MIT License
+
+Copyright (c) 2019 Kip Yin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

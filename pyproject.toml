@@ -1,24 +1,29 @@
 [tool.poetry]
 name = "pokemaster"
-version = "0.1.0"
+version = "0.1.3"
 description = "Get Real, Living™ Pokémon in Python"
 authors = ["Kip Yin <kipyty@outlook.com>"]
 license = "MIT"
 
+readme = "README.md"
+
+respository = "https://github.com/kipyin/pokemaster"
+
+keywords = ["pokemon", "pokedex", "pokemaster"]
+
 [tool.poetry.dependencies]
-python = "^3.6"
-pokedex = { git = "https://github.com/veekun/pokedex.git", branch = "master" }
+python = "^3.6.5"
 sqlalchemy = "^1.2"
 attrs = "^18.2"
-construct = "2.5.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.0"
 black = { version = "^18.3-alpha.0", allows-prereleases = true }
-mypy = "^0.650.0"
 pre-commit = "^1.12"
 pytest-cov = "^2.6"
 isort = "^4.3"
+invoke = "^1.2"
+tox = "^3.7"
 
 [tool.black]
 line-length = 80
@@ -29,6 +34,22 @@ skip-numeric-underscore-normalization = true
 [tool.isort]
 multi_line_output = 3
 use_parentheses = true
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+skipsdist = true
+# isolated_build = true
+envlist = py36, py37
+
+[testenv]
+whitelist_externals = poetry
+skip_install = true
+commands =
+    poetry install -v
+    pip install git+https://github.com/kipyin/pokedex
+    invoke test
+"""
 
 [build-system]
 requires = ["poetry>=0.12"]

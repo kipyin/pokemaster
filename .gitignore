@@ -7,4 +7,6 @@ __pycache__
 htmlcov/
 .hypothesis/
 .idea/
-.dist/
+dist/
+.tox/
+pip-wheel-metadata
