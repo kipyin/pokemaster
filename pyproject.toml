@@ -24,6 +24,7 @@ pytest-cov = "^2.6"
 isort = "^4.3"
 invoke = "^1.2"
 tox = "^3.7"
+towncrier = "^18.6"
 
 [tool.black]
 line-length = 80
@@ -50,6 +51,11 @@ commands =
     pip install git+https://github.com/kipyin/pokedex
     invoke test
 """
+
+[tool.towncrier]
+    package = "pokemaster"
+    filename = "CHANGELOG.md"
+    directory = "newsfragments"
 
 [build-system]
 requires = ["poetry>=0.12"]
