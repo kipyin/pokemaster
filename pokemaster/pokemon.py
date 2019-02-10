@@ -1,7 +1,7 @@
 """Basic Pokémon API"""
 from collections import deque
 from numbers import Real
-from typing import Deque, List, MutableMapping, NoReturn
+from typing import List, MutableMapping, NoReturn
 
 from pokedex.db import tables as tb
 
@@ -188,9 +188,9 @@ class Pokemon:
         return self._level
 
     @property
-    def moves(self) -> Deque[str]:
+    def moves(self) -> List[str]:
         """The Pokémon's learned moves."""
-        return self._moves
+        return list(self._moves)
 
     @property
     def national_id(self) -> int:
