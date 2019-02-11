@@ -10,7 +10,7 @@ before_install:
 install:
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python - --preview
   - source $HOME/.poetry/env
-  - poetry install -v
+  - pip install tox -U
 
 script:
   - tox
