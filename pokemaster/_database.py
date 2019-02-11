@@ -275,16 +275,31 @@ def get_move(move: str = None, move_id: int = None) -> pokedex.db.tables.Move:
 
 
 # TODO: get it via the machine no. or the move name
-def get_machine(machine_number: int) -> pokedex.db.tables.Machine:
-    """Get a TM or HM by the machine number."""
-    return (
+def get_machine(
+    machine_number: int = None, move_identifier: str = None, move_id: int = None
+) -> Optional[pokedex.db.tables.Machine]:
+    """
+    Get a TM or HM by the machine number，or the move's identifier,
+    if it is a valid machine.
+    """
+    _check_completeness(machine_number, move_identifier, move_id)
+    query = (
         SESSION.query(pokedex.db.tables.Machine)
         .join(pokedex.db.tables.VersionGroup)
-        .filter(
-            pokedex.db.tables.Machine.machine_number == machine_number,
-            pokedex.db.tables.VersionGroup.identifier == 'emerald',
+        .join(pokedex.db.tables.Move)
+        .filter(pokedex.db.tables.VersionGroup.identifier == 'emerald')
+    )
+    if machine_number is not None:
+        query = query.filter(
+            pokedex.db.tables.Machine.machine_number == machine_number
         )
-    ).one()
+    if move_identifier is not None:
+        query = query.filter(
+            pokedex.db.tables.Move.identifier == move_identifier
+        )
+    if move_id is not None:
+        query = query.filter(pokedex.db.tables.Move.id == move_id)
+    return query.one_or_none()
 
 
 def get_move_pool(
@@ -309,5 +324,5 @@ def get_move_pool(
 
 
 if __name__ == '__main__':
-    p = get_pokemon(species='deoxys')
-    print(p.species.identifier)
+    p = get_machine(108)
+    print(p.move.identifier)
