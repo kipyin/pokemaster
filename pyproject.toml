@@ -57,7 +57,7 @@ envlist = lint, py36, py37, py38-dev
 
 [testenv]
 whitelist_externals = poetry
-install_command = poetry install -v -E pokedex; echo {packages}
+install_command = poetry install -v -E "pokedex"; echo {packages}
 commands = poetry run pytest tests/ --cov=pokemaster
 
 [testenv:lint]
