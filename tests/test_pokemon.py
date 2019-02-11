@@ -146,7 +146,8 @@ def test_pokemon_not_forgetting_hm_moves():
 def test_pokemon_not_forgetting_move_when_known_less_than_4_moves():
     """
     If a Pokémon knows less than four moves, there is no way for this
-    Pokémon to forget any existing moves in the games.
+    Pokémon to forget any existing moves in the games, even when the
+    move to forget is specified.
     """
     mew = Pokemon('mew', level=10)
     mew.use_machine(1, forget='pound')
