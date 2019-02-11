@@ -53,7 +53,7 @@ legacy_tox_ini = """
 [tox]
 skipsdist = true
 isolated_build = true
-envlist = py36, py37, lint
+envlist = lint, py36, py37, py38-dev
 
 [testenv]
 whitelist_externals = poetry
