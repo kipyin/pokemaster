@@ -30,6 +30,11 @@ $ pip install git+https://github.com/kipyin/pokedex
 $ pip install pokemaster
 ```
 
+Or, if you have poetry, run:
+```console
+$ poetry add pokemaster -E pokedex
+```
+
 ## Basic Usage
 
 To summon a Real, Living™ Pokémon:
@@ -55,9 +60,8 @@ $ cd pokemaster
 If you have `poetry` installed,
 you can install the dependencies directly:
 
-```shell
-$ poetry install -v
-$ pip install git+https://github.com/kipyin/pokedex
+```console
+$ poetry install -v -E pokedex
 ```
 
 This will equip everything you need for the development.
