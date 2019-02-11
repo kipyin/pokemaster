@@ -8,14 +8,14 @@
 that is native to the core series Pokémon games
 developed by Game Freak & Nintendo.
 
-In `pokemaster`, 
+In `pokemaster`,
 everything you get is
 what you would expect in the games:
 a Pokémon has a bunch of attributes,
 knows up to four moves,
 can be evolved to another species,
 can learn, forget, and remember certain moves,
-can use moves to do stuff 
+can use moves to do stuff
 (such as attacking another Pokémon),
 can consume certain items,
 and much, much more.
@@ -60,16 +60,6 @@ $ poetry install -v
 $ pip install git+https://github.com/kipyin/pokedex
 ```
 
-If you have `invoke` already,
-you can install the dependencies with:
-
-```shell
-$ invoke install
-```
-
-This command installs `poetry` and `pokedex`, 
-and then runs `poetry install` for you.
-
 This will equip everything you need for the development.
 
 ### Linting
@@ -77,27 +67,33 @@ This will equip everything you need for the development.
 We use `black` to format the code,
 and `isort` to sort the imports.
 
-To format the code,
-use [invoke](http://docs.pyinvoke.org/en/stable/):
+The best way to ensure all files are in the right format
+is using `tox`:
 
-```shell
-$ invoke lint
+```console
+$ tox -e lint
 ```
 
 ### Testing
 
 After making commits,
 make sure all tests are passed.
-To run tests, do
+To run tests against all environments,
+simply do:
 
-```shell
-$ invoke test
+```console
+$ tox
 ```
 
-If you want to see the coverage:
+If you want to run tests against specific Python version,
+use `tox -e {env}`.
 
-```shell
-$ invoke test-html
+For example,
+if you want to run tests against Python 3.7,
+run the following command:
+
+```console
+$ tox -e py37
 ```
 
 ## LICENSE
