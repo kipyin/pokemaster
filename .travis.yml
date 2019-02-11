@@ -10,7 +10,7 @@ before_install:
 install:
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
   - source $HOME/.poetry/env
-  - pip install --upgrade tox
+  - poetry install -v
 
 script:
   - tox
@@ -18,6 +18,11 @@ script:
 matrix:
   fast_finish: true
   include:
+    # lint
+    - python: "3.7"
+      stage: lint
+      env: TOXENV=lint
+  
     # test
     - python: "3.6.5"
       stage: test
