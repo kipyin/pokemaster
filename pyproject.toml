@@ -32,7 +32,7 @@ pytest = "^4.0"
 black = { version = "^18.3-alpha.0", allows-prereleases = true }
 pre-commit = "^1.12"
 pytest-cov = "^2.6"
-isort = "^4.3"
+isort = { git = "https://github.com/timothycrosley/isort.git", branch = "develop" }
 invoke = "^1.2"
 tox = "^3.7"
 towncrier = "^18.6"
@@ -46,6 +46,8 @@ skip-numeric-underscore-normalization = true
 [tool.isort]
 multi_line_output = 3
 use_parentheses = true
+known_first_party = "pokemaster"
+known_third_party = ["attr", "pokedex", "pytest", "sqlalchemy"]
 
 [tool.tox]
 legacy_tox_ini = """
@@ -57,12 +59,13 @@ envlist = lint, py36, py37, py38-dev
 
 [testenv]
 whitelist_externals = poetry
-install_command = poetry install -v -E "pokedex"; echo {packages}
-commands = poetry run pytest tests/ --cov=pokemaster
+skip_install = true
+commands =
+    poetry install -v -E pokedex
+    poetry run pytest tests/ --cov=pokemaster
 
 [testenv:lint]
 basepython = python3.7
-skip_install = true
 deps = pre-commit
 commands = poetry run pre-commit run --all-files
 
