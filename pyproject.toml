@@ -43,12 +43,6 @@ py36 = true
 skip-string-normalization = true
 skip-numeric-underscore-normalization = true
 
-[tool.isort]
-multi_line_output = 3
-use_parentheses = true
-known_first_party = "pokemaster"
-known_third_party = ["attr", "pokedex", "pytest", "sqlalchemy"]
-
 [tool.tox]
 legacy_tox_ini = """
 
