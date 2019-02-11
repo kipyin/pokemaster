@@ -63,13 +63,8 @@ commands = poetry run pytest tests/ --cov=pokemaster
 [testenv:lint]
 basepython = python3.7
 skip_install = true
-deps =
-    black
-    isort
-commands =
-    isort -rc pokemaster/ tests/
-    black .
-
+deps = pre-commit
+commands = poetry run pre-commit run --all-files
 
 """
 
