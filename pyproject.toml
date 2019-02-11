@@ -50,7 +50,8 @@ skip_install = true
 commands =
     poetry install -v
     pip install git+https://github.com/kipyin/pokedex
-    invoke test
+    poetry run pytest tests/ --cov=pokemaster
+
 """
 
 [tool.towncrier]
