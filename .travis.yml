@@ -8,7 +8,7 @@ before_install:
   - pip install codecov
 
 install:
-  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python - --preview
   - source $HOME/.poetry/env
   - poetry install -v
 
@@ -22,7 +22,7 @@ matrix:
     - python: "3.7"
       stage: lint
       env: TOXENV=lint
-  
+
     # test
     - python: "3.6.5"
       stage: test
