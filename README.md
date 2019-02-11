@@ -25,7 +25,7 @@ and much, much more.
 `pokemaster` can be installed via `pip`, but you have to have `pokedex`
 installed first:
 
-```shell
+```console
 $ pip install git+https://github.com/kipyin/pokedex
 $ pip install pokemaster
 ```
@@ -39,7 +39,7 @@ $ poetry add pokemaster -E pokedex
 
 To summon a Real, Living™ Pokémon:
 
-```python
+```pycon
 >>> from pokemaster import Pokemon
 >>> bulbasaur = Pokemon(national_id=1, level=5)
 >>> eevee = Pokemon('eevee', level=10, gender='female')
@@ -52,7 +52,7 @@ To summon a Real, Living™ Pokémon:
 To make contribution,
 you need to clone the repo first, of course:
 
-```shell
+```console
 $ git clone https://github.com/kipyin/pokemaster.git
 $ cd pokemaster
 ```
