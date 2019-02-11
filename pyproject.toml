@@ -38,24 +38,38 @@ use_parentheses = true
 
 [tool.tox]
 legacy_tox_ini = """
+
 [tox]
 skipsdist = true
-# isolated_build = true
-envlist = py36, py37
+isolated_build = true
+envlist = py36, py37, lint
 
 [testenv]
 whitelist_externals = poetry
 skip_install = true
+
 commands =
     poetry install -v
     pip install git+https://github.com/kipyin/pokedex
-    invoke test
+    poetry run pytest tests/ --cov=pokemaster
+
+[testenv:lint]
+basepython = python3.7
+skip_install = true
+deps =
+    black
+    isort
+commands =
+    isort -rc pokemaster/ tests/
+    black .
+
+
 """
 
 [tool.towncrier]
-    package = "pokemaster"
-    filename = "CHANGELOG.md"
-    directory = "newsfragments"
+package = "pokemaster"
+filename = "CHANGELOG.md"
+directory = "newsfragments"
 
 [build-system]
 requires = ["poetry>=0.12"]
