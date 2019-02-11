@@ -143,7 +143,6 @@ def test_pokemon_not_forgetting_hm_moves():
         assert mew.use_machine(105)
 
 
-@pytest.mark.xfail(reason="Not implemented")
 def test_pokemon_not_forgetting_move_when_known_less_than_4_moves():
     """
     If a Pokémon knows less than four moves, there is no way for this
