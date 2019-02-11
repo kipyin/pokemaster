@@ -1,28 +1,44 @@
+dist: xenial
 language: python
 
 cache:
-        pip: true
+  pip: true
 
 before_install:
-        - pip install codecov
+  - pip install codecov
 
 install:
-        - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-        - source $HOME/.poetry/env
-        - pip install git+https://github.com/kipyin/pokedex
-        - poetry install -v
+  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python - --preview
+  - source $HOME/.poetry/env
+  - pip install tox -U
 
 script:
-        - invoke test
+  - tox
 
-jobs:
-        include:
-                - python: "3.6.5"
-                - python: "3.7.1"
-                  dist: xenial
+matrix:
+  fast_finish: true
+  include:
+    # lint
+    - python: "3.7"
+      stage: lint
+      env: TOXENV=lint
+
+    # test
+    - python: "3.6.5"
+      stage: test
+      env: TOXENV=py36
+    - python: "3.7.1"
+      stage: test
+      env: TOXENV=py37
+    - python: "3.8-dev"
+      stage: test
+      env: TOXENV=py38-dev
+
+  allow_failures:
+    - python: "3.8-dev"
 
 after_success:
-        - codecov
+  - codecov
 
 notification:
-        email: false
+  email: false

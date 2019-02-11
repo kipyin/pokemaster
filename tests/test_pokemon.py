@@ -130,3 +130,25 @@ def test_pokemon_use_machine_to_learn_moves():
     eevee = Pokemon(species='eevee', level=42)
     eevee.use_machine(6)  # toxic
     assert ['bite', 'baton-pass', 'take-down', 'toxic'] == list(eevee.moves)
+
+
+def test_pokemon_not_forgetting_hm_moves():
+    """
+    Moves learned by using a hidden machine cannot be forgotten.
+    """
+    mew = Pokemon('mew', level=10)
+    for hm in range(101, 105):
+        mew.use_machine(hm)
+    with pytest.raises(ValueError):
+        assert mew.use_machine(105)
+
+
+def test_pokemon_not_forgetting_move_when_known_less_than_4_moves():
+    """
+    If a Pokémon knows less than four moves, there is no way for this
+    Pokémon to forget any existing moves in the games, even when the
+    move to forget is specified.
+    """
+    mew = Pokemon('mew', level=10)
+    mew.use_machine(1, forget='pound')
+    assert ['pound', 'transform', 'focus-punch'] == list(mew.moves)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pokemaster"
-version = "0.1.3"
+version = "0.1.4"
 description = "Get Real, Living™ Pokémon in Python"
 authors = ["Kip Yin <kipyty@outlook.com>"]
 license = "MIT"
@@ -16,14 +16,26 @@ python = "^3.6.5"
 sqlalchemy = "^1.2"
 attrs = "^18.2"
 
+# `pokedex` is optional, mainly because use `poetry build` will fail to
+# recognize git dependencies.
+# Setting `pokedex` as an extra will ensure that `pip install pokemaster`
+# will always work, while keeping `poetry install -E pokedex` possible
+# for those who use `poetry`.
+pokedex = { git = "https://github.com/kipyin/pokedex.git", branch = "master", optional = true }
+construct = { version = "<=2.5.3", optional = true }
+
+[tool.poetry.extras]
+pokedex = ["pokedex", "construct"]
+
 [tool.poetry.dev-dependencies]
 pytest = "^4.0"
 black = { version = "^18.3-alpha.0", allows-prereleases = true }
 pre-commit = "^1.12"
 pytest-cov = "^2.6"
-isort = "^4.3"
+isort = { git = "https://github.com/timothycrosley/isort.git", branch = "develop" }
 invoke = "^1.2"
 tox = "^3.7"
+towncrier = "^18.6"
 
 [tool.black]
 line-length = 80
@@ -31,25 +43,32 @@ py36 = true
 skip-string-normalization = true
 skip-numeric-underscore-normalization = true
 
-[tool.isort]
-multi_line_output = 3
-use_parentheses = true
-
 [tool.tox]
 legacy_tox_ini = """
+
 [tox]
 skipsdist = true
-# isolated_build = true
-envlist = py36, py37
+isolated_build = true
+envlist = lint, py36, py37, py38-dev
 
 [testenv]
 whitelist_externals = poetry
 skip_install = true
 commands =
-    poetry install -v
-    pip install git+https://github.com/kipyin/pokedex
-    invoke test
+    poetry install -v -E pokedex
+    poetry run pytest tests/ --cov=pokemaster
+
+[testenv:lint]
+basepython = python3.7
+deps = pre-commit
+commands = poetry run pre-commit run --all-files
+
 """
+
+[tool.towncrier]
+package = "pokemaster"
+filename = "CHANGELOG.md"
+directory = "newsfragments"
 
 [build-system]
 requires = ["poetry>=0.12"]

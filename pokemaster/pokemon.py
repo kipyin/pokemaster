@@ -1,7 +1,7 @@
 """Basic Pokémon API"""
 from collections import deque
 from numbers import Real
-from typing import Deque, List, MutableMapping, NoReturn
+from typing import List, MutableMapping, NoReturn
 
 from pokedex.db import tables as tb
 
@@ -17,7 +17,7 @@ def _sign(x: int) -> int:
 
 class Pokemon:
     """
-    A Real, Living™ Pokémon in the games.
+    A Real, Living™ Pokémon.
 
     A ``Pokemon`` instance has the exact same attributes and behaviors
     as the ones in game: a Pokémon knows up to four moves, holds some
@@ -188,9 +188,9 @@ class Pokemon:
         return self._level
 
     @property
-    def moves(self) -> Deque[str]:
+    def moves(self) -> List[str]:
         """The Pokémon's learned moves."""
-        return self._moves
+        return list(self._moves)
 
     @property
     def national_id(self) -> int:
@@ -320,7 +320,7 @@ class Pokemon:
 
         :param earned_exp: The earned get_experience points upon defeating
             an opponent Pokémon.
-        :return: Nothing.
+        :return: NoReturn
         """
         # earned_exp = new_exp - self._exp
 
@@ -352,8 +352,31 @@ class Pokemon:
         :param str forget: The name of the move to forget.
         :return: NoReturn.
         """
+        # If the move to forget is specified, then first check if it
+        # is a valid move to forget or not.
+        # If the move is not specified, then assume forgetting the
+        # first move on the list.
         if forget is not None:
+            if forget not in self._moves:
+                raise ValueError(
+                    'Cannot forget a move: '
+                    f'{self.species} does not know move {forget}.'
+                )
+        else:
+            forget = self._moves[0]
+        # Get the tables.Machine by the move identifier.
+        # If `forget_machine` is not None (i.e. it is a machine) and
+        # `forget_machine.is_hm` is True, then the Pokémon cannot forget
+        # the move.
+        # Otherwise, remove the move from `self._moves`.
+        forget_machine = _database.get_machine(move_identifier=forget)
+        if forget_machine is not None and forget_machine.is_hm:
+            raise ValueError(
+                f'{self._species} cannot forget {forget_machine.move.identifier}!'
+            )
+        elif len(self._moves) == 4:
             self._moves.remove(forget)
+
         move_pool = _database.get_move_pool(
             species=self._species, move_method=move_method
         )
@@ -373,9 +396,10 @@ class Pokemon:
             the earliest learned move will be forgotten.
         :return: NoReturn.
         """
-        self._learn_move(
-            learn=_database.get_machine(machine).move.identifier, forget=forget
-        )
+        move_to_learn = _database.get_machine(
+            machine_number=machine
+        ).move.identifier
+        self._learn_move(learn=move_to_learn, forget=forget)
 
     def _level_up(self):
         """
