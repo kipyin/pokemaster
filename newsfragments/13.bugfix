@@ -1,5 +1,0 @@
-Pokémon cannot forget HM moves.
-
-Also, Pokémon cannot forget any move
-if it knows less than 4 moves,
-even when the move is passed by the `forget` kwarg.
