@@ -357,9 +357,7 @@ class Pokemon:
         # If the move is not specified, then assume forgetting the
         # first move on the list.
         if forget is not None:
-            if forget in self._moves:
-                self._moves.remove(forget)
-            else:
+            if forget not in self._moves:
                 raise ValueError(
                     'Cannot forget a move: '
                     f'{self.species} does not know move {forget}.'
