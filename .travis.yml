@@ -20,10 +20,6 @@ install:
 script:
   - tox
 
-env:
-  global:
-    - CC_TEST_REPORTER_ID=4f0dab18c60a01121843746c769a67d91e926c57069ecf1b5e6f3f83760c5417
-
 matrix:
   fast_finish: true
   include:
