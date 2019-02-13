@@ -4,8 +4,13 @@ language: python
 cache:
   pip: true
 
-before_install:
-  - pip install codecov
+before_script:  # code coverage tool
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+# before_install:
+#   - pip install codecov
 
 install:
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python - --preview
@@ -14,6 +19,10 @@ install:
 
 script:
   - tox
+
+env:
+  global:
+    - CC_TEST_REPORTER_ID=4f0dab18c60a01121843746c769a67d91e926c57069ecf1b5e6f3f83760c5417
 
 matrix:
   fast_finish: true
@@ -37,8 +46,12 @@ matrix:
   allow_failures:
     - python: "3.8-dev"
 
-after_success:
-  - codecov
+after_script:
+  - coverage xml
+  - if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT; fi
+
+# after_success:
+#   - codecov
 
 notification:
   email: false

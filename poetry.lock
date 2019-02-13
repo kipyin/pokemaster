@@ -171,6 +171,7 @@ requirements = ["pip", "pipreqs"]
 reference = "27515dbf9ba2137bd62f766d930273232338d953"
 type = "git"
 url = "https://github.com/timothycrosley/isort.git"
+
 [[package]]
 category = "dev"
 description = "A small but fast and easy to use stand-alone template engine written in pure python."
@@ -250,6 +251,7 @@ whoosh = ">=2.5,<2.7"
 reference = "0b7dfb3b59760d0370302bbce73ff739ce3c116a"
 type = "git"
 url = "https://github.com/kipyin/pokedex.git"
+
 [[package]]
 category = "dev"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -428,7 +430,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs", "pytest-flake8
 pokedex = ["pokedex", "construct"]
 
 [metadata]
-content-hash = "72656051a4d642116615e06778d29db4d3ccbcaba3eefcbb48ceb83a18224993"
+content-hash = "b7fb97aab2fe23007ccf2a30882db3d683ba87b4c9b017bfc60e04e9af90e02a"
 python-versions = "^3.6.5"
 
 [metadata.hashes]
