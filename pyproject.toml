@@ -57,6 +57,8 @@ whitelist_externals = poetry
 skip_install = true
 commands =
     poetry install -v -E pokedex
+    poetry run pokedex load -v
+    poetry run pokedex status
     poetry run pytest tests/ --cov=pokemaster
 
 [testenv:lint]
