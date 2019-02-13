@@ -19,7 +19,7 @@ attrs = "^18.2"
 # `pokedex` is optional, mainly because use `poetry build` will fail to
 # recognize git dependencies.
 # Setting `pokedex` as an extra will ensure that `pip install pokemaster`
-# will always work, while keeping `poetry install -E pokedex` possible
+# will always work, while keeping `poetry add pokemaster -E pokedex` possible
 # for those who use `poetry`.
 pokedex = { git = "https://github.com/kipyin/pokedex.git", branch = "master", optional = true }
 construct = { version = "<=2.5.3", optional = true }
