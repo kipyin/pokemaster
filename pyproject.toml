@@ -60,6 +60,7 @@ commands =
     poetry run pokedex load -v
     poetry run pokedex status
     poetry run pytest tests/ --cov=pokemaster
+    poetry run coverage xml
 
 [testenv:lint]
 basepython = python3.7

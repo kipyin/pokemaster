@@ -19,7 +19,6 @@ install:
 
 script:
   - tox
-  - poetry run coverage xml
 
 matrix:
   fast_finish: true
