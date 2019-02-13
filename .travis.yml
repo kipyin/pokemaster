@@ -19,6 +19,7 @@ install:
 
 script:
   - tox
+  - coverage xml
 
 matrix:
   fast_finish: true
