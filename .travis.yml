@@ -8,9 +8,7 @@ before_script:  # code coverage tool
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
-
-# before_install:
-#   - pip install codecov
+  - pip install codecov
 
 install:
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python - --preview
@@ -40,9 +38,7 @@ after_script:
   - ./cc-test-reporter format-coverage --input-type coverage.py
   - ./cc-test-reporter sum-coverage
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
-
-# after_success:
-#   - codecov
+  - codecov
 
 notification:
   email: false
