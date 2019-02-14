@@ -424,7 +424,3 @@ class Pokemon:
         Recalculate the battle stats.
         """
         self._battle_stats = BattleStats.from_stats(self._stats)
-
-
-if __name__ == '__main__':
-    p = Pokemon('eevee', level=5)
