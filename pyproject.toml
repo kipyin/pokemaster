@@ -73,7 +73,7 @@ commands = poetry run pre-commit run --all-files
 package = "pokemaster"
 filename = "CHANGELOG.rst"
 directory = "newsfragments"
-issue_format = "#[{issue}](https://github.com/kipyin/pokemaster/issues/{issue})"
+issue_format = "`#{issue} <https://github.com/kipyin/pokemaster/issues/{issue}>`_"
 underlines = ["-", "^"]
 
 [build-system]
