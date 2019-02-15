@@ -171,6 +171,7 @@ requirements = ["pip", "pipreqs"]
 reference = "27515dbf9ba2137bd62f766d930273232338d953"
 type = "git"
 url = "https://github.com/timothycrosley/isort.git"
+
 [[package]]
 category = "dev"
 description = "A small but fast and easy to use stand-alone template engine written in pure python."
@@ -250,6 +251,7 @@ whoosh = ">=2.5,<2.7"
 reference = "0b7dfb3b59760d0370302bbce73ff739ce3c116a"
 type = "git"
 url = "https://github.com/kipyin/pokedex.git"
+
 [[package]]
 category = "dev"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -394,6 +396,25 @@ testing = ["freezegun (>=0.3.11)", "pytest (>=3.0.0,<4)", "pytest-cov (>=2.5.1,<
 
 [[package]]
 category = "dev"
+description = "Type Hints for Python"
+name = "typing"
+optional = false
+python-versions = "*"
+version = "3.6.6"
+
+[[package]]
+category = "dev"
+description = "Backported and Experimental Type Hints for Python 3.5+"
+name = "typing-extensions"
+optional = false
+python-versions = "*"
+version = "3.7.2"
+
+[package.dependencies]
+typing = ">=3.6.2"
+
+[[package]]
+category = "dev"
 description = "Virtual Python Environment builder"
 name = "virtualenv"
 optional = false
@@ -428,7 +449,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs", "pytest-flake8
 pokedex = ["pokedex", "construct"]
 
 [metadata]
-content-hash = "72656051a4d642116615e06778d29db4d3ccbcaba3eefcbb48ceb83a18224993"
+content-hash = "09f7211126ffb5ed0de764013706058c6b714d34c650bf924254a86491e463d1"
 python-versions = "^3.6.5"
 
 [metadata.hashes]
@@ -466,6 +487,8 @@ sqlalchemy = ["52a42dbf02d0562d6e90e7af59f177f1cc027e72833cc29c3a821eefa009c71d"
 toml = ["229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c", "235682dd292d5899d361a811df37e04a8828a5b1da3115886b73cf81ebc9100e", "f1db651f9657708513243e61e6cc67d101a39bad662eaa9b5546f789338e07a3"]
 towncrier = ["3c0da1de042861df9030c0608d346d55cabe14cfa7cf04045f22b0af63eb8aa7", "cfde66ada782db9269407eaefb38562d3d2a4bc4d7647c0b2197ed184b869aae"]
 tox = ["04f8f1aa05de8e76d7a266ccd14e0d665d429977cd42123bc38efa9b59964e9e", "25ef928babe88c71e3ed3af0c464d1160b01fca2dd1870a5bb26c2dea61a17fc"]
+typing = ["4027c5f6127a6267a435201981ba156de91ad0d1d98e9ddc2aa173453453492d", "57dcf675a99b74d64dacf6fba08fb17cf7e3d5fdff53d4a30ea2a5e7e52543d4", "a4c8473ce11a65999c8f59cb093e70686b6c84c98df58c1dae9b3b196089858a"]
+typing-extensions = ["07b2c978670896022a43c4b915df8958bec4a6b84add7f2c87b2b728bda3ba64", "f3f0e67e1d42de47b5c67c32c9b26641642e9170fe7e292991793705cd5fef7c", "fb2cd053238d33a8ec939190f30cfd736c00653a85a2919415cecf7dc3d9da71"]
 virtualenv = ["8b9abfc51c38b70f61634bf265e5beacf6fae11fc25d355d1871f49b8e45f0db", "cceab52aa7d4df1e1871a70236eb2b89fcfe29b6b43510d9738689787c513261"]
 whoosh = ["7de7bc4d00a6d051dbb360b48eb7f3cd002373d87252fb0b284a3c9c453a7677"]
 zipp = ["55ca87266c38af6658b84db8cfb7343cdb0bf275f93c7afaea0d8e7a209c7478", "682b3e1c62b7026afe24eadf6be579fb45fec54c07ea218bded8092af07a68c4"]

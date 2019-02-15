@@ -7,7 +7,7 @@ from pokedex.db import tables as tb
 
 from pokemaster import _database
 from pokemaster.prng import PRNG
-from pokemaster.stats import Conditions, Stats
+from pokemaster.stats import BattleStats, Conditions, Stats
 
 
 def _sign(x: int) -> int:
@@ -134,6 +134,8 @@ class Pokemon:
         self._pp = list(map(lambda x: x.pp, _moves))
 
         self._held_item = None
+
+        self._battle_stats = BattleStats.from_stats(self._stats)
 
     @property
     def ability(self) -> str:
@@ -417,6 +419,8 @@ class Pokemon:
             return
         self._evolve('level-up')
 
-
-if __name__ == '__main__':
-    p = Pokemon('eevee', level=5)
+    def _reset_battle_stats(self):
+        """
+        Recalculate the battle stats.
+        """
+        self._battle_stats = BattleStats.from_stats(self._stats)

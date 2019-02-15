@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pokemaster"
-version = "0.1.4"
+version = "0.2.0"
 description = "Get Real, Living™ Pokémon in Python"
 authors = ["Kip Yin <kipyty@outlook.com>"]
 license = "MIT"
@@ -19,7 +19,7 @@ attrs = "^18.2"
 # `pokedex` is optional, mainly because use `poetry build` will fail to
 # recognize git dependencies.
 # Setting `pokedex` as an extra will ensure that `pip install pokemaster`
-# will always work, while keeping `poetry install -E pokedex` possible
+# will always work, while keeping `poetry add pokemaster -E pokedex` possible
 # for those who use `poetry`.
 pokedex = { git = "https://github.com/kipyin/pokedex.git", branch = "master", optional = true }
 construct = { version = "<=2.5.3", optional = true }
@@ -36,6 +36,8 @@ isort = { git = "https://github.com/timothycrosley/isort.git", branch = "develop
 invoke = "^1.2"
 tox = "^3.7"
 towncrier = "^18.6"
+coverage = "^4.5"
+typing-extensions = "^3.7"
 
 [tool.black]
 line-length = 80
@@ -56,7 +58,10 @@ whitelist_externals = poetry
 skip_install = true
 commands =
     poetry install -v -E pokedex
+    poetry run pokedex load -v
+    poetry run pokedex status
     poetry run pytest tests/ --cov=pokemaster
+    poetry run coverage xml
 
 [testenv:lint]
 basepython = python3.7
@@ -67,8 +72,30 @@ commands = poetry run pre-commit run --all-files
 
 [tool.towncrier]
 package = "pokemaster"
-filename = "CHANGELOG.md"
+filename = "CHANGELOG.rst"
 directory = "newsfragments"
+issue_format = "`#{issue} <https://github.com/kipyin/pokemaster/issues/{issue}>`_"
+underlines = ["-", "~"]
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bugfixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "dev"
+name = "Development Changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Improved Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
 
 [build-system]
 requires = ["poetry>=0.12"]
