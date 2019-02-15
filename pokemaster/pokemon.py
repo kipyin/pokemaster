@@ -1,9 +1,10 @@
 """Basic Pokémon API"""
 from collections import deque
 from numbers import Real
-from typing import List, NoReturn
+from typing import List
 
 from pokedex.db import tables as tb
+from typing_extensions import NoReturn
 
 from pokemaster import _database
 from pokemaster.prng import PRNG
