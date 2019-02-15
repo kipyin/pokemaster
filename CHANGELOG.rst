@@ -3,6 +3,18 @@ Changelog
 
 .. towncrier release notes start
 
+Pokemaster 0.2.0 (2019-02-16)
+-----------------------------
+
+Features
+~~~~~~~~
+
+- Added in-battle stats to ``Pokemon``. (`#15 <https://github.com/kipyin/pokemaster/issues/15>`_)
+- Added ``pokemaster.Weather`` class for weather-related mechanisms. (`#17 <https://github.com/kipyin/pokemaster/issues/17>`_)
+- Added ``pokemaster.game_version.Game`` enum
+  to manage game versions, version groups, and generations. (`#18 <https://github.com/kipyin/pokemaster/issues/18>`_)
+
+
 Pokemaster 0.1.4 (2019-02-12)
 -----------------------------
 
