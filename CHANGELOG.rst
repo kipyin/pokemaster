@@ -13,7 +13,7 @@ Bugfixes
 
   Also, Pokémon cannot forget any move
   if it knows less than 4 moves,
-  even when the move is passed by the `forget` kwarg. (#13)
+  even when the move is passed by the ``forget`` kwarg. (#13)
 
 
 Pokemaster 0.1.3 (2019-02-06)

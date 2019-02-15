@@ -71,7 +71,7 @@ commands = poetry run pre-commit run --all-files
 
 [tool.towncrier]
 package = "pokemaster"
-filename = "CHANGELOG.md"
+filename = "CHANGELOG.rst"
 directory = "newsfragments"
 issue_format = "#[{issue}](https://github.com/kipyin/pokemaster/issues/{issue})"
 underlines = ["-", "^"]
