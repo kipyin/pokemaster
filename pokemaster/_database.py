@@ -165,8 +165,7 @@ def wild_pokemon_held_item(
             return item
         elif item.rarity == 100:
             return item
-    else:
-        return None
+    return None
 
 
 def get_pokemon_default_moves(
