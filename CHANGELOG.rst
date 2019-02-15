@@ -7,7 +7,7 @@ Pokemaster 0.1.4 (2019-02-12)
 -----------------------------
 
 Bugfixes
-^^^^^^^^
+~~~~~~~~
 
 - Pokémon cannot forget HM moves.
 
