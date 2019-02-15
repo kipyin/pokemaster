@@ -78,6 +78,11 @@ issue_format = "`#{issue} <https://github.com/kipyin/pokemaster/issues/{issue}>`
 underlines = ["-", "~"]
 
 [[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bugfixes"
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "dev"
 name = "Development Changes"
 showcontent = true
@@ -85,6 +90,11 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "docs"
 name = "Improved Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
 showcontent = true
 
 [build-system]
