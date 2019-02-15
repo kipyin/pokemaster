@@ -7,27 +7,26 @@ from typing import ClassVar, Union
 import attr
 from typing_extensions import Final
 
-from pokemaster.game_version import Gen
 from pokemaster.pokemon import Pokemon
 
 WEATHERS: Final = {
     "clear-skies": {},
     "harsh-sunlight": {
-        Gen(3): {
+        3: {
             "natural": "The sunlight is strong.",
             "move": "The sunlight got bright!",
             "ability": "{pokemon}'s Drought intensified the sun's rays!",
             "after-turn": "The sunlight is strong.",
             "end": "The sunlight faded.",
         },
-        Gen(4): {
+        4: {
             "natural": None,
             "move": "The sunlight turned harsh!",
             "ability": "{pokemon}'s Drought intensified the sun's rays!",
             "after-turn": "The sunlight is strong.",
             "end": "The sunlight faded.",
         },
-        Gen(5): {
+        5: {
             "natural": None,
             "move": "The sunlight turned harsh!",
             "ability": "The sunlight turned harsh!",
@@ -36,21 +35,21 @@ WEATHERS: Final = {
         },
     },
     "rain": {
-        Gen(3): {
+        3: {
             "natural": "It is raining.",
             "move": "It started to rain!",
             "ability": "{pokemon}'s Drizzle made it rain!",
             "after-turn": "Rain continues to fall.",
             "end": "The rain stopped.",
         },
-        Gen(4): {
+        4: {
             "natural": "It started to rain!",
             "move": "It started to rain!",
             "ability": "{pokemon}'s Drizzle made it rain!",
             "after-turn": "Rain continues to fall.",
             "end": "The rain stopped.",
         },
-        Gen(5): {
+        5: {
             "natural": "It started to rain!",
             "move": "It started to rain!",
             "ability": "{pokemon}'s Drizzle made it rain!",
@@ -59,7 +58,7 @@ WEATHERS: Final = {
         },
     },
     "sandstorm": {
-        Gen(3): {
+        3: {
             "natural": "A sandstorm is raging.",
             "move": "A sandstorm brewed!",
             "ability": "{pokemon}'s Sand Stream whipped up a sandstorm!",
@@ -67,7 +66,7 @@ WEATHERS: Final = {
             "damage": "{pokemon} is buffeted by the sandstorm!",
             "end": "The sandstorm subsided.",
         },
-        Gen(4): {
+        4: {
             "natural": "A sandstorm brewed!",
             "move": "A sandstorm brewed!",
             "ability": "{pokemon}'s Sand Stream whipped up a sandstorm!",
@@ -75,7 +74,7 @@ WEATHERS: Final = {
             "damage": "{pokemon} is buffeted by the sandstorm!",
             "end": "The sandstorm subsided.",
         },
-        Gen(5): {
+        5: {
             "natural": "A sandstorm kicked up!",
             "move": "A sandstorm kicked up!",
             "ability": "A sandstorm kicked up!",
@@ -85,7 +84,7 @@ WEATHERS: Final = {
         },
     },
     "hail": {
-        Gen(3): {
+        3: {
             "natural": None,
             "move": "It started to hail!",
             "ability": None,
@@ -93,7 +92,7 @@ WEATHERS: Final = {
             "damamge": "{pokemon} is pelted by Hail!",
             "end": "The hail stopped.",
         },
-        Gen(4): {
+        4: {
             "natural": "It started to hail!",
             "move": "It started to hail!",
             "ability": "{pokemon}'s Snow Warning whipped up a hailstorm!",
@@ -101,7 +100,7 @@ WEATHERS: Final = {
             "damage": "{pokemon} is buffeted by the Hail!",
             "end": "The hail stopped.",
         },
-        Gen(5): {
+        5: {
             "natural": "It started to hail!",
             "move": "It started to hail!",
             "ability": "It started to hail!",
@@ -130,11 +129,7 @@ def weather_name_validator(_, __, name: str) -> None:
 
 def weather_generation_validator(_, __, generation: Gen) -> None:
     """Only Generation 3 ~ 5 are supported."""
-    if not isinstance(generation, Gen):
-        raise TypeError(
-            "'generation' must be a `pokemaster.game_version.Gen` member."
-        )
-    elif generation not in range(3, 6):
+    if generation not in range(3, 6):
         raise ValueError(
             f"Invalid generation: Gen. {generation}. "
             f"Only Generation 3 ~ 5 are supported."
@@ -184,9 +179,7 @@ class Weather:
         validator=weather_name_validator, converter=weather_name_converter
     )
     duration: Union[int, float] = float('inf')
-    generation: int = attr.ib(
-        converter=Gen, validator=weather_generation_validator, default=Gen(3)
-    )
+    generation: int = attr.ib(validator=weather_generation_validator, default=3)
     trigger: str = attr.ib(
         validator=weather_trigger_validator, default='natural'
     )
