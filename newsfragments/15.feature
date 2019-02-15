@@ -1,1 +1,1 @@
-Add in-battle stats to `Pokemon`
+Added in-battle stats to ``Pokemon``.
