@@ -73,6 +73,8 @@ commands = poetry run pre-commit run --all-files
 package = "pokemaster"
 filename = "CHANGELOG.md"
 directory = "newsfragments"
+issue_format = "#[{issue}](https://github.com/kipyin/pokemaster/issues/{issue})"
+underlines = ["-", "^"]
 
 [build-system]
 requires = ["poetry>=0.12"]
