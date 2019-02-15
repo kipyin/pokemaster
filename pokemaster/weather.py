@@ -127,7 +127,7 @@ def weather_name_validator(_, __, name: str) -> None:
         )
 
 
-def weather_generation_validator(_, __, generation: Gen) -> None:
+def weather_generation_validator(_, __, generation: int) -> None:
     """Only Generation 3 ~ 5 are supported."""
     if generation not in range(3, 6):
         raise ValueError(
