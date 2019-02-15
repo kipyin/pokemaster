@@ -40,6 +40,8 @@ class Weather:
 
     :param name: The name of the weather, such as 'rain' or
         'sandstorm'.
+    :param duration: How long the weather lasts. A weather
+        lasts forever by default.
     """
 
     name: str = attr.ib(
