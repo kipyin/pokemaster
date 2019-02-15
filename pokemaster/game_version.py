@@ -20,7 +20,7 @@ class Gen(enum.IntEnum):
     SEVEN = 7
 
     @property
-    def identifier(self):
+    def name(self):
         return f"generation-{self.value}"
 
 
@@ -43,11 +43,15 @@ class VersionGroup(enum.IntEnum):
     ULTRA_SUN_ULTRA_MOON = 18
 
     @property
-    def identifier(self):
-        return self.name.replace("_", "-").lower()
+    def name(self):
+        return self._name_.replace("_", "-").lower()
+
+    @property
+    def id(self):
+        return self.value
 
 
-class GameVersion(enum.Enum):
+class Game(enum.Enum):
     RED = VersionTuple(1, 1, 1)
     BLUE = VersionTuple(1, 1, 2)
     YELLOW = VersionTuple(1, 2, 3)
@@ -81,5 +85,7 @@ class GameVersion(enum.Enum):
         self.generation = Gen(generation)
         self.version_group = VersionGroup(version_group)
         self.version = version
-        self.identifier = self.name.replace("_", "-").lower()
-        self.id = version
+
+    @property
+    def name(self):
+        return self._name_.replace("_", "-").lower()
