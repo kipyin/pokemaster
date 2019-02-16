@@ -62,8 +62,7 @@ def _check_completeness(
     for arg in args:
         if arg is not None:
             return True
-    else:
-        raise ValueError(msg)
+    raise ValueError(msg)
 
 
 def get_pokemon(
