@@ -31,6 +31,7 @@ $ pip install pokemaster
 ```
 
 Or, if you have poetry, run:
+
 ```console
 $ poetry add pokemaster -E pokedex
 ```
