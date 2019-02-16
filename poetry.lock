@@ -147,14 +147,6 @@ version = "17.5.0"
 scripts = ["click (>=6.0)", "twisted (>=16.4.0)"]
 
 [[package]]
-category = "dev"
-description = "Pythonic task execution"
-name = "invoke"
-optional = false
-python-versions = "*"
-version = "1.2.0"
-
-[[package]]
 category = "main"
 description = "A Python utility / library to sort Python imports."
 name = "isort"
@@ -449,7 +441,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs", "pytest-flake8
 pokedex = ["pokedex", "construct"]
 
 [metadata]
-content-hash = "09f7211126ffb5ed0de764013706058c6b714d34c650bf924254a86491e463d1"
+content-hash = "1e8af12606a90cdb97f16edd53128fdd68f53d5b4eae1aa06009476205542b74"
 python-versions = "^3.6.5"
 
 [metadata.hashes]
@@ -469,7 +461,6 @@ identify = ["0749c74180ef0f6a3874eaa0bf89a6990a523233180e83e6f3c7c27312ac9ba3", 
 importlib-metadata = ["a17ce1a8c7bff1e8674cb12c992375d8d0800c9190177ecf0ad93e0097224095", "b50191ead8c70adfa12495fba19ce6d75f2e0275c14c5a7beb653d6799b512bd"]
 importlib-resources = ["6e2783b2538bd5a14678284a3962b0660c715e5a0f10243fd5e00a4b5974f50b", "d3279fd0f6f847cced9f7acc19bd3e5df54d34f93a2e7bb5f238f81545787078"]
 incremental = ["717e12246dddf231a349175f48d74d93e2897244939173b01974ab6661406b9f", "7b751696aaf36eebfab537e458929e194460051ccad279c72b755a167eebd4b3"]
-invoke = ["4f4de934b15c2276caa4fbc5a3b8a61c0eb0b234f2be1780d2b793321995c2d6", "dc492f8f17a0746e92081aec3f86ae0b4750bf41607ea2ad87e5a7b5705121b7", "eb6f9262d4d25b40330fb21d1e99bf0f85011ccc3526980f8a3eaedd4b43892e"]
 isort = []
 jinja2 = ["74c935a1b8bb9a3947c50a54766a969d4846290e1e788ea44c1392163723c3bd", "f84be1bb0040caca4cea721fcbbbbd61f9be9464ca236387158b0feea01914a4"]
 markdown = ["c00429bd503a47ec88d5e30a751e147dcb4c6889663cd3e2ba0afe858e009baa", "d02e0f9b04c500cde6637c11ad7c72671f359b87b9fe924b2383649d8841db7c"]
