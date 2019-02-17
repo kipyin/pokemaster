@@ -3,7 +3,7 @@ This module defines all move effects in the Pokémon games.
 """
 
 
-from typing import Sequence, Union
+from typing import Iterable, Sequence, Union
 
 from typing_extensions import NoReturn
 
@@ -13,6 +13,7 @@ from pokemaster.pokemon import Pokemon
 
 def regular_damage(
     user: Pokemon,
+    move: "Move",
     field: Field,
     power: int,
     targets: Union[Pokemon, Sequence[Pokemon]] = None,
@@ -25,11 +26,24 @@ def regular_damage(
 
     :param user: The move user.
     :param field: A ``pokemaster.Field`` instance.
+    :param power: The base power of the move.
     :param targets: A list of target Pokémon, or a single
         target Pokémon.
     """
     # 1. If *targets* is given, check its validity.
     # 2. For each target:
-    #   1) Calculate the actual damage based on the
-    #      user's attack stat and the target's defense stat.
+    #   1) Calculate the actual damage based on the power,
+    #      the user's attack stat and the target's defense
+    #      stat.
     #   2) Reduce the target's HP.
+
+    opponents = field.perspective(user).opponents
+    if isinstance(targets, Pokemon) and targets in opponents:
+        # the target is a single Pokémon
+        targets = [targets]
+    elif isinstance(targets, Iterable) and set(targets) ^ set(opponents):
+        pass
+    elif targets is None:
+        targets = opponents
+    else:
+        raise ValueError(f"Invalid targets: {targets}.")
