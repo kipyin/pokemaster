@@ -152,3 +152,16 @@ def test_pokemon_not_forgetting_move_when_known_less_than_4_moves():
     mew = Pokemon('mew', level=10)
     mew.use_machine(1, forget='pound')
     assert ['pound', 'transform', 'focus-punch'] == list(mew.moves)
+
+
+def test_pokemon_battle_stats():
+    """
+    When entering and exiting a battle, a Pokémon's in-battle stats
+    reset to the default values.
+    """
+    mew = Pokemon('mew', level=10)
+    assert 1.0 == mew._battle_stats.evasion
+    mew._battle_stats.evasion = 0
+    assert 0 == mew._battle_stats.evasion
+    mew._reset_battle_stats()
+    assert 1.0 == mew._battle_stats.evasion

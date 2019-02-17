@@ -4,7 +4,10 @@ language: python
 cache:
   pip: true
 
-before_install:
+before_script:  # code coverage tool
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
   - pip install codecov
 
 install:
@@ -30,14 +33,11 @@ matrix:
     - python: "3.7.1"
       stage: test
       env: TOXENV=py37
-    - python: "3.8-dev"
-      stage: test
-      env: TOXENV=py38-dev
 
-  allow_failures:
-    - python: "3.8-dev"
-
-after_success:
+after_script:
+  - ./cc-test-reporter format-coverage --input-type coverage.py
+  - ./cc-test-reporter sum-coverage
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
   - codecov
 
 notification:

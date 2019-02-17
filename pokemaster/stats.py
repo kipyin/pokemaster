@@ -138,7 +138,7 @@ class Stats:
     def validate_iv(self) -> bool:
         """Check if each IV is between 0 and 32."""
         for stat in self._NAMES:
-            if not (0 <= getattr(self, stat) <= 32):
+            if not 0 <= getattr(self, stat) <= 32:
                 raise ValueError(
                     f"The {stat} IV ({getattr(self, stat)}) must be a number "
                     "between 0 and 32 inclusive."
@@ -172,3 +172,29 @@ class Stats:
             elif isinstance(other, Real):
                 result_stats[stat] = operator(getattr(self, stat), other)
         return self.__class__(**result_stats)
+
+
+@attr.s(auto_attribs=True, slots=True)
+class BattleStats:
+    """
+    In-battle stats.
+    """
+
+    hp: Real
+    attack: Real
+    defense: Real
+    special_attack: Real
+    special_defense: Real
+    speed: Real
+    evasion: Real
+    accuracy: Real
+
+    @classmethod
+    def from_stats(cls, stats: Stats) -> "BattleStats":
+        """
+        Create a ``BattleStats`` instance from a Pokémon's stats.
+        """
+        attribs = attr.asdict(stats)
+        attribs['evasion'] = 1.0
+        attribs['accuracy'] = 1.0
+        return cls(**attribs)
