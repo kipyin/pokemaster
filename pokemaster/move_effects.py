@@ -5,10 +5,21 @@ This module defines all move effects in the Pokémon games.
 
 from typing import Iterable, Sequence, Union
 
+from pokedex.db import tables
 from typing_extensions import NoReturn
 
+from pokemaster._database import get_move
 from pokemaster.battle import Field
 from pokemaster.pokemon import Pokemon
+
+
+def calculate_damage(source: Pokemon, target: Pokemon, move: tables.Move):
+    """Calculate the actual damage a move deals.
+
+    :param source: The move's user.
+    :param target: The move's target.
+    :param move: A row from ``Move`` table in the database.
+    """
 
 
 def regular_damage(
