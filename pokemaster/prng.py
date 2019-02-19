@@ -107,16 +107,20 @@ class PRNG:
 
         return iv_src_1 + (iv_src_2 << 16)
 
-    def random(
+    def random(self) -> float:
+        """Return a random number from the uniform distribution [0, 1)."""
+        return self.next() / 0x10000
+
+    def uniform(
         self, min: Union[int, float] = None, max: Union[int, float] = None
     ) -> float:
-        """Return a random number between *min* and *max*.
+        """Return a random number from the uniform distribution [min, max)
 
         Usage::
 
-            PRNG.random() -> a random number between [0, 1)
-            PRNG.random(n) -> a random number between [0, n)
-            PRNG.random(m, n) -> a random number between [m, n)
+            PRNG.uniform() -> a random number between [0, 1)
+            PRNG.uniform(n) -> a random number between [0, n)
+            PRNG.uniform(m, n) -> a random number between [m, n)
 
         """
         if min is not None and not isinstance(min, Real):
@@ -125,16 +129,16 @@ class PRNG:
             raise TypeError(f"'max' must be an int or a float.")
 
         if min is None and max is None:
-            # PRNG.random() -> [0, 1)
-            return self.next() / 0x10000
+            # PRNG.uniform() -> [0, 1)
+            return self.random()
         elif (min is not None and max is None) or (
             min is None and max is not None
         ):
-            # PRNG.random(n) -> [0, n)
+            # PRNG.uniform(n) -> [0, n)
             cap = min or max
-            return self.next() / 0x10000 * cap
+            return self.random() * cap
         else:
-            # PRNG.random(m, n) -> [m, n)
+            # PRNG.uniform(m, n) -> [m, n)
             if max <= min:
                 raise ValueError("'max' must be strictly greater than 'min'.")
-            return self.next() / 0x10000 * (max - min) + min
+            return self.random() * (max - min) + min
