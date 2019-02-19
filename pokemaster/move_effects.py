@@ -13,13 +13,34 @@ from pokemaster.battle import Field
 from pokemaster.pokemon import Pokemon
 
 
-def calculate_damage(source: Pokemon, target: Pokemon, move: tables.Move):
+def calculate_damage(
+    source: Pokemon, target: Pokemon, move: tables.Move, field: Field
+) -> int:
     """Calculate the actual damage a move deals.
 
     :param source: The move's user.
     :param target: The move's target.
     :param move: A row from ``Move`` table in the database.
+    :param field: A ``Field`` instance.
+    :return: int
     """
+    if move.power is None:
+        return 0
+
+    if move.damage_class.identifier == 'physical':
+        effective_attack = getattr(source.stats, "attack")
+        effective_defense = getattr(target.stats, "defense")
+    elif move.damage_class.identifier == 'special':
+        effective_attack = getattr(source.stats, "special_attack")
+        effective_defense = getattr(target.stats, "special_defense")
+    else:
+        raise ValueError(
+            f"Unknown damage class: {move.damage_class.identifier}."
+        )
+
+    base_damage = (
+        2 * source.level // 5 + 2
+    ) * move.power * effective_attack // effective_defense // 50 + 2
 
 
 def regular_damage(
