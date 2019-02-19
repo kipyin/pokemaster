@@ -55,9 +55,12 @@ class PRNG:
         """Reset the generator with a seed, if given."""
         self._seed = seed or 0
 
-    def next(self, n=1) -> List[int]:
+    def next(self, n=1) -> Union[int, List[int]]:
         """Generate the next n random numbers."""
-        return [self() for _ in range(n)]
+        if n == 1:
+            return self()
+        else:
+            return [self() for _ in range(n)]
 
     def create_genome(self, method=2) -> Tuple[int, int]:
         """
