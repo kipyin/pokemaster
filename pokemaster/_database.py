@@ -148,7 +148,7 @@ def wild_pokemon_held_item(
     """Determine the held item of a wild Pokémon."""
     pokemon_ = get_pokemon(national_id=national_id)
 
-    held_item_chance = prng() / 0xFFFF
+    held_item_chance = prng.random()
 
     if compound_eyes:
         rare_item_chance = 0.2
