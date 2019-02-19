@@ -49,7 +49,7 @@ class PRNG:
         try:
             return next(self._generator())
         except StopIteration:
-            self._seed = 0
+            self.reset()
             return next(self._generator())
 
     def reset(self, seed=None):
