@@ -33,15 +33,15 @@ def test_pid_ivs_creation():
     assert (0x7E482751, 0x5EE9629C) == prng.create_genome(method=2)
 
 
-def test_random():
+def test_uniform():
     prng = PRNG(0x1A56B091)
     with pytest.raises(TypeError):
-        prng.random("10")
+        prng.uniform("10")
     with pytest.raises(TypeError):
-        prng.random(min=10, max="20")
+        prng.uniform(min=10, max="20")
 
-    assert prng.random() == 0x01DB / 0x10000
-    assert prng.random(10) == 10 * 0x7B06 / 0x10000
-    assert prng.random(5, 10) == 5 * 0x5233 / 0x10000 + 5
+    assert prng.uniform() == 0x01DB / 0x10000
+    assert prng.uniform(10) == 10 * 0x7B06 / 0x10000
+    assert prng.uniform(5, 10) == 5 * 0x5233 / 0x10000 + 5
     with pytest.raises(ValueError):
-        prng.random(10, 5)
+        prng.uniform(10, 5)
