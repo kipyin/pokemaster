@@ -31,6 +31,10 @@ class PRNG:
 
     _seed: int = attr.ib(validator=attr.validators.instance_of(int), default=0)
     _gen: int = attr.ib(validator=attr.validators.in_(range(1, 8)), default=3)
+    _source_seed: int = attr.ib(init=False)
+
+    def __attrs_post_init__(self):
+        self._source_seed = self._seed
 
     def _generator(self):
         if self._gen == 3:
