@@ -3,7 +3,10 @@ Provides the pseudo-random number generator used in various places.
 """
 from typing import List, Tuple
 
+import attr
 
+
+@attr.s(slots=True, auto_attribs=True, cmp=False)
 class PRNG:
     """A linear congruential random number generator.
 
@@ -26,20 +29,18 @@ class PRNG:
         https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
     """
 
-    def __init__(self, seed=0):
-        # In Emerald, the initial seed is always 0.
-        if not isinstance(seed, int):
-            raise TypeError(f'The seed must be an integer.')
-        self._seed = seed
+    _seed: int = attr.ib(validator=attr.validators.instance_of(int), default=0)
+    _gen: int = attr.ib(validator=attr.validators.in_(range(1, 8)), default=3)
 
-    # XXX: __iter__?
     def _generator(self):
-        while True:
-            self._seed = (0x41C64E6D * self._seed + 0x6073) & 0xFFFFFFFF
-            yield self._seed >> 16
+        if self._gen == 3:
+            while True:
+                self._seed = (0x41C64E6D * self._seed + 0x6073) & 0xFFFFFFFF
+                yield self._seed >> 16
+        else:
+            return ValueError(f"Gen. {self._gen} PRNG is not supported yet.")
 
     def __call__(self) -> int:
-        # FIXME: will eventually return StopIteration!
         try:
             return next(self._generator())
         except StopIteration:
