@@ -32,10 +32,10 @@ class PRNG:
 
     _seed: int = attr.ib(validator=attr.validators.instance_of(int), default=0)
     _gen: int = attr.ib(validator=attr.validators.in_(range(1, 8)), default=3)
-    _source_seed: int = attr.ib(init=False)
+    _initial_seed: int = attr.ib(init=False)
 
     def __attrs_post_init__(self):
-        self._source_seed = self._seed
+        self._initial_seed = self._seed
 
     def _generator(self):
         if self._gen == 3:
@@ -52,9 +52,9 @@ class PRNG:
             self.reset()
             return next(self._generator())
 
-    def reset(self, seed=None):
-        """Reset the generator with a seed, if given."""
-        self._seed = seed or 0
+    def reset(self):
+        """Reset the generator with the initial seed."""
+        self._seed = self._initial_seed
 
     def next(self, n=1) -> Union[int, List[int]]:
         """Generate the next n random numbers."""
