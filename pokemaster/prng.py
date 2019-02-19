@@ -1,7 +1,8 @@
 """
 Provides the pseudo-random number generator used in various places.
 """
-from typing import List, Tuple
+from numbers import Real
+from typing import List, Tuple, Union
 
 import attr
 
@@ -105,3 +106,35 @@ class PRNG:
             iv_src_1, _, iv_src_2 = self.next(3)
 
         return iv_src_1 + (iv_src_2 << 16)
+
+    def random(
+        self, min: Union[int, float] = None, max: Union[int, float] = None
+    ) -> float:
+        """Return a random number between *min* and *max*.
+
+        Usage::
+
+            PRNG.random() -> a random number between [0, 1)
+            PRNG.random(n) -> a random number between [0, n)
+            PRNG.random(m, n) -> a random number between [m, n)
+
+        """
+        if min is not None and not isinstance(min, Real):
+            raise TypeError(f"'min' must be an int or a float.")
+        if max is not None and not isinstance(max, Real):
+            raise TypeError(f"'max' must be an int or a float.")
+
+        if min is None and max is None:
+            # PRNG.random() -> [0, 1)
+            return self.next() / 0x10000
+        elif (min is not None and max is None) or (
+            min is None and max is not None
+        ):
+            # PRNG.random(n) -> [0, n)
+            cap = min or max
+            return self.next() / 0x10000 * cap
+        else:
+            # PRNG.random(m, n) -> [m, n)
+            if max <= min:
+                raise ValueError("'max' must be strictly greater than 'min'.")
+            return self.next() / 0x10000 * (max - min) + min
