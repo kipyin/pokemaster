@@ -81,29 +81,31 @@ commands =
 
 [tool.towncrier]
 package = "pokemaster"
-filename = "CHANGELOG.rst"
+filename = "CHANGELOG.md"
 directory = "newsfragments"
-issue_format = "`#{issue} <https://github.com/kipyin/pokemaster/issues/{issue}>`_"
-underlines = ["-", "~"]
+issue_format = "[#{issue}](https://github.com/kipyin/pokemaster/issues/{issue})"
+title_format = "## {name} {version} ({project_date})"
+start_string = "<!-- TOWNCRIER -->\n"
+underlines = ["", "", ""]
 
 [[tool.towncrier.type]]
 directory = "bugfix"
-name = "Bugfixes"
+name = "### Bugfixes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "dev"
-name = "Development Changes"
+name = "### Development Changes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "docs"
-name = "Improved Documentation"
+name = "### Improved Documentation"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "feature"
-name = "Features"
+name = "### Features"
 showcontent = true
 
 [build-system]
