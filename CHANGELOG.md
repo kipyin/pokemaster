@@ -8,7 +8,7 @@
 
 - Added in-battle stats to `Pokemon`. ([#15](https://github.com/kipyin/pokemaster/issues/15))
 - Added `pokemaster.Weather` class for weather-related mechanisms. ([#17](https://github.com/kipyin/pokemaster/issues/17))
-- Added pokemaster.game_version.Game enum
+- Added `pokemaster.game_version.Game` enum
   to manage game versions, version groups, and generations. ([#18](https://github.com/kipyin/pokemaster/issues/18))
 
 
