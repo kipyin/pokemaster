@@ -50,7 +50,7 @@ legacy_tox_ini = """
 [tox]
 skipsdist = true
 isolated_build = true
-envlist = lint, py36, py37, py38-dev
+envlist = lint, py36, py37, py38-dev, clean
 
 [testenv]
 whitelist_externals = poetry
@@ -66,6 +66,16 @@ commands =
 basepython = python3.7
 deps = pre-commit
 commands = poetry run pre-commit run --all-files
+
+[testenv:clean]
+basepython = python3.7
+whitelist_externals = rm
+commands =
+    rm -rf dist/
+    rm -rf */__pycache__/
+    rm -rf pokemaster.egg-info/
+    rm -rf pip-wheel-metadata/
+    rm -rf htmlcov/
 
 """
 
