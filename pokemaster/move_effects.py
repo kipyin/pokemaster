@@ -14,7 +14,10 @@ from pokemaster.pokemon import Pokemon
 
 
 def calculate_damage(
-    source: Pokemon, target: Pokemon, move: tables.Move, field: Field
+    source: Pokemon,
+    target: Union[Sequence[Pokemon], Pokemon],
+    move: tables.Move,
+    field: Field,
 ) -> int:
     """Calculate the actual damage a move deals.
 
