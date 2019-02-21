@@ -1,6 +1,5 @@
 """Provides general ``Stats`` class for statistics-related functionality
-and ``Conditions`` class for contests.
-"""
+and ``Conditions`` class for contests."""
 import operator
 from numbers import Real
 from typing import Callable, ClassVar, Tuple, Union
@@ -13,7 +12,7 @@ from pokemaster import _database
 
 @attr.s(slots=True, auto_attribs=True)
 class Conditions:
-    """Contest conditions"""
+    """Contest conditions."""
 
     coolness: int = 0
     beauty: int = 0
@@ -41,7 +40,6 @@ class Stats:
         >>> iv = Stats.make_iv(gene=0x00ff)
         >>> max_iv = Stats(32, 32, 32, 32, 32, 32)
         >>> species_strengths = Stats.make_species_strengths('eevee')
-
     """
 
     _NAMES: ClassVar[Tuple[str, ...]] = (
@@ -176,9 +174,7 @@ class Stats:
 
 @attr.s(auto_attribs=True, slots=True)
 class BattleStats:
-    """
-    In-battle stats.
-    """
+    """In-battle stats."""
 
     hp: Real
     attack: Real
@@ -191,9 +187,7 @@ class BattleStats:
 
     @classmethod
     def from_stats(cls, stats: Stats) -> "BattleStats":
-        """
-        Create a ``BattleStats`` instance from a Pokémon's stats.
-        """
+        """Create a ``BattleStats`` instance from a Pokémon's stats."""
         attribs = attr.asdict(stats)
         attribs['evasion'] = 1.0
         attribs['accuracy'] = 1.0

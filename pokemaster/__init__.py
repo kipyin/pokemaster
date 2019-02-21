@@ -1,6 +1,4 @@
-"""
-Public APIs.
-"""
+"""Public APIs."""
 from .pokemon import Pokemon
 from .weather import Weather
 from .game_version import Game
