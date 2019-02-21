@@ -27,3 +27,4 @@ repos:
     rev: stable
     hooks:
       - id: docformatter
+        args: [-ir, --wrap-summaries, "72"]
