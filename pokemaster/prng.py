@@ -1,9 +1,13 @@
 """
 Provides the pseudo-random number generator used in various places.
 """
-from typing import List, Tuple
+from numbers import Real
+from typing import List, Tuple, Union
+
+import attr
 
 
+@attr.s(slots=True, auto_attribs=True, cmp=False)
 class PRNG:
     """A linear congruential random number generator.
 
@@ -26,33 +30,38 @@ class PRNG:
         https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator
     """
 
-    def __init__(self, seed=0):
-        # In Emerald, the initial seed is always 0.
-        if not isinstance(seed, int):
-            raise TypeError(f'The seed must be an integer.')
-        self._seed = seed
+    _seed: int = attr.ib(validator=attr.validators.instance_of(int), default=0)
+    _gen: int = attr.ib(validator=attr.validators.in_(range(1, 8)), default=3)
+    _initial_seed: int = attr.ib(init=False)
 
-    # XXX: __iter__?
+    def __attrs_post_init__(self):
+        self._initial_seed = self._seed
+
     def _generator(self):
-        while True:
-            self._seed = (0x41C64E6D * self._seed + 0x6073) & 0xFFFFFFFF
-            yield self._seed >> 16
+        if self._gen == 3:
+            while True:
+                self._seed = (0x41C64E6D * self._seed + 0x6073) & 0xFFFFFFFF
+                yield self._seed >> 16
+        else:
+            return ValueError(f"Gen. {self._gen} PRNG is not supported yet.")
 
     def __call__(self) -> int:
-        # FIXME: will eventually return StopIteration!
         try:
             return next(self._generator())
         except StopIteration:
-            self._seed = 0
+            self.reset()
             return next(self._generator())
 
-    def reset(self, seed=None):
-        """Reset the generator with a seed, if given."""
-        self._seed = seed or 0
+    def reset(self):
+        """Reset the generator with the initial seed."""
+        self._seed = self._initial_seed
 
-    def next(self, n=1) -> List[int]:
+    def next(self, n=1) -> Union[int, List[int]]:
         """Generate the next n random numbers."""
-        return [self() for _ in range(n)]
+        if n == 1:
+            return self()
+        else:
+            return [self() for _ in range(n)]
 
     def create_genome(self, method=2) -> Tuple[int, int]:
         """
@@ -97,3 +106,39 @@ class PRNG:
             iv_src_1, _, iv_src_2 = self.next(3)
 
         return iv_src_1 + (iv_src_2 << 16)
+
+    def random(self) -> float:
+        """Return a random number from the uniform distribution [0, 1)."""
+        return self.next() / 0x10000
+
+    def uniform(
+        self, min: Union[int, float] = None, max: Union[int, float] = None
+    ) -> float:
+        """Return a random number from the uniform distribution [min, max)
+
+        Usage::
+
+            PRNG.uniform() -> a random number between [0, 1)
+            PRNG.uniform(n) -> a random number between [0, n)
+            PRNG.uniform(m, n) -> a random number between [m, n)
+
+        """
+        if min is not None and not isinstance(min, Real):
+            raise TypeError(f"'min' must be an int or a float.")
+        if max is not None and not isinstance(max, Real):
+            raise TypeError(f"'max' must be an int or a float.")
+
+        if min is None and max is None:
+            # PRNG.uniform() -> [0, 1)
+            return self.random()
+        elif (min is not None and max is None) or (
+            min is None and max is not None
+        ):
+            # PRNG.uniform(n) -> [0, n)
+            cap = min or max
+            return self.random() * cap
+        else:
+            # PRNG.uniform(m, n) -> [m, n)
+            if max <= min:
+                raise ValueError("'max' must be strictly greater than 'min'.")
+            return self.random() * (max - min) + min

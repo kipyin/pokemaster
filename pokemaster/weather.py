@@ -2,7 +2,7 @@
 Provides weather-related mechanisms.
 """
 
-from typing import ClassVar, Union
+from typing import Union
 
 import attr
 from typing_extensions import Final

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pokemaster"
-version = "0.2.0"
+version = "0.2.1"
 description = "Get Real, Living™ Pokémon in Python"
 authors = ["Kip Yin <kipyty@outlook.com>"]
 license = "MIT"
@@ -33,7 +33,6 @@ black = { version = "^18.3-alpha.0", allows-prereleases = true }
 pre-commit = "^1.12"
 pytest-cov = "^2.6"
 isort = { git = "https://github.com/timothycrosley/isort.git", branch = "develop" }
-invoke = "^1.2"
 tox = "^3.7"
 towncrier = "^18.6"
 coverage = "^4.5"
@@ -51,7 +50,7 @@ legacy_tox_ini = """
 [tox]
 skipsdist = true
 isolated_build = true
-envlist = lint, py36, py37, py38-dev
+envlist = lint, py36, py37, py38-dev, clean
 
 [testenv]
 whitelist_externals = poetry
@@ -68,33 +67,45 @@ basepython = python3.7
 deps = pre-commit
 commands = poetry run pre-commit run --all-files
 
+[testenv:clean]
+basepython = python3.7
+whitelist_externals = rm
+commands =
+    rm -rf dist/
+    rm -rf */__pycache__/
+    rm -rf pokemaster.egg-info/
+    rm -rf pip-wheel-metadata/
+    rm -rf htmlcov/
+
 """
 
 [tool.towncrier]
 package = "pokemaster"
-filename = "CHANGELOG.rst"
+filename = "CHANGELOG.md"
 directory = "newsfragments"
-issue_format = "`#{issue} <https://github.com/kipyin/pokemaster/issues/{issue}>`_"
-underlines = ["-", "~"]
+issue_format = "[#{issue}](https://github.com/kipyin/pokemaster/issues/{issue})"
+title_format = "## {name} {version} ({project_date})"
+start_string = "<!-- TOWNCRIER -->\n"
+underlines = ["", "", ""]
 
 [[tool.towncrier.type]]
 directory = "bugfix"
-name = "Bugfixes"
+name = "### Bugfixes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "dev"
-name = "Development Changes"
+name = "### Development Changes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "docs"
-name = "Improved Documentation"
+name = "### Improved Documentation"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "feature"
-name = "Features"
+name = "### Features"
 showcontent = true
 
 [build-system]

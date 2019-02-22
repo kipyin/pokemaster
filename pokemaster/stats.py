@@ -138,7 +138,7 @@ class Stats:
     def validate_iv(self) -> bool:
         """Check if each IV is between 0 and 32."""
         for stat in self._NAMES:
-            if not (0 <= getattr(self, stat) <= 32):
+            if not 0 <= getattr(self, stat) <= 32:
                 raise ValueError(
                     f"The {stat} IV ({getattr(self, stat)}) must be a number "
                     "between 0 and 32 inclusive."

@@ -2,7 +2,7 @@
 
 [![Travis CI](https://img.shields.io/travis/com/kipyin/pokemaster/master.svg?label=Travis%20CI)](https://travis-ci.com/kipyin/pokemaster) [![codecov](https://codecov.io/gh/kipyin/pokemaster/branch/master/graph/badge.svg)](https://codecov.io/gh/kipyin/pokemaster) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2ce3d3f469904b3a833c2a17045dff8a)](https://www.codacy.com/app/kipyin/pokemaster?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kipyin/pokemaster&amp;utm_campaign=Badge_Grade) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-## What is this?
+## Introduction
 
 `pokemaster` lets you create Pokémon
 that is native to the core series Pokémon games
@@ -31,6 +31,7 @@ $ pip install pokemaster
 ```
 
 Or, if you have poetry, run:
+
 ```console
 $ poetry add pokemaster -E pokedex
 ```

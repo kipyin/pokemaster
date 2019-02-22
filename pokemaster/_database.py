@@ -62,8 +62,7 @@ def _check_completeness(
     for arg in args:
         if arg is not None:
             return True
-    else:
-        raise ValueError(msg)
+    raise ValueError(msg)
 
 
 def get_pokemon(
@@ -149,7 +148,7 @@ def wild_pokemon_held_item(
     """Determine the held item of a wild Pokémon."""
     pokemon_ = get_pokemon(national_id=national_id)
 
-    held_item_chance = prng() / 0xFFFF
+    held_item_chance = prng.random()
 
     if compound_eyes:
         rare_item_chance = 0.2
@@ -165,8 +164,7 @@ def wild_pokemon_held_item(
             return item
         elif item.rarity == 100:
             return item
-    else:
-        return None
+    return None
 
 
 def get_pokemon_default_moves(
