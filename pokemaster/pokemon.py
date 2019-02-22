@@ -319,8 +319,8 @@ class Pokemon:
     def gain_exp(self, earned_exp: int) -> NoReturn:
         """Add ``earned_exp`` to the Pokémon's exp. points.
 
-        :param earned_exp: The earned get_experience points upon defeating
-            an opponent Pokémon.
+        :param earned_exp: The earned experience points upon
+            defeating an opponent Pokémon.
         :return: NoReturn
         """
         # earned_exp = new_exp - self._exp
