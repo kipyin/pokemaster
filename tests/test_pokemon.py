@@ -37,19 +37,18 @@ def test_instantiate_pokemon_with_specified_gender():
 
 def test_instantiate_pokemon_with_exp():
     """A ``Pokemon`` instance can be created by specifying the desired
-    exp.
-
-    points it has, and its level will be inferred automatically.
-    """
+    experience points it has, and its level will be inferred
+    automatically."""
     eevee = Pokemon(species='eevee', exp=2000)
     assert 12 == eevee.level
     assert 2000 == eevee.exp
 
 
 def test_gain_exp():
-    """``Pokemon.gain_exp()`` adds the earned exp.
+    """``Pokemon.gain_exp()`` adds the earned experience points to the
+    Pokémon's current exp.
 
-    points to the Pokémon's current exp. points.
+    points.
     """
     eevee = Pokemon(species='eevee', exp=2000)
     eevee.gain_exp(1)
@@ -57,11 +56,9 @@ def test_gain_exp():
 
 
 def test_exp_to_next_level():
-    """``Pokemon.exp_to_next_level`` calculates the amount of exp.
-
+    """``Pokemon.exp_to_next_level`` calculates the amount of experience
     points required to get to the next level dynamically, i.e. it is
-    calculated every time it is called.
-    """
+    calculated every time it is called."""
     eevee = Pokemon(species='eevee', exp=2000)
     assert 197 == eevee.exp_to_next_level
     eevee.gain_exp(1)
@@ -76,10 +73,7 @@ def test_exp_to_next_level_is_0_for_max_level():
 
 
 def test_level_100_pokemon_cannot_gain_exp_points():
-    """Level 100 ``Pokemon`` cannot gain any more exp.
-
-    points.
-    """
+    """Level 100 ``Pokemon`` cannot gain any more experience points."""
     eevee = Pokemon(species='eevee', level=100)
     eevee.gain_exp(1)
     assert 100 == eevee.level
@@ -87,10 +81,8 @@ def test_level_100_pokemon_cannot_gain_exp_points():
 
 
 def test_pokemon_level_up():
-    """If a Pokémon gains the exact exp.
-
-    points to the next level, it should level up.
-    """
+    """If a Pokémon gains the exact experience points to the next level,
+    it should level up."""
     bulbasaur = Pokemon(species='bulbasaur', level=5)
     bulbasaur.gain_exp(earned_exp=bulbasaur.exp_to_next_level)
     assert 6 == bulbasaur.level

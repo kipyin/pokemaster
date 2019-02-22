@@ -149,18 +149,12 @@ class Pokemon:
 
     @property
     def exp(self) -> int:
-        """The current exp.
-
-        points.
-        """
+        """The current experience points."""
         return self._exp
 
     @property
     def exp_to_next_level(self) -> int:
-        """The exp.
-
-        points needed to get to the next level.
-        """
+        """The experience points needed to get to the next level."""
         if self._level < 100:
             return (
                 _database.get_experience(
