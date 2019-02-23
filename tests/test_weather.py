@@ -1,6 +1,4 @@
-"""
-Tests for ``pokemaster.weather.Weather``.
-"""
+"""Tests for ``pokemaster.weather.Weather``."""
 import pytest
 
 from pokemaster.pokemon import Pokemon
@@ -9,22 +7,20 @@ from pokemaster.weather import Weather
 
 def test_weather_name_conversion():
     """Users can pass the weathers' English names (with spaces and
-    uppercase letters) to ``Weather()`` instantiation and getting
-    the correct weather.
-    """
+    uppercase letters) to ``Weather()`` instantiation and getting the
+    correct weather."""
     assert 'clear-skies' == Weather('Clear Skies').name
 
 
 def test_weather_name_validation():
-    """Only battle-affecting and Generation III weathers are accepted.
-    """
+    """Only battle-affecting and Generation III weathers are
+    accepted."""
     with pytest.raises(ValueError):
         Weather('Mysterious air current')
 
 
 def test_weather_trigger_validation():
-    """Must specify how a weather is triggered.
-    """
+    """Must specify how a weather is triggered."""
     with pytest.raises(ValueError):
         # Clear skies cannot be triggered (actually, the trigger is
         # 'natural'.)

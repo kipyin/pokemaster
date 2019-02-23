@@ -1,6 +1,4 @@
-"""
-Game version API.
-"""
+"""Game version API."""
 
 import enum
 from collections import namedtuple
