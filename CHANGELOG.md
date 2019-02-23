@@ -2,6 +2,28 @@
 
 <!-- TOWNCRIER -->
 
+## Pokemaster 0.2.1 (2019-02-22)
+
+
+### Bugfixes
+
+
+- Minor bugfix ([#19](https://github.com/kipyin/pokemaster/issues/19), [#20](https://github.com/kipyin/pokemaster/issues/20), [#21](https://github.com/kipyin/pokemaster/issues/21))
+
+
+### Features
+
+
+- Added random functions to `pokemaster.prng.PRNG`.
+
+  More specifically,
+  the following methods are introduced to the `PRNG` class:
+
+  - `random()` generates a random `float` in [0, 1).
+  - `uniform(a, b)` generates a random `float` in [a, b).
+  This is equivalent to `a + (b - a) * PRNG().random()`. ([#23](https://github.com/kipyin/pokemaster/issues/23))
+
+
 ## Pokemaster 0.2.0 (2019-02-16)
 
 ### Features
