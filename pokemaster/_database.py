@@ -1,8 +1,8 @@
 """Query helpers.
 
-Make simple queries in a breeze anywhere, any time.
-Note that tables should not be passed as arguments! That'll defeat
-the purpose of this module.
+Make simple queries in a breeze anywhere, any time. Note that tables
+should not be passed as arguments! That'll defeat the purpose of this
+module.
 """
 import warnings
 from typing import List, Optional, Tuple
@@ -221,9 +221,9 @@ def get_ability(
 ) -> pokedex.db.tables.Ability:
     """Not quite a query, but definitely hides the mess.
 
-    If a Pokémon only have one ability, then that'll be its
-    ability straight away; if it has more than one ability,
-    then the last bit of `personality` comes to play.
+    If a Pokémon only have one ability, then that'll be its ability
+    straight away; if it has more than one ability, then the last bit of
+    `personality` comes to play.
     """
     pokemon_ = get_pokemon(species=species, national_id=national_id, form=form)
     abilities = pokemon_.abilities
@@ -237,7 +237,8 @@ def get_pokemon_gender(
     form: str = None,
     personality: int = None,
 ) -> pokedex.db.tables.Gender:
-    """Determine a Pokémon's gender by its gender rate and personality."""
+    """Determine a Pokémon's gender by its gender rate and
+    personality."""
     pokemon = get_pokemon(national_id=national_id, species=species, form=form)
     gender_rate = pokemon.species.gender_rate
     if gender_rate == -1:
@@ -276,10 +277,8 @@ def get_move(move: str = None, move_id: int = None) -> pokedex.db.tables.Move:
 def get_machine(
     machine_number: int = None, move_identifier: str = None, move_id: int = None
 ) -> Optional[pokedex.db.tables.Machine]:
-    """
-    Get a TM or HM by the machine number，or the move's identifier,
-    if it is a valid machine.
-    """
+    """Get a TM or HM by the machine number，or the move's identifier, if
+    it is a valid machine."""
     _check_completeness(machine_number, move_identifier, move_id)
     query = (
         SESSION.query(pokedex.db.tables.Machine)
@@ -303,7 +302,8 @@ def get_machine(
 def get_move_pool(
     species: str, move_method: str = None
 ) -> List[pokedex.db.tables.PokemonMove]:
-    """Get a pool of moves that a Pokémon can learn via a specific method."""
+    """Get a pool of moves that a Pokémon can learn via a specific
+    method."""
     query = (
         SESSION.query(pokedex.db.tables.PokemonMove)
         .join(pokedex.db.tables.PokemonMoveMethod)

@@ -1,5 +1,4 @@
-"""
-Given a seed, the PRNG should have the exact same behavior.
+"""Given a seed, the PRNG should have the exact same behavior.
 
 The seed and the results are from the following link:
 https://www.smogon.com/ingame/rng/pid_iv_creation#pokemon_random_number_generator

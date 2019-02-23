@@ -1,4 +1,4 @@
-"""Basic Pokémon API"""
+"""Basic Pokémon API."""
 from collections import deque
 from numbers import Real
 from typing import List
@@ -17,14 +17,13 @@ def _sign(x: int) -> int:
 
 
 class Pokemon:
-    """
-    A Real, Living™ Pokémon.
+    """A Real, Living™ Pokémon.
 
     A ``Pokemon`` instance has the exact same attributes and behaviors
     as the ones in game: a Pokémon knows up to four moves, holds some
-    kind of item, have stats (hp, attack, speed, etc.), can level up
-    and evolve to another Pokémon, can be in some status conditions,
-    can be cured by using medicines, and much more.
+    kind of item, have stats (hp, attack, speed, etc.), can level up and
+    evolve to another Pokémon, can be in some status conditions, can be
+    cured by using medicines, and much more.
     """
 
     _prng = PRNG()
@@ -150,12 +149,12 @@ class Pokemon:
 
     @property
     def exp(self) -> int:
-        """The current exp. points."""
+        """The current experience points."""
         return self._exp
 
     @property
     def exp_to_next_level(self) -> int:
-        """The exp. points needed to get to the next level."""
+        """The experience points needed to get to the next level."""
         if self._level < 100:
             return (
                 _database.get_experience(
@@ -173,8 +172,7 @@ class Pokemon:
 
     @property
     def gender(self) -> str:
-        """
-        The Pokémon's gender.
+        """The Pokémon's gender.
 
         Possible values are: 'male', 'female', and 'genderless'.
         """
@@ -321,8 +319,8 @@ class Pokemon:
     def gain_exp(self, earned_exp: int) -> NoReturn:
         """Add ``earned_exp`` to the Pokémon's exp. points.
 
-        :param earned_exp: The earned get_experience points upon defeating
-            an opponent Pokémon.
+        :param earned_exp: The earned experience points upon
+            defeating an opponent Pokémon.
         :return: NoReturn
         """
         # earned_exp = new_exp - self._exp
@@ -405,8 +403,9 @@ class Pokemon:
         self._learn_move(learn=move_to_learn, forget=forget)
 
     def _level_up(self):
-        """
-        Increase Pokémon's level by one. Evolve the Pokémon as needed.
+        """Increase Pokémon's level by one.
+
+        Evolve the Pokémon as needed.
         """
         if self._level >= 100:
             return
@@ -421,7 +420,5 @@ class Pokemon:
         self._evolve('level-up')
 
     def _reset_battle_stats(self):
-        """
-        Recalculate the battle stats.
-        """
+        """Recalculate the battle stats."""
         self._battle_stats = BattleStats.from_stats(self._stats)
