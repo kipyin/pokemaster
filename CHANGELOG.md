@@ -2,7 +2,7 @@
 
 <!-- TOWNCRIER -->
 
-## Pokemaster 0.2.1 (2019-02-22)
+## 0.2.1 (2019-02-22)
 
 ### Bugfixes
 
@@ -15,12 +15,12 @@
   More specifically,
   the following methods are introduced to the `PRNG` class:
 
-  - `random()` generates a random `float` in [0, 1).
-  - `uniform(a, b)` generates a random `float` in [a, b).
+  - `random()` generates a random `float` in `[0, 1)`.
+  - `uniform(a, b)` generates a random `float` in `[a, b)`.
   This is equivalent to `a + (b - a) * PRNG().random()`. ([#23](https://github.com/kipyin/pokemaster/issues/23))
 
 
-## Pokemaster 0.2.0 (2019-02-16)
+## 0.2.0 (2019-02-16)
 
 ### Features
 
@@ -30,7 +30,7 @@
   to manage game versions, version groups, and generations. ([#18](https://github.com/kipyin/pokemaster/issues/18))
 
 
-## Pokemaster 0.1.4 (2019-02-12)
+## 0.1.4 (2019-02-12)
 
 ### Bugfixes
 
@@ -41,6 +41,6 @@
   even when the move is passed by the `forget` kwarg. ([#13](https://github.com/kipyin/pokemaster/issues/13))
 
 
-## Pokemaster 0.1.3 (2019-02-06)
+## 0.1.3 (2019-02-06)
 
 No significant changes.
