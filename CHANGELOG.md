@@ -15,6 +15,23 @@ Changes for the upcoming release are housed in
 
 <!-- TOWNCRIER -->
 
+## 0.2.2 (2019-02-24)
+
+### Bugfixes
+
+-   Removed extraneous newlines between sections in `CHANGELOG.md`.
+
+    Also fixed `CHANGELOG.md` markdown formatting using
+    [Markdown Style Guide](http://www.cirosantilli.com/markdown-style-guide/).
+    ([#25](https://github.com/kipyin/pokemaster/issues/25))
+
+### Development Changes
+
+-   Added [`docformatter`](https://github.com/myint/docformatter)
+    to format docstrings.
+    ([#24](https://github.com/kipyin/pokemaster/issues/24))
+
+
 ## 0.2.1 (2019-02-22)
 
 ### Bugfixes
