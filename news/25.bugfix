@@ -1,1 +1,4 @@
-Removes extraneous newlines between sections in `CHANGELOG.md`
+Removed extraneous newlines between sections in `CHANGELOG.md`.
+
+Also fixed `CHANGELOG.md` markdown formatting using
+[Markdown Style Guide](http://www.cirosantilli.com/markdown-style-guide/)
