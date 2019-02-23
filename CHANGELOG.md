@@ -4,15 +4,11 @@
 
 ## Pokemaster 0.2.1 (2019-02-22)
 
-
 ### Bugfixes
-
 
 - Minor bugfix ([#19](https://github.com/kipyin/pokemaster/issues/19), [#20](https://github.com/kipyin/pokemaster/issues/20), [#21](https://github.com/kipyin/pokemaster/issues/21))
 
-
 ### Features
-
 
 - Added random functions to `pokemaster.prng.PRNG`.
 
@@ -37,7 +33,6 @@
 ## Pokemaster 0.1.4 (2019-02-12)
 
 ### Bugfixes
-
 
 - Pokémon cannot forget HM moves.
 
