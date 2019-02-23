@@ -37,6 +37,7 @@ tox = "^3.7"
 towncrier = "^18.6"
 coverage = "^4.5"
 typing-extensions = "^3.7"
+docformatter = "^1.0"
 
 [tool.black]
 line-length = 80
