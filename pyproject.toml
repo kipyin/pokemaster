@@ -91,22 +91,22 @@ template = "newsfragments/TEMPLATE"
 
 [[tool.towncrier.type]]
 directory = "bugfix"
-name = "### Bugfixes"
+name = "Bugfixes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "dev"
-name = "### Development Changes"
+name = "Development Changes"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "docs"
-name = "### Improved Documentation"
+name = "Improved Documentation"
 showcontent = true
 
 [[tool.towncrier.type]]
 directory = "feature"
-name = "### Features"
+name = "Features"
 showcontent = true
 
 [build-system]
