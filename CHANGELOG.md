@@ -2,14 +2,6 @@
 
 <!-- TOWNCRIER -->
 
-## Pokemaster 0.2.2 (2019-02-23)
-
-
-### Development Changes
-
-
-- Added [`docformatter`](https://github.com/myint/docformatter) to format docstrings. ([#24](https://github.com/kipyin/pokemaster/issues/24))
-
 
 ## Pokemaster 0.2.1 (2019-02-22)
 
