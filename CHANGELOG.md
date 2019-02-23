@@ -1,5 +1,16 @@
 # Changelog
 
+Versions follow [Semantic Versioning](https://semver.org/),
+where the numbers follow `Major.Minor.Patch` convention:
+
+1. `Major` version signifies backward-incompatible API changes,
+2. `Minor` version signifies introcuction of new features
+in a backwards-compatible manner, and
+3. `Patch` version signifies backwards-compatible bug fixes.
+
+Changes for the upcoming release are housed in
+[`news/`](https://github.com/kipyin/pokemaster/tree/master/news).
+
 <!-- TOWNCRIER -->
 
 ## 0.2.1 (2019-02-22)
