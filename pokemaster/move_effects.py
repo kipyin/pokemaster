@@ -1,6 +1,4 @@
-"""
-This module defines all move effects in the Pokémon games.
-"""
+"""This module defines all move effects in the Pokémon games."""
 
 
 from typing import Iterable, Sequence, Union

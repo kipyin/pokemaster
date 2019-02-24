@@ -1,6 +1,4 @@
-"""
-This module provides battle-related classes.
-"""
+"""This module provides battle-related classes."""
 
 from typing import Sequence, Tuple
 
