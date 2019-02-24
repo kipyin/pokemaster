@@ -50,3 +50,15 @@ def test_weather_messages():
     )
     assert "The sandstorm rages." == sandstorm.get_after_turn_msg()
     assert "The sandstorm subsided." == sandstorm.get_end_msg()
+
+
+def test_weather_modifier():
+    """Weather modifier caluclation is included in ``Weather`` for
+    convenience."""
+    rain = Weather('Rain')
+    harsh_sunlight = Weather('Harsh sunlight')
+    assert 1.5 == rain.modifier("water")
+    assert 1.5 == harsh_sunlight.modifier("fire")
+    assert 0.5 == rain.modifier("fire")
+    assert 0.5 == harsh_sunlight.modifier("water")
+    assert 1 == rain.modifier("steel")
