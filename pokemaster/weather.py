@@ -224,3 +224,27 @@ class Weather:
         """Return the message that prints out when the weather effect
         ends."""
         return self._end_msg
+
+    def modifier(self, move_type: str) -> Union[int, float]:
+        """Calculate the damage modifier determined by *move_type*.
+
+        The modifier is 1.5 if a Water-type move is being used during
+        rain or a Fire-type move during harsh sunlight, and 0.5 if a
+        Water-type move is used during harsh sunlight or a Fire-type
+        move during rain, and 1 otherwise.
+
+        :param move_type: The name of the type of the move.
+        :return: Union[int, float]
+        """
+        if self.name == "rain" and move_type == "water":
+            damage_modifier = 1.5
+        elif self.name == "harsh-sunlight" and move_type == "fire":
+            damage_modifier = 1.5
+        elif self.name == "rain" and move_type == "fire":
+            damage_modifier = 0.5
+        elif self.name == "harsh-sunlight" and move_type == "water":
+            damage_modifier = 0.5
+        else:
+            damage_modifier = 1
+
+        return damage_modifier
