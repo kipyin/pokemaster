@@ -1,6 +1,4 @@
-"""
-Provides weather-related mechanisms.
-"""
+"""Provides weather-related mechanisms."""
 
 from typing import Union
 
@@ -113,9 +111,8 @@ WEATHERS: Final = {
 
 
 def weather_name_converter(name: str) -> str:
-    """Convert ``Weather.name`` attribute to name-style
-    (lowercase, ASCII, slugified string).
-    """
+    """Convert ``Weather.name`` attribute to name-style (lowercase,
+    ASCII, slugified string)."""
     return name.replace(" ", "-").lower().strip()
 
 
@@ -137,7 +134,8 @@ def weather_generation_validator(_, __, generation: int) -> None:
 
 
 def weather_trigger_validator(weather: "Weather", _, trigger: str) -> None:
-    """Validate if the trigger is one of 'natural', 'move', or 'ability'."""
+    """Validate if the trigger is one of 'natural', 'move', or
+    'ability'."""
     if trigger not in ['natural', 'move', 'ability']:
         # Make sure the trigger is valid.
         raise ValueError(
@@ -205,18 +203,15 @@ class Weather:
             return self._init_msg
 
     def get_damage_msg(self, damaged_pokemon: Pokemon) -> str:
-        """Return the message when the weather damages
-        a Pokémon.
-        """
+        """Return the message when the weather damages a Pokémon."""
         if self._damage_msg is not None:
             return self._damage_msg.format(pokemon=damaged_pokemon.species)
         else:
             raise ValueError(f"{self.name} does not have a damamge message!")
 
     def get_after_turn_msg(self):
-        """Return the message that prints out right before
-        a turn ends.
-        """
+        """Return the message that prints out right before a turn
+        ends."""
         if self._after_turn_msg is not None:
             return self._after_turn_msg
         else:
@@ -226,7 +221,6 @@ class Weather:
             )
 
     def get_end_msg(self):
-        """Return the message that prints out when the weather
-        effect ends.
-        """
+        """Return the message that prints out when the weather effect
+        ends."""
         return self._end_msg

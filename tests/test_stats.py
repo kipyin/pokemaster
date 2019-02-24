@@ -1,6 +1,4 @@
-"""
-Tests for ``pokemaster.stats``.
-"""
+"""Tests for ``pokemaster.stats``."""
 from pokemaster.stats import BattleStats, Stats
 
 
@@ -26,9 +24,7 @@ def test_stats_multiplication():
 
 
 def test_create_default_battle_stats():
-    """
-    BattleStats can be instantiated from a Stats object.
-    """
+    """BattleStats can be instantiated from a Stats object."""
     stats = Stats(1, 2, 3, 4, 5, 6)
     battle_stats = BattleStats.from_stats(stats)
     assert 1.0 == battle_stats.evasion

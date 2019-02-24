@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pokemaster"
-version = "0.2.0"
+version = "0.2.2"
 description = "Get Real, Living™ Pokémon in Python"
 authors = ["Kip Yin <kipyty@outlook.com>"]
 license = "MIT"
@@ -37,6 +37,7 @@ tox = "^3.7"
 towncrier = "^18.6"
 coverage = "^4.5"
 typing-extensions = "^3.7"
+docformatter = "^1.0"
 
 [tool.black]
 line-length = 80
@@ -81,10 +82,13 @@ commands =
 
 [tool.towncrier]
 package = "pokemaster"
-filename = "CHANGELOG.rst"
-directory = "newsfragments"
-issue_format = "`#{issue} <https://github.com/kipyin/pokemaster/issues/{issue}>`_"
-underlines = ["-", "~"]
+filename = "CHANGELOG.md"
+directory = "news"
+issue_format = "[#{issue}](https://github.com/kipyin/pokemaster/issues/{issue})"
+title_format = "## {version} ({project_date})"
+start_string = "<!-- TOWNCRIER -->\n"
+underlines = ["", "", ""]
+template = "news/TEMPLATE"
 
 [[tool.towncrier.type]]
 directory = "bugfix"

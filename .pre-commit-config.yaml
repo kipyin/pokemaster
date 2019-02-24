@@ -22,3 +22,9 @@ repos:
     hooks:
       - id: isort
         language_version: python3.7
+
+  - repo: https://github.com/akbiggs/docformatter
+    rev: stable
+    hooks:
+      - id: docformatter
+        args: [-ir, --wrap-summaries, "72"]

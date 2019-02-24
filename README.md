@@ -1,6 +1,9 @@
 # `pokemaster` - Get Real, Living™ Pokémon in Python
 
-[![Travis CI](https://img.shields.io/travis/com/kipyin/pokemaster/master.svg?label=Travis%20CI)](https://travis-ci.com/kipyin/pokemaster) [![codecov](https://codecov.io/gh/kipyin/pokemaster/branch/master/graph/badge.svg)](https://codecov.io/gh/kipyin/pokemaster) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2ce3d3f469904b3a833c2a17045dff8a)](https://www.codacy.com/app/kipyin/pokemaster?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kipyin/pokemaster&amp;utm_campaign=Badge_Grade) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![Travis CI](https://img.shields.io/travis/com/kipyin/pokemaster/master.svg?label=Travis%20CI)](https://travis-ci.com/kipyin/pokemaster)
+[![codecov](https://codecov.io/gh/kipyin/pokemaster/branch/master/graph/badge.svg)](https://codecov.io/gh/kipyin/pokemaster)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2ce3d3f469904b3a833c2a17045dff8a)](https://www.codacy.com/app/kipyin/pokemaster?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kipyin/pokemaster&amp;utm_campaign=Badge_Grade)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 ## Introduction
 
@@ -25,25 +28,25 @@ and much, much more.
 `pokemaster` can be installed via `pip`, but you have to have `pokedex`
 installed first:
 
-```console
-$ pip install git+https://github.com/kipyin/pokedex
-$ pip install pokemaster
+```bash
+pip install git+https://github.com/kipyin/pokedex
+pip install pokemaster
 ```
 
 Or, if you have poetry, run:
 
-```console
-$ poetry add pokemaster -E pokedex
+```bash
+poetry add pokemaster -E pokedex
 ```
 
 ## Basic Usage
 
 To summon a Real, Living™ Pokémon:
 
-```pycon
->>> from pokemaster import Pokemon
->>> bulbasaur = Pokemon(national_id=1, level=5)
->>> eevee = Pokemon('eevee', level=10, gender='female')
+```python
+from pokemaster import Pokemon
+bulbasaur = Pokemon(national_id=1, level=5)
+eevee = Pokemon('eevee', level=10, gender='female')
 ```
 
 ## Development
@@ -53,16 +56,16 @@ To summon a Real, Living™ Pokémon:
 To make contribution,
 you need to clone the repo first, of course:
 
-```console
-$ git clone https://github.com/kipyin/pokemaster.git
-$ cd pokemaster
+```bash
+git clone https://github.com/kipyin/pokemaster.git
+cd pokemaster
 ```
 
 If you have `poetry` installed,
 you can install the dependencies directly:
 
-```console
-$ poetry install -v -E pokedex
+```bash
+poetry install -v -E pokedex
 ```
 
 This will equip everything you need for the development.
@@ -75,8 +78,8 @@ and `isort` to sort the imports.
 The best way to ensure all files are in the right format
 is using `tox`:
 
-```console
-$ tox -e lint
+```bash
+tox -e lint
 ```
 
 ### Testing
@@ -86,7 +89,7 @@ make sure all tests are passed.
 To run tests against all environments,
 simply do:
 
-```console
+```bash
 $ tox
 ```
 
@@ -97,7 +100,7 @@ For example,
 if you want to run tests against Python 3.7,
 run the following command:
 
-```console
+```bash
 $ tox -e py37
 ```
 

@@ -1,6 +1,5 @@
-"""
-Provides the pseudo-random number generator used in various places.
-"""
+"""Provides the pseudo-random number generator used in various
+places."""
 from numbers import Real
 from typing import List, Tuple, Union
 
@@ -64,8 +63,7 @@ class PRNG:
             return [self() for _ in range(n)]
 
     def create_genome(self, method=2) -> Tuple[int, int]:
-        """
-        Generate the PID and IVs using the internal generator. Return
+        """Generate the PID and IVs using the internal generator. Return
         a tuple of two integers, in the order of 'PID' and 'IVs'.
 
         The generated 32-bit IVs is different from how it is actually
@@ -108,20 +106,21 @@ class PRNG:
         return iv_src_1 + (iv_src_2 << 16)
 
     def random(self) -> float:
-        """Return a random number from the uniform distribution [0, 1)."""
+        """Return a random number from the uniform distribution [0,
+        1)."""
         return self.next() / 0x10000
 
     def uniform(
         self, min: Union[int, float] = None, max: Union[int, float] = None
     ) -> float:
-        """Return a random number from the uniform distribution [min, max)
+        """Return a random number from the uniform distribution [min,
+        max)
 
         Usage::
 
             PRNG.uniform() -> a random number between [0, 1)
             PRNG.uniform(n) -> a random number between [0, n)
             PRNG.uniform(m, n) -> a random number between [m, n)
-
         """
         if min is not None and not isinstance(min, Real):
             raise TypeError(f"'min' must be an int or a float.")
