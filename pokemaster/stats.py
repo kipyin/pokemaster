@@ -1,13 +1,14 @@
 """Provides general ``Stats`` class for statistics-related functionality
 and ``Conditions`` class for contests."""
 import operator
-from numbers import Real
 from typing import Callable, ClassVar, Tuple, Union
 
 import attr
 from attr.validators import instance_of
 
 from pokemaster import _database
+
+Real = Union[float, int]
 
 
 @attr.s(slots=True, auto_attribs=True)
