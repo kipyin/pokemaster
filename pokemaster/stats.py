@@ -1,15 +1,14 @@
 """Provides general ``Stats`` class for statistics-related functionality
 and ``Conditions`` class for contests."""
 import operator
-from functools import partial
+from numbers import Real
 from typing import Callable, ClassVar, Tuple, Union
 
 import attr
 from attr.validators import instance_of
+from typing_extensions import NoReturn
 
 from pokemaster import _database
-
-Real = Union[float, int]
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -185,7 +184,7 @@ class _BattleStat:
     def stage(self) -> int:
         return self._stage
 
-    @property.setter
+    @stage.setter
     def stage(self, new_stage: int) -> NoReturn:
         """The stage is only valid between -6 and 6."""
         if not isinstance(new_stage, int):
@@ -193,21 +192,19 @@ class _BattleStat:
         self._stage = min(max(new_stage, -6), 6)
 
 
-@attr.s(lots=True)
+@attr.s(slots=True)
 class BattleStats:
     """In-battle stats."""
 
-    hp = attr.ib(converter=partial(_BattleStat, value))
-    attack = attr.ib(converter=partial(_BattleStat, value))
-    defense = attr.ib(converter=partial(_BattleStat, value))
-    special_attack = attr.ib(converter=partial(_BattleStat, value))
-    special_defense = attr.ib(converter=partial(_BattleStat, value))
-    speed = attr.ib(converter=partial(_BattleStat, value))
-    evasion = attr.ib(converter=partial(_BattleStat, value))
-    accuracy = attr.ib(converter=partial(_BattleStat, value))
-    critical_hit = attr.ib(
-        converter=partial(_BattleStat, value), default=1 / 16
-    )
+    hp = attr.ib(converter=_BattleStat)
+    attack = attr.ib(converter=_BattleStat)
+    defense = attr.ib(converter=_BattleStat)
+    special_attack = attr.ib(converter=_BattleStat)
+    special_defense = attr.ib(converter=_BattleStat)
+    speed = attr.ib(converter=_BattleStat)
+    evasion = attr.ib(converter=_BattleStat)
+    accuracy = attr.ib(converter=_BattleStat)
+    critical_hit = attr.ib(converter=_BattleStat, default=1 / 16)
 
     @classmethod
     def from_stats(cls, stats: Stats) -> "BattleStats":
