@@ -11,6 +11,36 @@ from pokemaster.battle import Field
 from pokemaster.pokemon import Pokemon
 
 
+def _calculate_critical_hit_chance(
+    source: Pokemon, target: Pokemon, move: tables.Move
+) -> bool:
+    """Calculate the chance of scoring a critical hit."""
+    # Quick exits:
+    if target.ability in ('battle-armor', 'shell-armor'):
+        return False
+    if move.identifier in ('storm-throw', 'frost-breath'):
+        return True
+    if source.successed_moves and source.successed_moves[-1] == 'laser-focus':
+        return True
+    if (
+        source.ability == 'merciless'
+        and target.status_condition.name == 'poison'
+    ):
+        return True
+
+    # Normal cases:
+    critical_stage = move.meta.crit_rate
+    if source.held_item:
+        if source.held_item in ('razor-claw', 'scope-lens'):
+            critical_stage += 1
+        elif source.held_item == 'stick' and source.species == 'farfetchd':
+            critical_stage += 2
+        elif source.held_item == 'lucky-punch' and source.species == 'chansey':
+            critical_stage += 2
+    if source.ability == 'super-luck':
+        critical_stage += 1
+
+
 def calculate_damage(
     source: Pokemon,
     target: Union[Sequence[Pokemon], Pokemon],
@@ -42,6 +72,13 @@ def calculate_damage(
     base_damage = (
         2 * source.level // 5 + 2
     ) * move.power * effective_attack // effective_defense // 50 + 2
+
+    if instance(target, Pokemon):
+        target_modifier = 1
+    else:
+        target_modifier = 0.75
+
+    weather_modifier = field.weather.modifier(move.type.identifier)
 
 
 def regular_damage(
