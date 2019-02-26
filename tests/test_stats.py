@@ -27,11 +27,11 @@ def test_create_default_battle_stats():
     """BattleStats can be instantiated from a Stats object."""
     stats = Stats(1, 2, 3, 4, 5, 6)
     battle_stats = BattleStats.from_stats(stats)
-    assert 1.0 == battle_stats.evasion
-    assert 1.0 == battle_stats.accuracy
-    assert 1 == battle_stats.hp
-    assert 2 == battle_stats.attack
-    assert 3 == battle_stats.defense
-    assert 4 == battle_stats.special_attack
-    assert 5 == battle_stats.special_defense
-    assert 6 == battle_stats.speed
+    assert 1.0 == battle_stats.evasion.value
+    assert 1.0 == battle_stats.accuracy.value
+    assert 1 == battle_stats.hp.value
+    assert 2 == battle_stats.attack.value
+    assert 3 == battle_stats.defense.value
+    assert 4 == battle_stats.special_attack.value
+    assert 5 == battle_stats.special_defense.value
+    assert 6 == battle_stats.speed.value

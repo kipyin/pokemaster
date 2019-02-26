@@ -1,6 +1,7 @@
 """Provides general ``Stats`` class for statistics-related functionality
 and ``Conditions`` class for contests."""
 import operator
+from functools import partial
 from typing import Callable, ClassVar, Tuple, Union
 
 import attr
@@ -174,17 +175,39 @@ class Stats:
 
 
 @attr.s(auto_attribs=True, slots=True)
+class _BattleStat:
+    """A single in-battle stat."""
+
+    value: Real
+    _stage: int = 0
+
+    @property
+    def stage(self) -> int:
+        return self._stage
+
+    @property.setter
+    def stage(self, new_stage: int) -> NoReturn:
+        """The stage is only valid between -6 and 6."""
+        if not isinstance(new_stage, int):
+            raise TypeError("stage must be int.")
+        self._stage = min(max(new_stage, -6), 6)
+
+
+@attr.s(lots=True)
 class BattleStats:
     """In-battle stats."""
 
-    hp: Real
-    attack: Real
-    defense: Real
-    special_attack: Real
-    special_defense: Real
-    speed: Real
-    evasion: Real
-    accuracy: Real
+    hp = attr.ib(converter=partial(_BattleStat, value))
+    attack = attr.ib(converter=partial(_BattleStat, value))
+    defense = attr.ib(converter=partial(_BattleStat, value))
+    special_attack = attr.ib(converter=partial(_BattleStat, value))
+    special_defense = attr.ib(converter=partial(_BattleStat, value))
+    speed = attr.ib(converter=partial(_BattleStat, value))
+    evasion = attr.ib(converter=partial(_BattleStat, value))
+    accuracy = attr.ib(converter=partial(_BattleStat, value))
+    critical_hit = attr.ib(
+        converter=partial(_BattleStat, value), default=1 / 16
+    )
 
     @classmethod
     def from_stats(cls, stats: Stats) -> "BattleStats":
@@ -192,4 +215,5 @@ class BattleStats:
         attribs = attr.asdict(stats)
         attribs['evasion'] = 1.0
         attribs['accuracy'] = 1.0
+        attribs['critical_hit'] = 1 / 16
         return cls(**attribs)
