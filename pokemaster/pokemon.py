@@ -126,6 +126,7 @@ class Pokemon:
         self._stats = self._calculate_stats()
         self._current_hp = self._stats.hp
         self._conditions = Conditions()
+        self._status = 'normal'
 
         _moves = _database.get_pokemon_default_moves(
             species=self._species, level=self._level
@@ -212,6 +213,11 @@ class Pokemon:
     def stats(self) -> Stats:
         """The statistics of the Pokémon."""
         return self._stats
+
+    @property
+    def status(self) -> str:
+        """The status condition of the Pokémon."""
+        return self._status
 
     @property
     def types(self) -> List[str]:
