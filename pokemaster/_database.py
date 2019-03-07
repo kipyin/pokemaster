@@ -262,15 +262,19 @@ def get_pokemon_gender(
     )
 
 
-def get_move(move: str = None, move_id: int = None) -> pokedex.db.tables.Move:
+def get_move(
+    move: str = None, move_id: int = None, generation: int = None
+) -> pokedex.db.tables.Move:
     """"""
     _check_completeness(move, move_id)
-    conditions = {'generation': 3}
+    query = SESSION.query(pokedex.db.tables.Move)
+    if generation:
+        query = query.filter(pokedex.db.tables.Move.generation_id <= generation)
     if move is not None:
-        conditions['identifier'] = move
+        query = query.filter_by(identifier=move)
     if move_id is not None:
-        conditions['id'] = move_id
-    return (SESSION.query(pokedex.db.tables.Move).filter_by(**conditions)).one()
+        query = query.filter_by(id=move_id)
+    return query.one()
 
 
 # TODO: get it via the machine no. or the move name
