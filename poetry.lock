@@ -67,7 +67,7 @@ version = "1.4.0"
 six = "*"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Composable command line interface toolkit"
 name = "click"
 optional = false
@@ -460,7 +460,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs", "pytest-flake8
 pokedex = ["pokedex", "construct"]
 
 [metadata]
-content-hash = "47f0eaca8b75f5a341e8df47debdd29686cbdc6e7514a27bd9133c9183d63675"
+content-hash = "aa5b3e19518e0b9b24fb78bc29bad75d9603092a1db78d4a588e177dc07c4d68"
 python-versions = "^3.6.5"
 
 [metadata.hashes]

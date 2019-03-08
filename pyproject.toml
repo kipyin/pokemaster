@@ -23,6 +23,7 @@ attrs = "^18.2"
 # for those who use `poetry`.
 pokedex = { git = "https://github.com/kipyin/pokedex.git", branch = "master", optional = true }
 construct = { version = "<=2.5.3", optional = true }
+click = "^7.0"
 
 [tool.poetry.extras]
 pokedex = ["pokedex", "construct"]
