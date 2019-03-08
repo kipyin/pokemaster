@@ -1,0 +1,1 @@
+"""pokemaster CLI commands."""
