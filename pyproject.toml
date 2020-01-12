@@ -7,7 +7,7 @@ license = "MIT"
 
 readme = "README.md"
 
-respository = "https://github.com/kipyin/pokemaster"
+repository = "https://github.com/kipyin/pokemaster"
 
 keywords = ["pokemon", "pokedex", "pokemaster"]
 
@@ -21,23 +21,24 @@ attrs = "^18.2"
 # Setting `pokedex` as an extra will ensure that `pip install pokemaster`
 # will always work, while keeping `poetry add pokemaster -E pokedex` possible
 # for those who use `poetry`.
-pokedex = { git = "https://github.com/kipyin/pokedex.git", branch = "master", optional = true }
-construct = { version = "<=2.5.3", optional = true }
+#Pokedex = { git = "https://github.com/kipyin/pokedex.git", branch = "master", optional = true }
+#construct = { version = "<=2.5.3", optional = true }
 
 [tool.poetry.extras]
 pokedex = ["pokedex", "construct"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.0"
-black = { version = "^18.3-alpha.0", allows-prereleases = true }
 pre-commit = "^1.12"
 pytest-cov = "^2.6"
-isort = { git = "https://github.com/timothycrosley/isort.git", branch = "develop" }
+#isort = { git = "https://github.com/timothycrosley/isort.git", branch = "develop" }
 tox = "^3.7"
 towncrier = "^18.6"
 coverage = "^4.5"
 typing-extensions = "^3.7"
 docformatter = "^1.0"
+black = "^19.10b0"
+isort = "^4.3.21"
 
 [tool.black]
 line-length = 80
