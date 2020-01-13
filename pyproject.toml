@@ -58,7 +58,8 @@ envlist = lint, py36, py37, py38-dev, clean
 whitelist_externals = poetry
 skip_install = true
 commands =
-    poetry install -v -E pokedex
+    pip install git+https://github.com/kipyin/pokedex.git
+    poetry install -v
     poetry run pokedex load -v
     poetry run pokedex status
     poetry run pytest tests/ --cov=pokemaster
