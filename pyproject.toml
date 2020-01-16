@@ -7,7 +7,7 @@ license = "MIT"
 
 readme = "README.md"
 
-respository = "https://github.com/kipyin/pokemaster"
+repository = "https://github.com/kipyin/pokemaster"
 
 keywords = ["pokemon", "pokedex", "pokemaster"]
 
@@ -29,7 +29,7 @@ pokedex = ["pokedex", "construct"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.0"
-black = { version = "^18.3-alpha.0", allows-prereleases = true }
+black = { version = "^18.3-alpha.0", allow-prereleases = true }
 pre-commit = "^1.12"
 pytest-cov = "^2.6"
 isort = { git = "https://github.com/timothycrosley/isort.git", branch = "develop" }
